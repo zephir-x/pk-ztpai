@@ -1,2 +1,20 @@
-﻿.idea/
+﻿# IDEs and Editors
+.idea/
+
+# Dependencies
 node_modules/
+
+# .NET binary and compilation files
+[Bb]in/
+[Oo]bj/
+
+# Frontend build files (Vite/React)
+dist/
+build/
+
+# Environment variables
+.env
+.env.*
+!.env.Example
+appsettings.Development.json
+appsettings.Local.json
