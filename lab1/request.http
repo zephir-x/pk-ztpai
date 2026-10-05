@@ -9,3 +9,66 @@ Accept: application/json
 ### Get non-existing room (Should return 404)
 GET http://localhost:3000/api/rooms/999
 Accept: application/json
+
+### Create a valid reservation
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Jan Kowalski",
+  "participants": 20,
+  "date": "2026-10-10"
+}
+
+### Create another valid reservation (for filtering purposes)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 2,
+  "reservedBy": "Anna Nowak",
+  "participants": 10,
+  "date": "2026-10-15"
+}
+
+### Validation Error: Missing required fields
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "participants": 0,
+  "date": "2026-10-10"
+}
+
+### Business Rule Error: Capacity exceeded
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Piotr Wiśniewski",
+  "participants": 40,
+  "date": "2026-10-12"
+}
+
+### Get all reservations
+GET http://localhost:3000/api/reservations
+Accept: application/json
+
+### Get reservations filtered by roomId
+GET http://localhost:3000/api/reservations?roomId=1
+Accept: application/json
+
+### Get reservations filtered by non-existent roomId (Should return empty array)
+GET http://localhost:3000/api/reservations?roomId=999
+Accept: application/json
+
+### Cancel existing reservation
+PATCH http://localhost:3000/api/reservations/1/cancel
+Accept: application/json
+
+### Cancel non-existing reservation (Should return 404)
+PATCH http://localhost:3000/api/reservations/999/cancel
+Accept: application/json
