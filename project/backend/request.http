@@ -1,0 +1,21 @@
+﻿@HostAddress = http://localhost:5074
+@Email = testuser@example.com
+@Password = SecurePass123!
+
+### Register a new user
+POST {{HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{Email}}",
+  "password": "{{Password}}"
+}
+
+### Login and retrieve JWT token
+POST {{HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{Email}}",
+  "password": "{{Password}}"
+}
