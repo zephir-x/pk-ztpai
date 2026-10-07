@@ -2,14 +2,48 @@ using Microsoft.EntityFrameworkCore;
 using ProjectHub.Api.Infrastructure.Data;
 using ProjectHub.Api.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using ProjectHub.Api.Infrastructure.Middleware;
+using ProjectHub.Api.Services.Workspaces;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using FluentValidation;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Dependency Injection Configuration
-builder.Services.AddOpenApi();
 builder.Services.AddControllers();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+// Configure Swagger with JWT Bearer Authentication support
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your valid JWT token in the text input below.\r\n\r\nExample: 'eyJhbGciOiJIUzI1NiIs...'"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // Register DbContext with connection string from appsettings
 builder.Services.AddDbContext<ProjectHubDbContext>(options =>
@@ -22,6 +56,7 @@ var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<Jw
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
+builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
 
 // Register JWT Bearer authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -44,9 +79,14 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // HTTP Request Pipeline
+// Enforce global error handling as the first middleware
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    // Serve generated Swagger as a JSON endpoint and enable Swagger UI
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 // Enforce authentication and authorization middleware

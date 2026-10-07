@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProjectHub.Api.Domain.Entities;
 using ProjectHub.Api.Domain.Enums;
@@ -15,21 +16,30 @@ public class AuthController : ControllerBase
     private readonly ProjectHubDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtProvider _jwtProvider;
+    private readonly IValidator<RegisterRequest> _registerValidator;
+    private readonly IValidator<LoginRequest> _loginValidator;
 
     // Injects dependencies for data access and security operations
     public AuthController(
         ProjectHubDbContext context, 
         IPasswordHasher passwordHasher, 
-        IJwtProvider jwtProvider)
+        IJwtProvider jwtProvider,
+        IValidator<RegisterRequest> registerValidator,
+        IValidator<LoginRequest> loginValidator)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _jwtProvider = jwtProvider;
+        _registerValidator = registerValidator;
+        _loginValidator = loginValidator;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
+        // Triggers ExceptionHandlingMiddleware with 400 Bad Request on failure
+        await _registerValidator.ValidateAndThrowAsync(request);
+        
         // Enforce email uniqueness to prevent duplicate accounts
         if (await _context.Users.AnyAsync(u => u.Email == request.Email))
         {
@@ -55,6 +65,8 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
+        await _loginValidator.ValidateAndThrowAsync(request);
+        
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
         // Verify credentials against the stored hash securely to mitigate timing attacks
