@@ -40,6 +40,7 @@ public class ExceptionHandlingMiddleware
             ValidationException => (int)HttpStatusCode.BadRequest,
             NotFoundException => (int)HttpStatusCode.NotFound,
             ForbiddenException => (int)HttpStatusCode.Forbidden,
+            ConflictException => (int)HttpStatusCode.Conflict,
             _ => (int)HttpStatusCode.InternalServerError
         };
 

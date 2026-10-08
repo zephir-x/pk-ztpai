@@ -4,6 +4,9 @@ using ProjectHub.Api.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ProjectHub.Api.Infrastructure.Middleware;
 using ProjectHub.Api.Services.Workspaces;
+using ProjectHub.Api.Services.Projects;
+using ProjectHub.Api.Services.Tasks;
+using ProjectHub.Api.Services.Comments;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using FluentValidation;
@@ -57,6 +60,9 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptio
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<ITaskItemService, TaskItemService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
 
 // Register JWT Bearer authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

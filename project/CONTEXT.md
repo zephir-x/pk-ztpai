@@ -41,13 +41,13 @@ These specific rules MUST be implemented in the domain/service layer:
 - [x] EF Core models, Fluent API, Migrations.
 - [x] BCrypt, JWT Provider, AuthController (register/login).
 
-### [~] Stage 4: Business Logic & REST API
+### [x] Stage 4: Business Logic & REST API
 - [x] **Core Infrastructure:** Global Error Handling Middleware (ProblemDetails), FluentValidation pipeline, Pagination & Filtering shared DTOs.
 - [x] **Swagger:** OpenAPI configured with JWT Bearer auth.
 - [x] **Workspaces Feature:** DTOs, Service logic, Role-based constraints, WorkspacesController.
-- [ ] **Projects Feature:** Implement CRUD for Projects. Enforce **Business Rule 3** (Cannot delete project with critical unresolved tasks).
-- [ ] **Tasks Feature:** Implement CRUD for TaskItems. Enforce **Business Rule 1** (Cannot close unassigned task) and **Business Rule 2** (Only Admin can reassign).
-- [ ] **Comments Feature:** Implement basic CRUD for Comments (foundation for Stage 5).
+- [x] **Projects Feature:** Implement CRUD for Projects. Enforce **Business Rule 3** (Cannot delete project with critical unresolved tasks).
+- [x] **Tasks Feature:** Implement CRUD for TaskItems. Enforce **Business Rule 1** (Cannot close unassigned task) and **Business Rule 2** (Only Admin can reassign).
+- [x] **Comments Feature:** Implement basic CRUD for Comments (foundation for Stage 5).
 
 ### [ ] Stage 5: Advanced Requirements (Grade 5.0 target)
 - [ ] **Async Mechanism:** Integrate MediatR (or BackgroundService) to asynchronously process mention notifications in comments (@user) without blocking the HTTP thread.
