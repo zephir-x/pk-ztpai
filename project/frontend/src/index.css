@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply text-matte antialiased min-h-screen bg-gray-50;
+    }
+}
+
+@layer utilities {
+    /* Dark background with subtle lights */
+    .bg-spotlight {
+        background-color: #111827; /* Very dark matte */
+        background-image:
+                radial-gradient(circle at 15% 30%, rgba(255, 255, 255, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 85% 70%, rgba(255, 255, 255, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+    }
+
+    /* Glass for the main authorization container */
+    .glass-auth-panel {
+        @apply bg-white/90 backdrop-blur-2xl shadow-[0_0_40px_rgba(0,0,0,0.2)];
+    }
+
+    /* Smaller glass panels (e.g., dashboard cards) */
+    .glass-panel {
+        @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-sm rounded-xl;
+    }
+
+    /* Fiery button – stripped down to the essentials, without unnecessary permanent shadows */
+    .btn-fiery {
+        @apply bg-gradient-to-r from-fiery to-fiery-dark text-white font-medium px-4 py-2 rounded-lg transition-all duration-300 hover:shadow-[0_4px_15px_rgba(249,115,22,0.3)] active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+    }
+
+    .text-gradient-fiery {
+        @apply bg-clip-text text-transparent bg-gradient-to-r from-fiery-light to-fiery-dark;
+    }
+
+    .input-glass {
+        @apply w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fiery/50 transition-all text-matte-dark placeholder-gray-400;
+    }
+}

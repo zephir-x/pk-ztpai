@@ -1,6 +1,6 @@
 ﻿# ProjectHub - AI Developer Context
 **Author:** Kacper Gumulak (Index: 151872)
-**Status:** In Progress (Stages 1-3 Completed. Stage 4 in progress)
+**Status:** In Progress (Stages 1-5 Completed. Stage 6 in progress)
 **Goal:** Deliver a fully functional Jira-like task management system meeting strict academic requirements for the "Zaawansowane Technologie Programowania Aplikacji Internetowych" course (Grade 5.0 target).
 
 ## 1. Tech Stack
@@ -18,7 +18,7 @@
 4. `TaskItem` (Id, Title, Description, Status, Priority, ProjectId, AssigneeId, CreatedAt, UpdatedAt)
 5. `Comment` (Id, Content, TaskItemId, AuthorId, CreatedAt)
 
-## 3. Strict Business Rules (Approved by Professor)
+## 3. Strict Business Rules
 These specific rules MUST be implemented in the domain/service layer:
 1. **Task Completion Constraint:** A task cannot change its status to "Done" (`ProjectTaskStatus.Done`) if it does not have an active assignee attached.
 2. **Admin Assignee Constraint:** Changing a task's assigned user (`AssigneeId`) can ONLY be performed by a user with `ADMIN` privileges within the given context.
@@ -53,9 +53,9 @@ These specific rules MUST be implemented in the domain/service layer:
 - [x] **Async Mechanism:** Integrate MediatR (or BackgroundService) to asynchronously process mention notifications in comments (@user) without blocking the HTTP thread.
 - [x] **Extended Element (WebSockets):** Integrate SignalR to instantly push Kanban board state changes (task moves/updates) to all connected clients in a workspace.
 
-### [ ] Stage 6: Frontend Client (React)
-- [ ] Setup Axios client with JWT interceptors.
-- [ ] Auth State: Login & Registration views.
+### [~] Stage 6: Frontend Client (React)
+- [x] Setup Axios client with JWT interceptors.
+- [x] Auth State: Login & Registration views.
 - [ ] Views: Workspace List, Project Dashboard.
 - [ ] Views: Kanban Board (Drag & Drop functionality).
 - [ ] UI Error Handling: Catch API 400/403/404 errors and display user-friendly toasts/messages.
@@ -75,3 +75,33 @@ These specific rules MUST be implemented in the domain/service layer:
 * **Tone:** Objective, cool-headed, highly substantive. Point out architectural flaws early and correct them.
 * **Formatting:** DO NOT use emojis in code, documentation, or chat unless explicitly asked.
 * **Commits:** Upon the "commit time" command, summarize changes and generate a Conventional Commits message.
+
+## 8. Backend Architecture Snapshot (Milestone 1)
+**Design Pattern & Request Flow:**
+`HTTP Request -> Controller -> DTO Validation (FluentValidation) -> Domain Service (Business Rules & Auth) -> DbContext (EF Core) -> HTTP Response`.
+
+**Directory Structure:**
+*   `Controllers/`: HTTP endpoints (`Auth`, `Workspaces`, `Projects`, `TaskItems`, `Comments`). Restricted via `[Authorize]`.
+*   `Domain/`:
+    *   `Entities/`: 5 core DB entities.
+    *   `Enums/`: `UserRole`, `ProjectTaskStatus`, `TaskPriority`.
+    *   `Events/`: `CommentCreatedEvent` for MediatR.
+    *   `Exceptions/`: Custom domain exceptions (`NotFoundException`, `ForbiddenException`, `ConflictException`).
+*   `DTOs/`: Grouped by feature (`Auth`, `Comments`, `Common`, `Projects`, `Tasks`, `Workspaces`). Includes strict FluentValidation rules for incoming requests.
+*   `Infrastructure/`:
+    *   `Authentication/`: JWT Token generation and BCrypt hashing.
+    *   `Data/`: `ProjectHubDbContext`, FluentAPI configurations, Migrations.
+    *   `Events/`: Event dispatcher, Channel architecture, and `EventProcessingBackgroundService` for non-blocking MediatR integration.
+    *   `Middleware/`: `ExceptionHandlingMiddleware` mapping domain exceptions to RFC 7807 ProblemDetails.
+    *   `SignalR/`: `KanbanHub` for real-time WebSocket communication.
+*   `Services/`: Encapsulated business logic enforcing strict hierarchical access and all Grade 5.0 business constraints.
+
+## 9. Frontend Architecture Snapshot (Phase 1 & Phase 2)
+**Technology & Setup:** Vite, React 18, TypeScript, Tailwind CSS v3, Axios, React Router v6.
+**Styling Paradigm:** Glassmorphism mixed with dark matte backgrounds and specific fiery (orange/amber) accents. 45% (Matte) / 45% (White/Glass) / 10% (Fiery) ratio.
+**Directory Structure:**
+*   `api/`: `axiosClient.ts` configured with request (JWT injection) and response (401 redirection) interceptors. Points to `VITE_API_URL`.
+*   `components/`: Reusable logic like `ProtectedRoute.tsx` and structural views like `Layout.tsx` (Sidebar + Main Content).
+*   `context/`: `AuthContext.tsx` handling global authentication state via `localStorage`.
+*   `hooks/`: `usePageTitle.ts` for dynamic document title rendering.
+*   `pages/`: Core views. E.g., `Auth.tsx` utilizes a unified state-driven sliding animation for seamless Login/Registration.

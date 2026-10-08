@@ -18,6 +18,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Dependency Injection Configuration
 builder.Services.AddControllers();
+
+// CORS Policy Configuration
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendOrigin", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 builder.Services.AddSignalR();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
@@ -96,6 +109,9 @@ var app = builder.Build();
 // HTTP Request Pipeline
 // Enforce global error handling as the first middleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+// Allow browser requests
+app.UseCors("FrontendOrigin");
 
 if (app.Environment.IsDevelopment())
 {
