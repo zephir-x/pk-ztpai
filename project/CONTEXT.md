@@ -49,9 +49,9 @@ These specific rules MUST be implemented in the domain/service layer:
 - [x] **Tasks Feature:** Implement CRUD for TaskItems. Enforce **Business Rule 1** (Cannot close unassigned task) and **Business Rule 2** (Only Admin can reassign).
 - [x] **Comments Feature:** Implement basic CRUD for Comments (foundation for Stage 5).
 
-### [ ] Stage 5: Advanced Requirements (Grade 5.0 target)
-- [ ] **Async Mechanism:** Integrate MediatR (or BackgroundService) to asynchronously process mention notifications in comments (@user) without blocking the HTTP thread.
-- [ ] **Extended Element (WebSockets):** Integrate SignalR to instantly push Kanban board state changes (task moves/updates) to all connected clients in a workspace.
+### [x] Stage 5: Advanced Requirements (Grade 5.0 target)
+- [x] **Async Mechanism:** Integrate MediatR (or BackgroundService) to asynchronously process mention notifications in comments (@user) without blocking the HTTP thread.
+- [x] **Extended Element (WebSockets):** Integrate SignalR to instantly push Kanban board state changes (task moves/updates) to all connected clients in a workspace.
 
 ### [ ] Stage 6: Frontend Client (React)
 - [ ] Setup Axios client with JWT interceptors.

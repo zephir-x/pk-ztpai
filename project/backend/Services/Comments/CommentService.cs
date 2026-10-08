@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProjectHub.Api.Domain.Entities;
 using ProjectHub.Api.Domain.Enums;
+using ProjectHub.Api.Domain.Events;
 using ProjectHub.Api.Domain.Exceptions;
 using ProjectHub.Api.DTOs.Comments;
 using ProjectHub.Api.DTOs.Common;
 using ProjectHub.Api.Infrastructure.Data;
+using ProjectHub.Api.Infrastructure.Events;
 using ProjectHub.Api.Infrastructure.Extensions;
 
 namespace ProjectHub.Api.Services.Comments;
@@ -12,10 +14,12 @@ namespace ProjectHub.Api.Services.Comments;
 public class CommentService : ICommentService
 {
     private readonly ProjectHubDbContext _context;
+    private readonly IEventDispatcher _eventDispatcher;
 
-    public CommentService(ProjectHubDbContext context)
+    public CommentService(ProjectHubDbContext context, IEventDispatcher eventDispatcher)
     {
         _context = context;
+        _eventDispatcher = eventDispatcher;
     }
 
     public async Task<PagedResponse<CommentResponse>> GetPagedByTaskAsync(Guid taskItemId, PagedRequest request, Guid userId, UserRole role, CancellationToken ct = default)
@@ -59,7 +63,9 @@ public class CommentService : ICommentService
         _context.Comments.Add(comment);
         await _context.SaveChangesAsync(ct);
 
-        // Note: Integration with MediatR for mention processing (@user) will be injected here in Stage 5.
+        // Dispatch domain event asynchronously without blocking the HTTP response
+        var commentEvent = new CommentCreatedEvent(comment.Id, comment.Content, comment.TaskItemId, comment.AuthorId);
+        await _eventDispatcher.DispatchAsync(commentEvent, ct);
 
         return new CommentResponse(comment.Id, comment.Content, comment.TaskItemId, comment.AuthorId, comment.CreatedAt);
     }

@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ProjectHub.Api.Infrastructure.Data;
 using ProjectHub.Api.Infrastructure.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ProjectHub.Api.Infrastructure.Middleware;
+using ProjectHub.Api.Infrastructure.SignalR;
+using ProjectHub.Api.Infrastructure.Events;
 using ProjectHub.Api.Services.Workspaces;
 using ProjectHub.Api.Services.Projects;
 using ProjectHub.Api.Services.Tasks;
@@ -16,6 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Dependency Injection Configuration
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // Configure Swagger with JWT Bearer Authentication support
@@ -64,6 +67,12 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskItemService, TaskItemService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 
+// Async Mechanism (MediatR & Event Channel) 
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
+builder.Services.AddSingleton<EventDispatcher>();
+builder.Services.AddSingleton<IEventDispatcher>(sp => sp.GetRequiredService<EventDispatcher>());
+builder.Services.AddHostedService<EventProcessingBackgroundService>();
+
 // Register JWT Bearer authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -100,5 +109,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<KanbanHub>("/hubs/kanban"); // Map SignalR WebSocket endpoint
 
 app.Run();

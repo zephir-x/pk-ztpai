@@ -1,8 +1,8 @@
 ﻿@HostAddress = http://localhost:5074
-@Email = testuser@example.com
+@Email = test_integration@example.com
 @Password = SecurePass123!
 
-### Register a new user
+### 1. Register a new test user
 POST {{HostAddress}}/api/auth/register
 Content-Type: application/json
 
@@ -11,11 +11,93 @@ Content-Type: application/json
   "password": "{{Password}}"
 }
 
-### Login and retrieve JWT token
+### 2. Login & Capture Token
+# @name Login
 POST {{HostAddress}}/api/auth/login
 Content-Type: application/json
 
 {
   "email": "{{Email}}",
   "password": "{{Password}}"
+}
+> {% client.global.set("auth_token", response.body.token); %}
+
+### 3. Create Workspace
+# @name CreateWorkspace
+POST {{HostAddress}}/api/workspaces
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Integration Test Workspace"
+}
+> {% client.global.set("workspace_id", response.body.id); %}
+
+### 4. Create Project
+# @name CreateProject
+POST {{HostAddress}}/api/projects
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Integration Test Project",
+  "description": "Testing business rules",
+  "workspaceId": "{{workspace_id}}"
+}
+> {% client.global.set("project_id", response.body.id); %}
+
+### 5. Create Task (No Assignee, Status: ToDo, Priority: Critical)
+# Enums: Priority 3 = Critical, Status 0 = ToDo
+# @name CreateTask
+POST {{HostAddress}}/api/taskitems
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "title": "Critical Bug",
+  "description": "System crashes on startup",
+  "status": 0,
+  "priority": 3,
+  "projectId": "{{project_id}}",
+  "assigneeId": null
+}
+> {% client.global.set("task_id", response.body.id); %}
+
+### 6. TEST RULE 1: Try to close an unassigned task
+# Expected Result: 409 Conflict
+# Enums: Status 3 = Done
+PUT {{HostAddress}}/api/taskitems/{{task_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "title": "Critical Bug",
+  "description": "System crashes on startup",
+  "status": 3,
+  "priority": 3
+}
+
+### 7. TEST RULE 2: Try to reassign task as standard user
+# Expected Result: 403 Forbidden (Only ADMIN can do this)
+PATCH {{HostAddress}}/api/taskitems/{{task_id}}/assignee
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "assigneeId": "00000000-0000-0000-0000-000000000000"
+}
+
+### 8. TEST RULE 3: Try to delete a project with critical unresolved tasks
+# Expected Result: 409 Conflict
+DELETE {{HostAddress}}/api/projects/{{project_id}}
+Authorization: Bearer {{auth_token}}
+
+### 9. Add a Comment to the Task (Testing Async MediatR Mentions)
+POST {{HostAddress}}/api/comments
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "content": "Hey @Admin and @Kacper, this issue is blocking the release.",
+  "taskItemId": "{{task_id}}"
 }

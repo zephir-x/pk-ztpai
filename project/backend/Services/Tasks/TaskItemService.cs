@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using ProjectHub.Api.Domain.Entities;
 using ProjectHub.Api.Domain.Enums;
 using ProjectHub.Api.Domain.Exceptions;
@@ -6,16 +7,19 @@ using ProjectHub.Api.DTOs.Common;
 using ProjectHub.Api.DTOs.Tasks;
 using ProjectHub.Api.Infrastructure.Data;
 using ProjectHub.Api.Infrastructure.Extensions;
+using ProjectHub.Api.Infrastructure.SignalR;
 
 namespace ProjectHub.Api.Services.Tasks;
 
 public class TaskItemService : ITaskItemService
 {
     private readonly ProjectHubDbContext _context;
+    private readonly IHubContext<KanbanHub> _hubContext;
 
-    public TaskItemService(ProjectHubDbContext context)
+    public TaskItemService(ProjectHubDbContext context, IHubContext<KanbanHub> hubContext)
     {
         _context = context;
+        _hubContext = hubContext;
     }
 
     public async Task<PagedResponse<TaskItemResponse>> GetPagedByProjectAsync(Guid projectId, PagedRequest request, Guid userId, UserRole role, CancellationToken ct = default)
@@ -97,8 +101,11 @@ public class TaskItemService : ITaskItemService
 
     public async Task UpdateAsync(Guid id, UpdateTaskItemRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id, ct) 
-            ?? throw new NotFoundException($"Task with ID {id} was not found.");
+        // Include Project to access WorkspaceId for SignalR broadcast
+        var task = await _context.Tasks
+                       .Include(t => t.Project)
+                       .FirstOrDefaultAsync(t => t.Id == id, ct) 
+                        ?? throw new NotFoundException($"Task with ID {id} was not found.");
 
         await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);
 
@@ -115,12 +122,19 @@ public class TaskItemService : ITaskItemService
         task.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(ct);
+        
+        // Real-time broadcast to all clients joined to this workspace group
+        await _hubContext.Clients.Group(task.Project.WorkspaceId.ToString())
+            .SendAsync("TaskUpdated", new { TaskId = task.Id, task.Status, task.Priority }, ct);
     }
 
     public async Task ChangeAssigneeAsync(Guid id, ChangeAssigneeRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id, ct) 
-            ?? throw new NotFoundException($"Task with ID {id} was not found.");
+        // Include Project to access WorkspaceId for SignalR broadcast
+        var task = await _context.Tasks
+                       .Include(t => t.Project)
+                       .FirstOrDefaultAsync(t => t.Id == id, ct) 
+                        ?? throw new NotFoundException($"Task with ID {id} was not found.");
 
         await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);
 
@@ -134,6 +148,10 @@ public class TaskItemService : ITaskItemService
         task.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(ct);
+        
+        // Real-time broadcast to all clients joined to this workspace group
+        await _hubContext.Clients.Group(task.Project.WorkspaceId.ToString())
+            .SendAsync("TaskAssigneeChanged", new { TaskId = task.Id, AssigneeId = task.AssigneeId }, ct);
     }
 
     public async Task DeleteAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
