@@ -1,8 +1,10 @@
 ﻿using ProjectHub.Api.Domain.Enums;
 
+using ProjectHub.Api.Domain.Common;
+
 namespace ProjectHub.Api.Domain.Entities;
 
-public class TaskItem
+public class TaskItem : ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -12,6 +14,8 @@ public class TaskItem
     public Guid ProjectId { get; set; }
     public Guid? AssigneeId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation properties

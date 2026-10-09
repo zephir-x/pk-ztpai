@@ -78,7 +78,9 @@ public class WorkspaceService : IWorkspaceService
     // Updates an existing workspace - modification strictly requires ownership or admin rights
     public async Task UpdateAsync(Guid id, UpdateWorkspaceRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == id, ct) 
+        var workspace = await _context.Workspaces
+            .Include(w => w.Projects).ThenInclude(p => p.Tasks).ThenInclude(t => t.Comments)
+            .FirstOrDefaultAsync(w => w.Id == id, ct) 
             ?? throw new NotFoundException($"Workspace with ID {id} was not found.");
 
         ValidateAccess(workspace, userId, role);
@@ -91,7 +93,7 @@ public class WorkspaceService : IWorkspaceService
     // Deletes a workspace. Deletion strictly requires ownership or admin rights
     public async Task DeleteAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == id, ct) 
+        var workspace = await _context.Workspaces.Include(w => w.Projects).ThenInclude(p => p.Tasks).ThenInclude(t => t.Comments).FirstOrDefaultAsync(w => w.Id == id, ct) 
             ?? throw new NotFoundException($"Workspace with ID {id} was not found.");
 
         ValidateAccess(workspace, userId, role);

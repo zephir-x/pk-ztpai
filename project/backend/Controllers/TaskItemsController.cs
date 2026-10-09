@@ -20,6 +20,14 @@ public class TaskItemsController : ControllerBase
         _taskItemService = taskItemService;
     }
 
+    
+    [HttpGet("my-tasks")]
+    public async Task<IActionResult> GetMyTasks(CancellationToken ct)
+    {
+        var response = await _taskItemService.GetMyTasksAsync(GetUserId(), ct);
+        return Ok(response);
+    }
+
     [HttpGet("project/{projectId:guid}")]
     public async Task<IActionResult> GetPagedByProject(Guid projectId, [FromQuery] PagedRequest request, CancellationToken ct)
     {

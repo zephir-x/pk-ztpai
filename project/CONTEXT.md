@@ -60,18 +60,18 @@ Implemented in the domain/service layer:
 - [x] Implement Edit and Delete functionality for Workspaces and Projects.
 - [x] Introduce `ThemeColor` enums internally stored as string, seamlessly mapped to UI ribbons and tags.
 
-### [ ] Stage 8: Feature Expansion & Soft Delete Architecture
-- [ ] **Soft Delete Architecture**: Implement `IsDeleted` / `DeletedAt` fields across major entities. Do not permanently delete database records; update global query filters to exclude deleted items on backend and frontend.
-- [ ] **My Tasks View**: Implement a dedicated view displaying all tasks assigned to the current user, featuring quick links traversing `Workspace -> Project -> Task` or a unified accessible interface.
+### [~] Stage 8: Feature Expansion & Soft Delete Architecture
+- [x] **Soft Delete Architecture**: Implement `IsDeleted` / `DeletedAt` fields across major entities. Do not permanently delete database records; update global query filters to exclude deleted items on backend and frontend.
+- [x] **My Tasks View**: Implement a dedicated view displaying all tasks assigned to the current user, featuring quick links traversing `Workspace -> Project -> Task` or a unified accessible interface.
+- [ ] **User Management**: Implement the Administration panel for managing users (Add, Edit, Soft Delete), explicitly including a password reset/override capability for forgotten passwords.
 - [ ] **Settings & Profile View**: Allow users to modify their profile details (First Name, Last Name, Avatar URL). Implement system-wide user preferences including App Theme Accent Color (overriding default fiery orange) and Language selection.
 - [ ] **Notifications & Messaging System (New Entity)**:
   - Users receive alerts for task assignments, mentions, or comments.
   - Users can send messages/support requests directly to Administrators.
   - Administrators have a dedicated Notifications view to read and manage messages received from users or mentions.
-- [ ] **User Management**: Implement the Administration panel for managing users (Add, Edit, Soft Delete), explicitly including a password reset/override capability for forgotten passwords.
 
 ### [ ] Stage 9: Glassmorphism Redesign
-- [ ] Overhaul the entire UI to a "Glassmorphism in shades of gray" design. Discard the basic layout in favor of a deeply polished, translucent grayscale esthetic (based on reference images to be provided).
+- [ ] Overhaul the entire UI to a "Glassmorphism in shades of gray" design. Discard the basic layout in favor of a deeply polished, translucent grayscale esthetic (based on reference images to be provided) and set of animations / visual corrections.
 
 ### [ ] Stage 10: Quality Assurance & Deployment
 - [ ] Minimum 5 unit tests isolating Domain/Service logic (Rules 1, 2, 3).

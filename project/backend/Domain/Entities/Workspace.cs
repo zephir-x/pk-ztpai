@@ -1,11 +1,15 @@
-﻿namespace ProjectHub.Api.Domain.Entities;
+﻿using ProjectHub.Api.Domain.Common;
 
-public class Workspace
+namespace ProjectHub.Api.Domain.Entities;
+
+public class Workspace : ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public Guid OwnerId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
     public ProjectHub.Api.Domain.Enums.ThemeColor ThemeColor { get; set; } = ProjectHub.Api.Domain.Enums.ThemeColor.Blue;
 
     // Navigation properties

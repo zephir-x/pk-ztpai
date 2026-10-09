@@ -83,7 +83,9 @@ public class ProjectService : IProjectService
     // Updates the core details (name, description) of an existing project
     public async Task UpdateAsync(Guid id, UpdateProjectRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == id, ct) 
+        var project = await _context.Projects
+            .Include(p => p.Tasks).ThenInclude(t => t.Comments)
+            .FirstOrDefaultAsync(p => p.Id == id, ct) 
             ?? throw new NotFoundException($"Project with ID {id} was not found.");
 
         await ValidateWorkspaceAccessAsync(project.WorkspaceId, userId, role, ct);
@@ -98,7 +100,7 @@ public class ProjectService : IProjectService
     // Deletes a project - enforces a business rule preventing the deletion of projects containing unresolved tasks with a critical priority
     public async Task DeleteAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == id, ct) 
+        var project = await _context.Projects.Include(p => p.Tasks).ThenInclude(t => t.Comments).FirstOrDefaultAsync(p => p.Id == id, ct) 
             ?? throw new NotFoundException($"Project with ID {id} was not found.");
 
         await ValidateWorkspaceAccessAsync(project.WorkspaceId, userId, role, ct);

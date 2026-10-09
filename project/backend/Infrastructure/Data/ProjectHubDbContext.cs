@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProjectHub.Api.Domain.Entities;
+using ProjectHub.Api.Domain.Common;
 
 namespace ProjectHub.Api.Infrastructure.Data;
 
@@ -18,6 +19,14 @@ public class ProjectHubDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Global Query Filters for Soft Delete
+        modelBuilder.Entity<User>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Workspace>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Project>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<TaskItem>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Comment>().HasQueryFilter(e => !e.IsDeleted);
+
 
         // Configures User entity constraints
         modelBuilder.Entity<User>(entity =>
@@ -76,5 +85,19 @@ public class ProjectHubDbContext : DbContext
                   .HasForeignKey(c => c.AuthorId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        foreach (var entry in ChangeTracker.Entries<ISoftDeletable>())
+        {
+            if (entry.State == EntityState.Deleted)
+            {
+                entry.State = EntityState.Modified;
+                entry.Entity.IsDeleted = true;
+                entry.Entity.DeletedAt = DateTime.UtcNow;
+            }
+        }
+        return base.SaveChangesAsync(cancellationToken);
     }
 }

@@ -7,6 +7,7 @@ import AdminPanel from './pages/AdminPanel';
 import Dashboard from './pages/Dashboard';
 import WorkspaceDetails from './pages/WorkspaceDetails';
 import ProjectKanban from './pages/ProjectKanban';
+import MyTasks from './pages/MyTasks';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -43,7 +44,7 @@ function App() {
                             <Route path="/admin" element={<AdminPanel />} />
                             <Route path="/workspace/:workspaceId" element={<WorkspaceDetails />} />
                             <Route path="/projects/:projectId" element={<ProjectKanban />} />
-                            <Route path="/tasks" element={<div className="glass-panel p-6 text-gray-500">My Tasks (Coming soon)</div>} />
+                            <Route path="/tasks" element={<MyTasks />} />
                             <Route path="/settings" element={<div className="glass-panel p-6 text-gray-500">Settings (Coming soon)</div>} />
                         </Route>
                     </Route>

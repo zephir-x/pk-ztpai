@@ -56,6 +56,23 @@ export const TaskPriority = {
 export type TaskPriority = typeof TaskPriority[keyof typeof TaskPriority];
 
 // === Task Management DTOs ===
+export interface MyTaskResponse {
+    id: string;
+    title: string;
+    description: string | null;
+    status: ProjectTaskStatus;
+    priority: TaskPriority;
+    projectId: string;
+    projectName: string;
+    projectThemeColor: ThemeColor;
+    workspaceId: string;
+    workspaceName: string;
+    workspaceThemeColor: ThemeColor;
+    assigneeId: string | null;
+    createdAt: string;
+    updatedAt: string | null;
+}
+
 export interface TaskItemResponse {
     id: string;
     title: string;

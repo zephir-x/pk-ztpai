@@ -24,6 +24,34 @@ public class TaskItemService : ITaskItemService
     }
     
     // Retrieves a paginated and optionally filtered list of tasks for a specific project
+    public async Task<IEnumerable<MyTaskResponse>> GetMyTasksAsync(Guid userId, CancellationToken ct = default)
+    {
+        return await _context.Tasks
+            .AsNoTracking()
+            .Include(t => t.Project)
+                .ThenInclude(p => p.Workspace)
+            .Where(t => t.AssigneeId == userId)
+            .OrderByDescending(t => t.Priority)
+            .ThenByDescending(t => t.CreatedAt)
+            .Select(t => new MyTaskResponse(
+                t.Id,
+                t.Title,
+                t.Description,
+                t.Status,
+                t.Priority,
+                t.ProjectId,
+                t.Project.Name,
+                t.Project.ThemeColor,
+                t.Project.WorkspaceId,
+                t.Project.Workspace.Name,
+                t.Project.Workspace.ThemeColor,
+                t.AssigneeId,
+                t.CreatedAt,
+                t.UpdatedAt
+            ))
+            .ToListAsync(ct);
+    }
+
     public async Task<PagedResponse<TaskItemResponse>> GetPagedByProjectAsync(Guid projectId, PagedRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var query = _context.Tasks
@@ -150,7 +178,9 @@ public class TaskItemService : ITaskItemService
     // Deletes a task item
     public async Task DeleteAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id, ct) 
+        var task = await _context.Tasks
+            .Include(t => t.Comments)
+            .FirstOrDefaultAsync(t => t.Id == id, ct) 
             ?? throw new NotFoundException($"Task with ID {id} was not found.");
 
         await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);

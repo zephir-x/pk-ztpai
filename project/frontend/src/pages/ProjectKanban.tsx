@@ -252,9 +252,12 @@ export default function ProjectKanban() {
                                                                     <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500 border border-white">
                                                                         {task.assigneeId ? 'AS' : '?'}
                                                                     </div>
-                                                                    <div className="flex items-center text-gray-400 gap-1 text-xs">
+                                                                    <button 
+                                                                        onClick={(e) => openTaskModal(task, 'comments', e)}
+                                                                        className="flex items-center text-gray-400 hover:text-fiery transition-colors gap-1 text-xs cursor-pointer"
+                                                                    >
                                                                         <MessageSquare size={14} />
-                                                                    </div>
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         )}

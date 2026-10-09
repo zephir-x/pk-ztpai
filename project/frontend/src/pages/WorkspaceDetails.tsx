@@ -97,9 +97,6 @@ export default function WorkspaceDetails() {
                     <LayoutGrid size={48} className="text-gray-400 mb-4" />
                     <h3 className="text-lg font-semibold text-matte-dark mb-2">No projects found</h3>
                     <p className="text-gray-500 max-w-md">This workspace is currently empty.</p>
-                    {isAdmin && (
-                        <button onClick={() => { setEditProject(null); setIsModalOpen(true); }} className="btn-fiery mt-6">Create Project</button>
-                    )}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
