@@ -9,6 +9,7 @@ using ProjectHub.Api.Infrastructure.Extensions;
 
 namespace ProjectHub.Api.Services.Workspaces;
 
+// Service responsible for managing organizational workspaces
 public class WorkspaceService : IWorkspaceService
 {
     private readonly ProjectHubDbContext _context;
@@ -17,16 +18,11 @@ public class WorkspaceService : IWorkspaceService
     {
         _context = context;
     }
-
+    
+    // Retrieves a paginated and optionally filtered list of workspaces
     public async Task<PagedResponse<WorkspaceResponse>> GetPagedAsync(PagedRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var query = _context.Workspaces.AsNoTracking();
-
-        // Business Rule: Standard users can only view their own workspaces. Admins see all.
-        if (role != UserRole.Admin)
-        {
-            query = query.Where(w => w.OwnerId == userId);
-        }
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
@@ -37,7 +33,6 @@ public class WorkspaceService : IWorkspaceService
             .OrderByDescending(w => w.CreatedAt)
             .ToPagedResponseAsync(request.PageNumber, request.PageSize, ct);
 
-        // Map domain entities to response DTOs
         var mappedItems = pagedData.Items
             .Select(w => new WorkspaceResponse(w.Id, w.Name, w.OwnerId, w.CreatedAt))
             .ToList();
@@ -50,7 +45,8 @@ public class WorkspaceService : IWorkspaceService
             PageSize = pagedData.PageSize
         };
     }
-
+    
+    // Retrieves the details of a specific workspace by its unique identifier
     public async Task<WorkspaceResponse> GetByIdAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var workspace = await _context.Workspaces
@@ -58,11 +54,10 @@ public class WorkspaceService : IWorkspaceService
             .FirstOrDefaultAsync(w => w.Id == id, ct) 
             ?? throw new NotFoundException($"Workspace with ID {id} was not found.");
 
-        ValidateAccess(workspace, userId, role);
-
         return new WorkspaceResponse(workspace.Id, workspace.Name, workspace.OwnerId, workspace.CreatedAt);
     }
-
+    
+    // Creates a new workspace and sets the calling user as its owner
     public async Task<WorkspaceResponse> CreateAsync(CreateWorkspaceRequest request, Guid userId, CancellationToken ct = default)
     {
         var workspace = new Workspace
@@ -78,7 +73,8 @@ public class WorkspaceService : IWorkspaceService
 
         return new WorkspaceResponse(workspace.Id, workspace.Name, workspace.OwnerId, workspace.CreatedAt);
     }
-
+    
+    // Updates an existing workspace. Modification strictly requires ownership or admin rights
     public async Task UpdateAsync(Guid id, UpdateWorkspaceRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == id, ct) 
@@ -89,7 +85,8 @@ public class WorkspaceService : IWorkspaceService
         workspace.Name = request.Name;
         await _context.SaveChangesAsync(ct);
     }
-
+    
+    // Deletes a workspace. Deletion strictly requires ownership or admin rights
     public async Task DeleteAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == id, ct) 
@@ -100,8 +97,8 @@ public class WorkspaceService : IWorkspaceService
         _context.Workspaces.Remove(workspace);
         await _context.SaveChangesAsync(ct);
     }
-
-    // Business Rule: Ownership or Admin access is strictly required for modification or specific access
+    
+    // Confirms that the current user has the authority to modify the workspace
     private static void ValidateAccess(Workspace workspace, Guid userId, UserRole role)
     {
         if (workspace.OwnerId != userId && role != UserRole.Admin)

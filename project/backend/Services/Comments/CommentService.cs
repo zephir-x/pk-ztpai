@@ -103,11 +103,6 @@ public class CommentService : ICommentService
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == taskItemId, ct)
             ?? throw new NotFoundException($"Task with ID {taskItemId} was not found.");
-
-        if (task.Project.Workspace.OwnerId != userId)
-        {
-            throw new ForbiddenException("You do not have permission to access comments in this task.");
-        }
     }
 
     // Ensures only the comment author or a system administrator can modify or delete a comment

@@ -1,36 +1,54 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+﻿import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 import Auth from './pages/Auth';
-
-const DashboardPlaceholder = () => (
-    <div className="glass-panel p-6 w-full border-t-2 border-t-fiery">
-        <h3 className="text-lg font-semibold text-matte-dark mb-2">Welcome to your Workspaces</h3>
-        <p className="text-gray-500 text-sm">
-            This area will soon list all your available workspaces and projects fetched securely from the backend API.
-        </p>
-    </div>
-);
+import AdminPanel from './pages/AdminPanel';
+import Dashboard from './pages/Dashboard';
+import WorkspaceDetails from './pages/WorkspaceDetails';
+import ProjectKanban from './pages/ProjectKanban';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
+    // Global Application State & Routing Setup
     return (
         <AuthProvider>
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 4000,
+                    style: {
+                        background: '#374151',
+                        color: '#fff',
+                        borderRadius: '8px',
+                    },
+                    error: {
+                        style: {
+                            background: '#fee2e2',
+                            color: '#b91c1c',
+                            border: '1px solid #fca5a5',
+                        },
+                    },
+                }}
+            />
             <Router>
                 <Routes>
-                    {/* Public Auth Route */}
+                    {/* Public Endpoints */}
                     <Route path="/auth" element={<Auth />} />
 
-                    {/* Protected Routes */}
+                    {/* Secured Application Shell */}
                     <Route element={<ProtectedRoute />}>
                         <Route element={<Layout />}>
-                            <Route path="/dashboard" element={<DashboardPlaceholder />} />
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/admin" element={<AdminPanel />} />
+                            <Route path="/workspace/:workspaceId" element={<WorkspaceDetails />} />
+                            <Route path="/projects/:projectId" element={<ProjectKanban />} />
                             <Route path="/tasks" element={<div className="glass-panel p-6 text-gray-500">My Tasks (Coming soon)</div>} />
                             <Route path="/settings" element={<div className="glass-panel p-6 text-gray-500">Settings (Coming soon)</div>} />
                         </Route>
                     </Route>
 
-                    {/* Fallback Redirect */}
+                    {/* Navigation Fallbacks */}
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/login" element={<Navigate to="/auth" replace />} />
                     <Route path="/register" element={<Navigate to="/auth" replace />} />

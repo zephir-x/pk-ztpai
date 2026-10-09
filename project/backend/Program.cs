@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ProjectHub.Api.Infrastructure.Data;
 using ProjectHub.Api.Infrastructure.Authentication;
@@ -16,10 +16,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Dependency Injection Configuration
+// === Dependency Injection & Base Services ===
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-// CORS Policy Configuration
+// === CORS Policy Configuration ===
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 builder.Services.AddCors(options =>
 {
@@ -31,10 +33,8 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
-builder.Services.AddSignalR();
-builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-// Configure Swagger with JWT Bearer Authentication support
+// === Swagger / OpenAPI Configuration ===
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -64,11 +64,11 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Register DbContext with connection string from appsettings
+// === Database Configuration ===
 builder.Services.AddDbContext<ProjectHubDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Infrastructure & Authentication Services
+// === Infrastructure & Application Services ===
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() 
                  ?? throw new InvalidOperationException("JWT configuration is missing.");
 
@@ -80,13 +80,13 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskItemService, TaskItemService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 
-// Async Mechanism (MediatR & Event Channel) 
+// === Async Mechanism (MediatR & Event Channel) ===
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
 builder.Services.AddSingleton<EventDispatcher>();
 builder.Services.AddSingleton<IEventDispatcher>(sp => sp.GetRequiredService<EventDispatcher>());
 builder.Services.AddHostedService<EventProcessingBackgroundService>();
 
-// Register JWT Bearer authentication
+// === Authentication & Authorization ===
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -100,31 +100,60 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtOptions.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
         };
+        
+        // SignalR requires extracting the JWT token from the query string instead of the HTTP header during the initial WebSocket handshake negotiation
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/kanbanHub"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// HTTP Request Pipeline
-// Enforce global error handling as the first middleware
+// === Application Initialization & Seeding ===
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var dbContext = services.GetRequiredService<ProjectHubDbContext>();
+        
+        await dbContext.Database.MigrateAsync();
+        await DatabaseSeeder.SeedAsync(dbContext);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred during database migration or seeding.");
+    }
+}
+
+// === HTTP Request Pipeline ===
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// Allow browser requests
 app.UseCors("FrontendOrigin");
 
 if (app.Environment.IsDevelopment())
 {
-    // Serve generated Swagger as a JSON endpoint and enable Swagger UI
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Enforce authentication and authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<KanbanHub>("/hubs/kanban"); // Map SignalR WebSocket endpoint
+app.MapHub<KanbanHub>("/kanbanHub");
 
 app.Run();

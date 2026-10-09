@@ -31,11 +31,13 @@ axiosClient.interceptors.response.use(
     },
     (error) => {
         if (error.response) {
+            const isLoginRequest = error.config?.url?.includes('/auth/login');
+            
             // If the token is expired or invalid, remove it and redirect to login
-            if (error.response.status === 401) {
+            if (error.response.status === 401 && !isLoginRequest) {
                 localStorage.removeItem('token');
-                if (window.location.pathname !== '/login') {
-                    window.location.href = '/login';
+                if (window.location.pathname !== '/auth') {
+                    window.location.href = '/auth';
                 }
             }
         }

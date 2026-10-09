@@ -11,6 +11,7 @@ using ProjectHub.Api.Infrastructure.SignalR;
 
 namespace ProjectHub.Api.Services.Tasks;
 
+// Service handling task item operations, including CRUD, assignee management, business rule enforcement, and real-time SignalR notifications
 public class TaskItemService : ITaskItemService
 {
     private readonly ProjectHubDbContext _context;
@@ -21,16 +22,14 @@ public class TaskItemService : ITaskItemService
         _context = context;
         _hubContext = hubContext;
     }
-
+    
+    // Retrieves a paginated and optionally filtered list of tasks for a specific project
     public async Task<PagedResponse<TaskItemResponse>> GetPagedByProjectAsync(Guid projectId, PagedRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        await ValidateProjectAccessAsync(projectId, userId, role, ct);
-
         var query = _context.Tasks
             .AsNoTracking()
             .Where(t => t.ProjectId == projectId);
 
-        // Support filtering by task title (fulfills Grade 4.0 requirement)
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             query = query.Where(t => t.Title.Contains(request.SearchTerm));
@@ -52,7 +51,8 @@ public class TaskItemService : ITaskItemService
             PageSize = pagedData.PageSize
         };
     }
-
+    
+    // Retrieves a single task item by its identifier
     public async Task<TaskItemResponse> GetByIdAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var task = await _context.Tasks
@@ -60,22 +60,19 @@ public class TaskItemService : ITaskItemService
             .FirstOrDefaultAsync(t => t.Id == id, ct) 
             ?? throw new NotFoundException($"Task with ID {id} was not found.");
 
-        await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);
-
         return new TaskItemResponse(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.CreatedAt, task.UpdatedAt);
     }
-
+    
+    // Creates a new task item and validates assignment constraints
     public async Task<TaskItemResponse> CreateAsync(CreateTaskItemRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
         await ValidateProjectAccessAsync(request.ProjectId, userId, role, ct);
 
-        // Enforce Business Rule 1: Task Completion Constraint
         if (request.Status == ProjectTaskStatus.Done && request.AssigneeId == null)
         {
             throw new ConflictException("A task cannot be created with 'Done' status if it does not have an assignee.");
         }
 
-        // Enforce Business Rule 2: Admin Assignee Constraint (During Creation)
         if (request.AssigneeId != null && role != UserRole.Admin)
         {
             throw new ForbiddenException("Only users with ADMIN privileges can assign tasks to a user.");
@@ -98,10 +95,10 @@ public class TaskItemService : ITaskItemService
 
         return new TaskItemResponse(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.CreatedAt, task.UpdatedAt);
     }
-
+    
+    // Updates general details of a task and broadcasts the update to clients via SignalR
     public async Task UpdateAsync(Guid id, UpdateTaskItemRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        // Include Project to access WorkspaceId for SignalR broadcast
         var task = await _context.Tasks
                        .Include(t => t.Project)
                        .FirstOrDefaultAsync(t => t.Id == id, ct) 
@@ -109,7 +106,6 @@ public class TaskItemService : ITaskItemService
 
         await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);
 
-        // Enforce Business Rule 1: Task Completion Constraint
         if (request.Status == ProjectTaskStatus.Done && task.AssigneeId == null)
         {
             throw new ConflictException("A task cannot be marked as 'Done' if it does not have an active assignee attached.");
@@ -123,14 +119,13 @@ public class TaskItemService : ITaskItemService
 
         await _context.SaveChangesAsync(ct);
         
-        // Real-time broadcast to all clients joined to this workspace group
         await _hubContext.Clients.Group(task.Project.WorkspaceId.ToString())
-            .SendAsync("TaskUpdated", new { TaskId = task.Id, task.Status, task.Priority }, ct);
+            .SendAsync("TaskUpdated", new TaskItemResponse(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.CreatedAt, task.UpdatedAt), ct);
     }
-
+    
+    // Reassigns a task to a different user - requires administrative privileges - dispatches real-time assignment notifications via SignalR
     public async Task ChangeAssigneeAsync(Guid id, ChangeAssigneeRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        // Include Project to access WorkspaceId for SignalR broadcast
         var task = await _context.Tasks
                        .Include(t => t.Project)
                        .FirstOrDefaultAsync(t => t.Id == id, ct) 
@@ -138,7 +133,6 @@ public class TaskItemService : ITaskItemService
 
         await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);
 
-        // Enforce Business Rule 2: Admin Assignee Constraint
         if (role != UserRole.Admin)
         {
             throw new ForbiddenException("Changing a task's assigned user can ONLY be performed by a user with ADMIN privileges.");
@@ -149,11 +143,11 @@ public class TaskItemService : ITaskItemService
 
         await _context.SaveChangesAsync(ct);
         
-        // Real-time broadcast to all clients joined to this workspace group
         await _hubContext.Clients.Group(task.Project.WorkspaceId.ToString())
             .SendAsync("TaskAssigneeChanged", new { TaskId = task.Id, AssigneeId = task.AssigneeId }, ct);
     }
-
+    
+    // Deletes a task item
     public async Task DeleteAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id, ct) 
@@ -164,8 +158,8 @@ public class TaskItemService : ITaskItemService
         _context.Tasks.Remove(task);
         await _context.SaveChangesAsync(ct);
     }
-
-    // Ensures user has access to the underlying workspace owning the project
+    
+    // Confirms that the current user has the authority to modify the project's tasks
     private async Task ValidateProjectAccessAsync(Guid projectId, Guid userId, UserRole role, CancellationToken ct)
     {
         if (role == UserRole.Admin) return;

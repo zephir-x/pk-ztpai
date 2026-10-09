@@ -1,17 +1,19 @@
 ﻿import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { LayoutDashboard, CheckSquare, LogOut, Settings } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, LogOut, Settings, Shield } from 'lucide-react';
 
 export const Layout = () => {
-    const { logout } = useAuth();
+    const { isAdmin, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Dynamically inject Admin Panel if the user has the ADMIN role
     const navItems = [
+        ...(isAdmin ? [{ name: 'Admin Panel', path: '/admin', icon: Shield }] : []),
         { name: 'Workspaces', path: '/dashboard', icon: LayoutDashboard },
         { name: 'My Tasks', path: '/tasks', icon: CheckSquare },
-        { name: 'Settings', path: '/settings', icon: Settings },
+        { name: 'Settings', path: '/settings', icon: Settings }
     ];
 
     const currentTabName = navItems.find(i => i.path === location.pathname)?.name || 'Dashboard';
@@ -24,7 +26,7 @@ export const Layout = () => {
 
     return (
         <div className="flex h-screen overflow-hidden bg-gray-50">
-            {/* Sidebar – dark, elegant matte */}
+            {/* Sidebar */}
             <aside className="w-64 bg-spotlight text-white flex flex-col shadow-2xl z-20 border-r border-gray-800">
                 <div className="p-6 flex items-center gap-3">
                     <img src="/logo.png" alt="Logo" className="w-9 h-auto drop-shadow-md" />
@@ -63,20 +65,9 @@ export const Layout = () => {
                 </div>
             </aside>
 
-            {/* Workspace (Light) */}
-            <main className="flex-1 flex flex-col overflow-y-auto relative">
-                <header className="h-16 border-b border-gray-200 bg-white/70 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10">
-                    <h2 className="text-xl font-semibold text-matte-dark">
-                        {currentTabName}
-                    </h2>
-                    <button className="btn-fiery flex items-center gap-2 text-sm">
-                        <span className="text-lg leading-none">+</span> New Project
-                    </button>
-                </header>
-
-                <div className="p-8">
-                    <Outlet />
-                </div>
+            {/* Workspace */}
+            <main className="flex-1 flex flex-col overflow-y-auto relative p-8">
+                <Outlet />
             </main>
         </div>
     );
