@@ -47,6 +47,7 @@ public static class DatabaseSeeder
         {
             Id = workspaceId,
             Name = "Engineering Team",
+            ThemeColor = ThemeColor.Gray,
             OwnerId = adminId,
             CreatedAt = now
         };
@@ -60,6 +61,7 @@ public static class DatabaseSeeder
             Id = projectId,
             Name = "Core Platform Redesign",
             Description = "Seed project for integration testing.",
+            ThemeColor = ThemeColor.Gray,
             WorkspaceId = workspaceId,
             CreatedAt = now
         };
@@ -76,7 +78,7 @@ public static class DatabaseSeeder
             Status = ProjectTaskStatus.ToDo,
             Priority = TaskPriority.Critical,
             ProjectId = projectId,
-            AssigneeId = null,
+            AssigneeId = standardUserId,
             CreatedAt = now
         };
         

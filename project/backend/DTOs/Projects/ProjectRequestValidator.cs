@@ -13,6 +13,9 @@ public class CreateProjectRequestValidator : AbstractValidator<CreateProjectRequ
         RuleFor(x => x.Description)
             .MaximumLength(500).WithMessage("Description cannot exceed 500 characters.");
 
+        RuleFor(x => x.ThemeColor)
+            .IsInEnum().WithMessage("Invalid ThemeColor.");
+
         RuleFor(x => x.WorkspaceId)
             .NotEmpty().WithMessage("Workspace ID is required.");
     }
@@ -28,5 +31,8 @@ public class UpdateProjectRequestValidator : AbstractValidator<UpdateProjectRequ
 
         RuleFor(x => x.Description)
             .MaximumLength(500).WithMessage("Description cannot exceed 500 characters.");
+
+        RuleFor(x => x.ThemeColor)
+            .IsInEnum().WithMessage("Invalid ThemeColor.");
     }
 }

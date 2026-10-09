@@ -1,6 +1,6 @@
 # ProjectHub - AI Developer Context
 **Author:** Kacper Gumulak (Index: 151872)
-**Status:** In Progress (Stages 1-6 Completed. Transitioning to Stage 6.5 refinement)
+**Status:** In Progress (Transitioning to Stage 7 Feature Expansion)
 **Goal:** Deliver a fully functional Jira-like task management system meeting strict academic requirements for the "Zaawansowane Technologie Programowania Aplikacji Internetowych" course (Grade 5.0 target).
 
 ## 1. Tech Stack
@@ -11,12 +11,13 @@
 * **Security:** JWT Authentication, BCrypt password hashing, Role-based Authorization (USER, ADMIN).
 
 ## 2. Business Domain & Database (ERD)
-Strictly 5 entities required and mapped:
-1. `User` (Id, Email, PasswordHash, Role, CreatedAt)
-2. `Workspace` (Id, Name, ColorHex, OwnerId, CreatedAt, IsDeleted)
-3. `Project` (Id, Name, Description, WorkspaceId, CreatedAt, IsDeleted)
-4. `TaskItem` (Id, Title, Description, Status, Priority, ProjectId, AssigneeId, CreatedAt, UpdatedAt, IsDeleted)
-5. `Comment` (Id, Content, TaskItemId, AuthorId, CreatedAt)
+Strictly 6 entities required and mapped:
+1. `User` (Id, Email, PasswordHash, Role, CreatedAt, FirstName, LastName, AvatarUrl, Language, AccentColor)
+2. `Workspace` (Id, Name, ThemeColor, OwnerId, CreatedAt, IsDeleted, DeletedAt)
+3. `Project` (Id, Name, Description, ThemeColor, WorkspaceId, CreatedAt, IsDeleted, DeletedAt)
+4. `TaskItem` (Id, Title, Description, Status, Priority, ProjectId, AssigneeId, CreatedAt, UpdatedAt, IsDeleted, DeletedAt)
+5. `Comment` (Id, Content, TaskItemId, AuthorId, CreatedAt, IsDeleted, DeletedAt)
+6. `Notification` (Id, UserId, Content, Type, IsRead, CreatedAt) // NEW ENTITY
 
 ## 3. Strict Business Rules
 Implemented in the domain/service layer:
@@ -27,7 +28,7 @@ Implemented in the domain/service layer:
 ## 4. Academic Grading Requirements Matrix
 * **Grade 3.0:** Working backend, DB connection, 3 entities, CRUD, HTTP methods, layer separation, DTO pattern, input validation, global error handling, 1 business rule, persistent data, proper HTTP status codes.
 * **Grade 4.0:** All 3.0 + Authentication, Authorization (2 roles), role-based endpoint restriction, pagination, searching or filtering of data, Swagger/OpenAPI, 5 unit tests (business logic), 3 integration tests (API), DB migrations, config management, no raw secrets in repo.
-* **Grade 5.0:** All 4.0 + 5 entities, 3 business rules, frontend communicating with API, login/auth on frontend, frontend handling of listing/adding/editing/deleting/API errors, async mechanism (MediatR/Events), logic tests, Docker Compose (Backend + DB), detailed README, and one extended element (SignalR WebSockets).
+* **Grade 5.0:** All 4.0 + 5 entities (expanded to 6), 3 business rules, frontend communicating with API, login/auth on frontend, frontend handling of listing/adding/editing/deleting/API errors, async mechanism (MediatR/Events), logic tests, Docker Compose (Backend + DB), detailed README, and one extended element (SignalR WebSockets).
 
 ## 5. Formal Deliverables Requirement
 * **README.md:** Project overview, architecture, run instructions, ERD diagram, API documentation.
@@ -51,22 +52,32 @@ Implemented in the domain/service layer:
 - [x] Global toast notifications (`react-hot-toast`) replacing flashing error states.
 - [x] Frontend RBAC decoding (Admin Panel, conditional action buttons, tabbed task details).
 
-### [ ] Stage 6.5: Polish & Architectural Clean-Up (In Progress)
-- [x] Standardize code styling, remove redundant comments, and enforce professional single-line English documentation across backend services and frontend views.
-- [x] Patch SignalR WebSockets integration (JWT URL parsing, React strict mode mounting safeguards, complete object broadcasting).
-- [x] Refine Role-Based Access Control (RBAC) to allow global read access while strictly locking modifications to admins/owners, reflecting this securely in the React UI.
-- [x] Implement robust user assignment via dedicated PATCH endpoint and translate frontend Toast notifications.
-- [ ] Implement Edit and Delete functionality for Workspaces and Projects, including colored ribbons/tags (currently only available for tasks).
-- [ ] Implement complete User Management for administrators (Add, edit, and delete users).
+### [x] Stage 7: Polish & Architectural Clean-Up
+- [x] Standardize code styling, remove redundant comments, and enforce professional single-line English documentation.
+- [x] Patch SignalR WebSockets integration (JWT URL parsing, React strict mode mounting safeguards).
+- [x] Refine Role-Based Access Control (RBAC) to allow global read access while strictly locking modifications to admins.
+- [x] Implement robust user assignment via dedicated PATCH endpoint.
+- [x] Implement Edit and Delete functionality for Workspaces and Projects.
+- [x] Introduce `ThemeColor` enums internally stored as string, seamlessly mapped to UI ribbons and tags.
 
-### [ ] Stage 7: Quality Assurance (xUnit)
+### [ ] Stage 8: Feature Expansion & Soft Delete Architecture
+- [ ] **Soft Delete Architecture**: Implement `IsDeleted` / `DeletedAt` fields across major entities. Do not permanently delete database records; update global query filters to exclude deleted items on backend and frontend.
+- [ ] **My Tasks View**: Implement a dedicated view displaying all tasks assigned to the current user, featuring quick links traversing `Workspace -> Project -> Task` or a unified accessible interface.
+- [ ] **Settings & Profile View**: Allow users to modify their profile details (First Name, Last Name, Avatar URL). Implement system-wide user preferences including App Theme Accent Color (overriding default fiery orange) and Language selection.
+- [ ] **Notifications & Messaging System (New Entity)**:
+  - Users receive alerts for task assignments, mentions, or comments.
+  - Users can send messages/support requests directly to Administrators.
+  - Administrators have a dedicated Notifications view to read and manage messages received from users or mentions.
+- [ ] **User Management**: Implement the Administration panel for managing users (Add, Edit, Soft Delete), explicitly including a password reset/override capability for forgotten passwords.
+
+### [ ] Stage 9: Glassmorphism Redesign
+- [ ] Overhaul the entire UI to a "Glassmorphism in shades of gray" design. Discard the basic layout in favor of a deeply polished, translucent grayscale esthetic (based on reference images to be provided).
+
+### [ ] Stage 10: Quality Assurance & Deployment
 - [ ] Minimum 5 unit tests isolating Domain/Service logic (Rules 1, 2, 3).
 - [ ] Minimum 3 integration tests using `WebApplicationFactory`.
-
-### [ ] Stage 8: Deployment & Final Deliverables
 - [ ] Multi-stage Dockerfile and Docker Compose orchestration.
-- [ ] Technical README.md documentation.
-- [ ] Video demonstration recording.
+- [ ] Technical README.md documentation and video demonstration recording.
 
 ## 7. AI Guidelines
 * **Code Style:** Clean architecture, DTOs for external boundaries, Fluent API for EF Core.
@@ -75,9 +86,6 @@ Implemented in the domain/service layer:
 * **Formatting:** Strictly NO emojis in code, documentation, or chat.
 
 ## 8. Recent Modifications & Reflections
-During Stage 6.5, several critical bugs and architectural edge cases were resolved:
-* **SignalR WebSocket Authentication:** WebSockets cannot use standard HTTP Authorization: Bearer headers during handshakes. SignalR passes the token via query string (?access_token=...). The ASP.NET Core AddJwtBearer middleware was patched (OnMessageReceived) to intercept and validate tokens from the URL specifically for /kanbanHub.
-* **React Strict Mode Lifecycle:** React 18's double-mounting caused SignalR to abort negotiations abruptly ("connection was stopped during negotiation"). Implemented an isMounted flag pattern inside useEffect to prevent state updates and error toasts from bleeding across canceled connection attempts.
-* **Real-time Data Sync & UI Bugs:** SignalR was broadcasting an anonymous, incomplete object ({ TaskId, Status, Priority }) upon Drag & Drop. In the frontend, missing id fields led to an undefined === undefined match, causing the selectedTask state to catch the incomplete object and accidentally pop open an empty details modal. Fixed by broadcasting the full TaskItemResponse DTO.
-* **Read-Only RBAC Refinements:** Backend services initially blocked GET operations with a ForbiddenException if a standard user was not the workspace owner, preventing them from viewing projects and comments. Permissions were relaxed to allow all authenticated users to read resources (allowing standard users to see comments and board items), while strictly locking POST/PUT/DELETE operations behind Ownership/Admin checks. Frontend UI (<Plus />, <Edit2 />) was also updated to selectively hide these controls from standard users.
-* **Assignee Workflow:** The generic PUT task update ignored AssigneeId changes. The frontend was re-wired to use the dedicated PATCH /api/taskitems/{id}/assignee endpoint, ensuring assignments correctly persist to the database. Toast notifications were also translated to descriptive Polish messages.
+* **ThemeColor Refactoring:** Upgraded `ThemeColor` from primitive string HEX codes to a strongly-typed Enum on the backend (with EF Core `.HasConversion<string>()`). This ensures absolute structural integrity. The frontend seamlessly maps these numerical enum indices back to visual Tailwind hex arrays via `THEME_COLOR_MAP`, allowing robust and aesthetic ribbon integration natively supported by the DataSeeder.
+* **SignalR & Real-time Edge Cases:** Addressed complex query-string token parsing logic required for WebSocket handshakes.
+* **Design Synchronization:** Unified layout metrics (`absolute left-0 w-1.5`) across Project and Workspace cards to maintain strict pixel-perfect visual cohesion without structural drift.

@@ -21,7 +21,7 @@ export default function AdminPanel() {
             const data = await userService.getAll();
             setUsers(data);
         } catch {
-            toast.error('Nie uda�o si� pobra� bazy u�ytkownik�w.');
+            toast.error('Failed to retrieve the user database.');
         } finally {
             setIsLoading(false);
         }

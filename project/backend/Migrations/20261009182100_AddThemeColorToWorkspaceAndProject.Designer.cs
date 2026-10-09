@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ProjectHub.Api.Infrastructure.Data;
@@ -11,9 +12,11 @@ using ProjectHub.Api.Infrastructure.Data;
 namespace ProjectHub.Api.Migrations
 {
     [DbContext(typeof(ProjectHubDbContext))]
-    partial class ProjectHubDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261009182100_AddThemeColorToWorkspaceAndProject")]
+    partial class AddThemeColorToWorkspaceAndProject
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -71,10 +74,7 @@ namespace ProjectHub.Api.Migrations
 
                     b.Property<string>("ThemeColor")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasDefaultValue("Blue");
+                        .HasColumnType("text");
 
                     b.Property<Guid>("WorkspaceId")
                         .HasColumnType("uuid");
@@ -176,9 +176,9 @@ namespace ProjectHub.Api.Migrations
                     b.Property<string>("ThemeColor")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasDefaultValue("Blue");
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasDefaultValue("#3b82f6");
 
                     b.HasKey("Id");
 

@@ -30,6 +30,7 @@ public class ProjectHubDbContext : DbContext
         modelBuilder.Entity<Workspace>(entity =>
         {
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.ThemeColor).HasConversion<string>().HasMaxLength(20).IsRequired().HasDefaultValue(ProjectHub.Api.Domain.Enums.ThemeColor.Blue);
             entity.HasOne(w => w.Owner)
                   .WithMany(u => u.Workspaces)
                   .HasForeignKey(w => w.OwnerId)
@@ -41,6 +42,7 @@ public class ProjectHubDbContext : DbContext
         {
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.ThemeColor).HasConversion<string>().HasMaxLength(20).IsRequired().HasDefaultValue(ProjectHub.Api.Domain.Enums.ThemeColor.Blue);
             entity.HasOne(p => p.Workspace)
                   .WithMany(w => w.Projects)
                   .HasForeignKey(p => p.WorkspaceId)

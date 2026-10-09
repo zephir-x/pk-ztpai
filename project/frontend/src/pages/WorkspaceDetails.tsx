@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { projectService } from '../api/projectService';
 import { type ProjectResponse } from '../types/api';
-import { CreateProjectModal } from '../components/modals/CreateProjectModal';
+import { ProjectModal } from '../components/modals/ProjectModal';
+import { THEME_COLOR_MAP } from '../components/modals/WorkspaceModal';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useAuth } from '../context/AuthContext';
-import { LayoutGrid, Plus, ArrowLeft } from 'lucide-react';
+import { LayoutGrid, Plus, ArrowLeft, Edit2, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function WorkspaceDetails() {
@@ -22,6 +23,7 @@ export default function WorkspaceDetails() {
     const [projects, setProjects] = useState<ProjectResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editProject, setEditProject] = useState<ProjectResponse | null>(null);
 
     // Fetch available projects on component mount
     useEffect(() => {
@@ -36,14 +38,29 @@ export default function WorkspaceDetails() {
             const data = await projectService.getByWorkspace(id);
             setProjects(data);
         } catch {
-            toast.error('Nie uda�o si� pobra� projekt�w.');
+            toast.error('Failed to download projects.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleProjectCreated = (newProject: ProjectResponse) => {
-        setProjects(prev => [newProject, ...prev]);
+    const handleProjectSaved = (project: ProjectResponse, isEdit: boolean) => {
+        if (isEdit) {
+            setProjects(prev => prev.map(p => p.id === project.id ? project : p));
+        } else {
+            setProjects(prev => [project, ...prev]);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this project? This operation cannot be undone.')) return;
+        try {
+            await projectService.delete(id);
+            setProjects(prev => prev.filter(p => p.id !== id));
+            toast.success('The project has been deleted.');
+        } catch {
+            toast.error('Failed to delete the project.');
+        }
     };
 
     // Prevent rendering board before data completes loading
@@ -67,7 +84,7 @@ export default function WorkspaceDetails() {
                     <p className="text-gray-500 text-sm mt-1">Select a project to view its Kanban board</p>
                 </div>
                 {isAdmin && (
-                    <button onClick={() => setIsModalOpen(true)} className="btn-fiery flex items-center gap-2">
+                    <button onClick={() => { setEditProject(null); setIsModalOpen(true); }} className="btn-fiery flex items-center gap-2">
                         <Plus size={18} />
                         <span>New Project</span>
                     </button>
@@ -81,7 +98,7 @@ export default function WorkspaceDetails() {
                     <h3 className="text-lg font-semibold text-matte-dark mb-2">No projects found</h3>
                     <p className="text-gray-500 max-w-md">This workspace is currently empty.</p>
                     {isAdmin && (
-                        <button onClick={() => setIsModalOpen(true)} className="btn-fiery mt-6">Create Project</button>
+                        <button onClick={() => { setEditProject(null); setIsModalOpen(true); }} className="btn-fiery mt-6">Create Project</button>
                     )}
                 </div>
             ) : (
@@ -90,9 +107,20 @@ export default function WorkspaceDetails() {
                         <div
                             key={project.id}
                             onClick={() => navigate('/projects/' + project.id, { state: { projectName: project.name, workspaceId: project.workspaceId } })}
-                            className="glass-panel p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group border-t-4 border-t-transparent hover:border-t-fiery"
+                            className="glass-panel relative overflow-hidden p-6 pl-8 hover:shadow-lg transition-all duration-300 cursor-pointer group"
                         >
-                            <h3 className="text-lg font-semibold text-matte-dark mb-2 group-hover:text-fiery transition-colors">{project.name}</h3>
+                            <div className="absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300" style={{ backgroundColor: THEME_COLOR_MAP[project.themeColor] }}></div>
+                            <h3 className="text-lg font-semibold text-matte-dark mb-2 group-hover:text-fiery transition-colors pr-12">{project.name}</h3>
+                            {isAdmin && (
+                                <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-3">
+                                    <button onClick={(e) => { e.stopPropagation(); setEditProject(project); setIsModalOpen(true); }} className="text-gray-400 hover:text-blue-500 transition-colors">
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }} className="text-gray-400 hover:text-red-500 transition-colors">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            )}
                             <p className="text-sm text-gray-500 line-clamp-2 mb-4">
                                 {project.description || 'No description provided.'}
                             </p>
@@ -106,11 +134,12 @@ export default function WorkspaceDetails() {
 
             {/* Modals */}
             {workspaceId && isAdmin && (
-                <CreateProjectModal
+                <ProjectModal
                     isOpen={isModalOpen}
                     workspaceId={workspaceId}
                     onClose={() => setIsModalOpen(false)}
-                    onCreated={handleProjectCreated}
+                    onSaved={handleProjectSaved}
+                    initialData={editProject}
                 />
             )}
         </div>

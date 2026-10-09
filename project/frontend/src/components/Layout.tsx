@@ -11,7 +11,7 @@ export const Layout = () => {
     // Dynamically inject Admin Panel if the user has the ADMIN role
     const navItems = [
         ...(isAdmin ? [{ name: 'Admin Panel', path: '/admin', icon: Shield }] : []),
-        { name: 'Workspaces', path: '/dashboard', icon: LayoutDashboard },
+        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { name: 'My Tasks', path: '/tasks', icon: CheckSquare },
         { name: 'Settings', path: '/settings', icon: Settings }
     ];
@@ -29,8 +29,8 @@ export const Layout = () => {
             {/* Sidebar */}
             <aside className="w-64 bg-spotlight text-white flex flex-col shadow-2xl z-20 border-r border-gray-800">
                 <div className="p-6 flex items-center gap-3">
-                    <img src="/logo.png" alt="Logo" className="w-9 h-auto drop-shadow-md" />
-                    <span className="text-xl font-bold tracking-wide">ProjectHub</span>
+                    <img src="/logo.png" alt="Logo" className="w-12 h-auto drop-shadow-md invert brightness-0 opacity-90" />
+                    <span className="text-xl font-extrabold tracking-wide text-fiery">ProjectHub</span>
                 </div>
 
                 <nav className="flex-1 px-4 py-4 space-y-2">

@@ -10,6 +10,7 @@ export interface PagedResponse<T> {
 export interface WorkspaceResponse {
     id: string;
     name: string;
+    themeColor: ThemeColor;
     ownerId: string;
     createdAt: string;
 }
@@ -18,14 +19,22 @@ export interface ProjectResponse {
     id: string;
     name: string;
     description: string | null;
+    themeColor: ThemeColor;
     workspaceId: string;
     createdAt: string;
 }
 
-export interface ApiError {
-    message: string;
-    errors?: Record<string, string[]>;
-}
+export const ThemeColor = {
+    Blue: 0,
+    Red: 1,
+    Green: 2,
+    Yellow: 3,
+    Purple: 4,
+    Pink: 5,
+    Gray: 6
+} as const;
+
+export type ThemeColor = typeof ThemeColor[keyof typeof ThemeColor];
 
 // === Task Status and Priority Enums ===
 export const ProjectTaskStatus = {

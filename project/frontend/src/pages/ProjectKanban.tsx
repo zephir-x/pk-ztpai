@@ -57,7 +57,7 @@ export default function ProjectKanban() {
         let isMounted = true;
         hubConnection.start()
             .then(() => { if(isMounted) hubConnection.invoke('JoinWorkspaceGroup', workspaceId); })
-            .catch(() => { if(isMounted) toast.error('Nie udało się nawiązać połączenia z serwerem aktualizacji na żywo.'); });
+            .catch(() => { if(isMounted) toast.error('Failed to connect to the live update server.'); });
 
         hubConnection.on("TaskUpdated", (updatedTask: TaskItemResponse) => {
             setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
@@ -89,7 +89,7 @@ export default function ProjectKanban() {
             const data = await taskService.getByProject(id);
             setTasks(data);
         } catch {
-            toast.error('Nie udało się pobrać listy zadań z serwera.');
+            toast.error('Failed to retrieve the task list from the server.');
         } finally {
             setIsLoading(false);
         }
@@ -137,11 +137,11 @@ export default function ProjectKanban() {
             setTasks(prev => prev.map(t => t.id === draggableId ? { ...t, status: originalStatus } : t));
 
             if (err instanceof AxiosError && err.response?.status === 409) {
-                toast.error(err.response.data?.message || 'Operacja niemożliwa: nie można zamknąć zadania bez przypisanego użytkownika.');
+                toast.error(err.response.data?.message || 'Operation impossible: the task cannot be closed without an assigned user.');
             } else if (err instanceof AxiosError && err.response?.status === 403) {
-                toast.error('Tylko administrator (ADMIN) może wykonać tę aktywność.');
+                toast.error('Only the administrator can perform this activity.');
             } else {
-                toast.error('Wystąpił problem podczas aktualizacji statusu zadania.');
+                toast.error('An error occurred while updating the task status.');
             }
         }
     };
@@ -170,11 +170,17 @@ export default function ProjectKanban() {
 
     return (
         <div className="h-full flex flex-col">
-            {/* Top Navigation & Header */}
-            <div className="flex items-center gap-4 mb-8">
-                <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
-                    <ArrowLeft size={20} className="text-gray-600" />
-                </button>
+            {/* Top Navigation */}
+            <button
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-fiery transition-colors mb-6 font-medium"
+            >
+                <ArrowLeft size={16} />
+                Back to Projects
+            </button>
+
+            {/* Header Section */}
+            <div className="flex justify-between items-center mb-8">
                 <div>
                     <h2 className="text-2xl font-bold text-matte-dark">{projectName}</h2>
                     <p className="text-gray-500 text-sm mt-1">Kanban Board</p>

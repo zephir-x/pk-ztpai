@@ -63,58 +63,114 @@ export default function Auth() {
         <div className="min-h-screen flex items-center justify-center bg-spotlight p-4 overflow-hidden relative">
             {/* Main Animation Container */}
             <div className="relative w-full max-w-5xl h-[650px] bg-matte border border-gray-700 rounded-3xl overflow-hidden shadow-2xl flex">
-                {/* Glass Form Panel (Moves left-right) */}
+                
+                {/* Glass Form Panel (Moves left-right, permanently rounded on all corners) */}
                 <div
-                    className={`absolute top-0 left-0 w-1/2 h-full glass-auth-panel z-20 transition-transform duration-700 ease-in-out flex flex-col justify-center px-12 ${
-                        isLogin ? 'translate-x-full rounded-l-3xl' : 'translate-x-0 rounded-r-3xl'
+                    className={`absolute top-0 left-0 w-1/2 h-full glass-auth-panel z-20 transition-transform duration-700 ease-in-out rounded-3xl ${
+                        isLogin ? 'translate-x-full' : 'translate-x-0'
                     }`}
                 >
-                    <div className="text-center mb-8">
-                        <img src="/logo.png" alt="ProjectHub Logo" className="w-16 h-auto mx-auto mb-6 drop-shadow-sm" />
-                        <h2 className="text-3xl font-bold text-matte-dark">
-                            {isLogin ? 'Welcome back' : 'Create Account'}
-                        </h2>
-                        <p className="text-gray-500 mt-2">
-                            {isLogin ? 'Sign in to access your workspaces' : 'Set up your profile in seconds'}
-                        </p>
-                    </div>
-
-                    {error && (
-                        <div className="bg-red-50/50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm text-center">
-                            {error}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-matte-dark mb-1">Email Address</label>
-                            <input
-                                type="email"
-                                required
-                                className="input-glass"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="name@company.com"
-                            />
-                        </div>
-                        <div>
-                            <div className="flex justify-between items-center mb-1">
-                                <label className="block text-sm font-semibold text-matte-dark">Password</label>
+                    <div className="relative w-full h-full">
+                        {/* Login Content (Fades in when isLogin is true) */}
+                        <div className={`absolute inset-0 flex flex-col justify-center px-12 transition-opacity duration-700 ease-in-out ${isLogin ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+                            <div className="text-center mb-8">
+                                <img src="/logo.png" alt="ProjectHub Logo" className="w-20 h-auto mx-auto mb-6 drop-shadow-sm" />
+                                <h2 className="text-3xl font-bold text-matte-dark">
+                                    Welcome back
+                                </h2>
+                                <p className="text-gray-500 mt-2">
+                                    Sign in to access your workspaces
+                                </p>
                             </div>
-                            <input
-                                type="password"
-                                required
-                                className="input-glass"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder={isLogin ? "••••••••" : "Min. 8 chars (A-Z, a-z, 0-9)"}
-                            />
+
+                            {error && isLogin && (
+                                <div className="bg-red-50/50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm text-center">
+                                    {error}
+                                </div>
+                            )}
+
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-matte-dark mb-1">Email Address</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        className="input-glass"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="name@company.com"
+                                    />
+                                </div>
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-sm font-semibold text-matte-dark">Password</label>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        required
+                                        className="input-glass"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                    />
+                                </div>
+
+                                <button type="submit" disabled={isLoading} className="btn-fiery w-full mt-4 py-3 text-base">
+                                    {isLoading ? 'Processing...' : 'Sign In'}
+                                </button>
+                            </form>
                         </div>
 
-                        <button type="submit" disabled={isLoading} className="btn-fiery w-full mt-4 py-3 text-base">
-                            {isLoading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
-                        </button>
-                    </form>
+                        {/* Register Content (Fades in when isLogin is false) */}
+                        <div className={`absolute inset-0 flex flex-col justify-center px-12 transition-opacity duration-700 ease-in-out ${!isLogin ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+                            <div className="text-center mb-8">
+                                <img src="/logo.png" alt="ProjectHub Logo" className="w-20 h-auto mx-auto mb-6 drop-shadow-sm" />
+                                <h2 className="text-3xl font-bold text-matte-dark">
+                                    Create Account
+                                </h2>
+                                <p className="text-gray-500 mt-2">
+                                    Set up your profile in seconds
+                                </p>
+                            </div>
+
+                            {error && !isLogin && (
+                                <div className="bg-red-50/50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm text-center">
+                                    {error}
+                                </div>
+                            )}
+
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-matte-dark mb-1">Email Address</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        className="input-glass"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="name@company.com"
+                                    />
+                                </div>
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-sm font-semibold text-matte-dark">Password</label>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        required
+                                        className="input-glass"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Min. 8 chars (A-Z, a-z, 0-9)"
+                                    />
+                                </div>
+
+                                <button type="submit" disabled={isLoading} className="btn-fiery w-full mt-4 py-3 text-base">
+                                    {isLoading ? 'Processing...' : 'Sign Up'}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
                 
                 {/* Background Text for Login (Left Side) */}

@@ -34,7 +34,7 @@ public class WorkspaceService : IWorkspaceService
             .ToPagedResponseAsync(request.PageNumber, request.PageSize, ct);
 
         var mappedItems = pagedData.Items
-            .Select(w => new WorkspaceResponse(w.Id, w.Name, w.OwnerId, w.CreatedAt))
+            .Select(w => new WorkspaceResponse(w.Id, w.Name, w.ThemeColor, w.OwnerId, w.CreatedAt))
             .ToList();
 
         return new PagedResponse<WorkspaceResponse>
@@ -54,7 +54,7 @@ public class WorkspaceService : IWorkspaceService
             .FirstOrDefaultAsync(w => w.Id == id, ct) 
             ?? throw new NotFoundException($"Workspace with ID {id} was not found.");
 
-        return new WorkspaceResponse(workspace.Id, workspace.Name, workspace.OwnerId, workspace.CreatedAt);
+        return new WorkspaceResponse(workspace.Id, workspace.Name, workspace.ThemeColor, workspace.OwnerId, workspace.CreatedAt);
     }
     
     // Creates a new workspace and sets the calling user as its owner
@@ -64,6 +64,7 @@ public class WorkspaceService : IWorkspaceService
         {
             Id = Guid.NewGuid(),
             Name = request.Name,
+            ThemeColor = request.ThemeColor,
             OwnerId = userId,
             CreatedAt = DateTime.UtcNow
         };
@@ -71,10 +72,10 @@ public class WorkspaceService : IWorkspaceService
         _context.Workspaces.Add(workspace);
         await _context.SaveChangesAsync(ct);
 
-        return new WorkspaceResponse(workspace.Id, workspace.Name, workspace.OwnerId, workspace.CreatedAt);
+        return new WorkspaceResponse(workspace.Id, workspace.Name, workspace.ThemeColor, workspace.OwnerId, workspace.CreatedAt);
     }
     
-    // Updates an existing workspace. Modification strictly requires ownership or admin rights
+    // Updates an existing workspace - modification strictly requires ownership or admin rights
     public async Task UpdateAsync(Guid id, UpdateWorkspaceRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == id, ct) 
@@ -83,6 +84,7 @@ public class WorkspaceService : IWorkspaceService
         ValidateAccess(workspace, userId, role);
 
         workspace.Name = request.Name;
+        workspace.ThemeColor = request.ThemeColor;
         await _context.SaveChangesAsync(ct);
     }
     

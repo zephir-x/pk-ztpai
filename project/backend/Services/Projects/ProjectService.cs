@@ -36,7 +36,7 @@ public class ProjectService : IProjectService
             .ToPagedResponseAsync(request.PageNumber, request.PageSize, ct);
 
         var mappedItems = pagedData.Items
-            .Select(p => new ProjectResponse(p.Id, p.Name, p.Description, p.WorkspaceId, p.CreatedAt))
+            .Select(p => new ProjectResponse(p.Id, p.Name, p.Description, p.ThemeColor, p.WorkspaceId, p.CreatedAt))
             .ToList();
 
         return new PagedResponse<ProjectResponse>
@@ -56,10 +56,10 @@ public class ProjectService : IProjectService
             .FirstOrDefaultAsync(p => p.Id == id, ct) 
             ?? throw new NotFoundException($"Project with ID {id} was not found.");
 
-        return new ProjectResponse(project.Id, project.Name, project.Description, project.WorkspaceId, project.CreatedAt);
+        return new ProjectResponse(project.Id, project.Name, project.Description, project.ThemeColor, project.WorkspaceId, project.CreatedAt);
     }
     
-    // Creates a new project within a specified workspace. Requires appropriate workspace access
+    // Creates a new project within a specified workspace - requires appropriate workspace access
     public async Task<ProjectResponse> CreateAsync(CreateProjectRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
         await ValidateWorkspaceAccessAsync(request.WorkspaceId, userId, role, ct);
@@ -69,6 +69,7 @@ public class ProjectService : IProjectService
             Id = Guid.NewGuid(),
             Name = request.Name,
             Description = request.Description,
+            ThemeColor = request.ThemeColor,
             WorkspaceId = request.WorkspaceId,
             CreatedAt = DateTime.UtcNow
         };
@@ -76,7 +77,7 @@ public class ProjectService : IProjectService
         _context.Projects.Add(project);
         await _context.SaveChangesAsync(ct);
 
-        return new ProjectResponse(project.Id, project.Name, project.Description, project.WorkspaceId, project.CreatedAt);
+        return new ProjectResponse(project.Id, project.Name, project.Description, project.ThemeColor, project.WorkspaceId, project.CreatedAt);
     }
     
     // Updates the core details (name, description) of an existing project
@@ -89,6 +90,7 @@ public class ProjectService : IProjectService
 
         project.Name = request.Name;
         project.Description = request.Description;
+        project.ThemeColor = request.ThemeColor;
         
         await _context.SaveChangesAsync(ct);
     }

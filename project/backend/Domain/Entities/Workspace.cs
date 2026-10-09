@@ -6,6 +6,7 @@ public class Workspace
     public string Name { get; set; } = string.Empty;
     public Guid OwnerId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public ProjectHub.Api.Domain.Enums.ThemeColor ThemeColor { get; set; } = ProjectHub.Api.Domain.Enums.ThemeColor.Blue;
 
     // Navigation properties
     public User Owner { get; set; } = null!;
