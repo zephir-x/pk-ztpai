@@ -13,6 +13,7 @@ export default function Auth() {
     // Form
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -24,11 +25,18 @@ export default function Auth() {
         setError(null);
         setEmail('');
         setPassword('');
+        setConfirmPassword('');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+
+        if (!isLogin && password !== confirmPassword) {
+            setError("Passwords do not match.");
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -42,6 +50,7 @@ export default function Auth() {
                 setIsLogin(true);
                 setEmail('');
                 setPassword('');
+                setConfirmPassword('');
             }
         } catch (err) {
             if (err instanceof AxiosError && err.response?.data) {
@@ -162,6 +171,24 @@ export default function Auth() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Min. 8 chars (A-Z, a-z, 0-9)"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-sm font-semibold text-matte-dark">Confirm Password</label>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        required
+                                        className={"input-glass transition-colors duration-300 " + (
+                                            password && confirmPassword && password === confirmPassword 
+                                                ? 'border-green-500 ring-1 ring-green-500' 
+                                                : (password && password !== confirmPassword ? 'border-red-500 ring-1 ring-red-500' : '')
+                                        )}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        placeholder="••••••••"
                                     />
                                 </div>
 

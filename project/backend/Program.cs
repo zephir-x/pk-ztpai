@@ -6,6 +6,7 @@ using ProjectHub.Api.Infrastructure.Middleware;
 using ProjectHub.Api.Infrastructure.SignalR;
 using ProjectHub.Api.Infrastructure.Events;
 using ProjectHub.Api.Services.Workspaces;
+using ProjectHub.Api.Services.Users;
 using ProjectHub.Api.Services.Projects;
 using ProjectHub.Api.Services.Tasks;
 using ProjectHub.Api.Services.Comments;
@@ -76,6 +77,7 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptio
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskItemService, TaskItemService>();
 builder.Services.AddScoped<ICommentService, CommentService>();

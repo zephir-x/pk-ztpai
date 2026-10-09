@@ -64,12 +64,11 @@ export default function MyTasks() {
 
     return (
         <div className="h-full flex flex-col overflow-y-auto pr-2 pb-8">
-            <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-fiery/10 flex items-center justify-center text-fiery">
-                    <CheckSquare size={24} />
-                </div>
+            <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h2 className="text-2xl font-bold text-matte-dark">My Tasks</h2>
+                    <h2 className="text-2xl font-bold text-matte-dark flex items-center gap-2">
+                        <CheckSquare className="text-fiery" /> My Tasks
+                    </h2>
                     <p className="text-gray-500 text-sm mt-1">All tasks currently assigned to you across workspaces.</p>
                 </div>
             </div>

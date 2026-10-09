@@ -103,11 +103,32 @@ export interface UpdateTaskRequest {
 }
 
 // === User and Communication DTOs ===
+export const UserRole = {
+    User: 0,
+    Admin: 1
+} as const;
+
+export type UserRole = typeof UserRole[keyof typeof UserRole];
+
+
 export interface UserResponse {
     id: string;
     email: string;
-    role: string;
+    role: string | UserRole;
+    createdAt: string;
 }
+export interface CreateUserRequest {
+    email: string;
+    password?: string;
+    role: UserRole;
+}
+
+export interface UpdateUserRequest {
+    email: string;
+    password?: string;
+    role: UserRole;
+}
+
 
 export interface CommentResponse {
     id: string;

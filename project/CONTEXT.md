@@ -63,7 +63,7 @@ Implemented in the domain/service layer:
 ### [~] Stage 8: Feature Expansion & Soft Delete Architecture
 - [x] **Soft Delete Architecture**: Implement `IsDeleted` / `DeletedAt` fields across major entities. Do not permanently delete database records; update global query filters to exclude deleted items on backend and frontend.
 - [x] **My Tasks View**: Implement a dedicated view displaying all tasks assigned to the current user, featuring quick links traversing `Workspace -> Project -> Task` or a unified accessible interface.
-- [ ] **User Management**: Implement the Administration panel for managing users (Add, Edit, Soft Delete), explicitly including a password reset/override capability for forgotten passwords.
+- [x] **User Management**: Implement the Administration panel for managing users (Add, Edit, Soft Delete), explicitly including a password reset/override capability for forgotten passwords.
 - [ ] **Settings & Profile View**: Allow users to modify their profile details (First Name, Last Name, Avatar URL). Implement system-wide user preferences including App Theme Accent Color (overriding default fiery orange) and Language selection.
 - [ ] **Notifications & Messaging System (New Entity)**:
   - Users receive alerts for task assignments, mentions, or comments.
@@ -85,7 +85,11 @@ Implemented in the domain/service layer:
 * **Tone:** Objective, technical, candidate for Grade 5.0 evaluation.
 * **Formatting:** Strictly NO emojis in code, documentation, or chat.
 
+
 ## 8. Recent Modifications & Reflections
+* **Database Seeder Scale-up:** Rewrote the database seeder to use dynamic GUIDs (`Guid.NewGuid()`) instead of static ones. The seeder now realistically simulates an entire organizational structure with 4+ users, multiple workspaces, projects, intertwined tasks, and complex comment threads. This dramatically improves the testing workflow.
+* **Soft Delete Architecture:** Integrated an EF Core `ISoftDeletable` system. A DbContext SaveChanges interceptor elegantly catches `EntityState.Deleted` and flips it to `Modified` with `IsDeleted = true`. Accompanied by `HasQueryFilter`, this guarantees that no frontend modifications are needed to hide deleted entities.
+* **User Management & Form Security:** Fully implemented User Management with CRUD and soft deletes. Upgraded user creation and registration modals to feature a strict "Confirm Password" logic block with conditional green CSS highlighting when passwords match securely.
 * **ThemeColor Refactoring:** Upgraded `ThemeColor` from primitive string HEX codes to a strongly-typed Enum on the backend (with EF Core `.HasConversion<string>()`). This ensures absolute structural integrity. The frontend seamlessly maps these numerical enum indices back to visual Tailwind hex arrays via `THEME_COLOR_MAP`, allowing robust and aesthetic ribbon integration natively supported by the DataSeeder.
 * **SignalR & Real-time Edge Cases:** Addressed complex query-string token parsing logic required for WebSocket handshakes.
 * **Design Synchronization:** Unified layout metrics (`absolute left-0 w-1.5`) across Project and Workspace cards to maintain strict pixel-perfect visual cohesion without structural drift.
