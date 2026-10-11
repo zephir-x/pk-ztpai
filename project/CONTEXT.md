@@ -1,77 +1,105 @@
-﻿# ProjectHub - AI Developer Context
-**Author:** Kacper Gumulak (Index: 151872)
-**Status:** In Progress (Stages 1-3 Completed. Stage 4 in progress)
-**Goal:** Deliver a fully functional Jira-like task management system meeting strict academic requirements for the "Zaawansowane Technologie Programowania Aplikacji Internetowych" course (Grade 5.0 target).
+# Project Execution Plan & Context Specification
 
-## 1. Tech Stack
-* **Backend:** ASP.NET Core Web API (.NET 9), C#, Entity Framework Core (Fluent API).
-* **Database:** PostgreSQL (Dockerized container).
-* **Frontend:** React + TypeScript (Vite).
-* **Architecture:** N-Tier, REST API, DTO pattern. Strict separation of business logic from HTTP request handling is mandatory.
-* **Security:** JWT Authentication, BCrypt password hashing, Role-based Authorization (USER, ADMIN).
+## 1. Project Overview
+ProjectHub is a modern project management platform inspired by Asana, Jira, and Linear. It is built as a Single Page Application (SPA) with a React frontend and an ASP.NET Core Web API backend using PostgreSQL and Entity Framework Core. The architecture emphasizes robust business rules, full-stack real-time collaboration via SignalR, role-based security, and aesthetic UI styling.
 
-## 2. Business Domain & Database (ERD)
-5 entities required and mapped.
-1. `User` (Id, Email, PasswordHash, Role, CreatedAt)
-2. `Workspace` (Id, Name, OwnerId, CreatedAt)
-3. `Project` (Id, Name, Description, WorkspaceId, CreatedAt)
-4. `TaskItem` (Id, Title, Description, Status, Priority, ProjectId, AssigneeId, CreatedAt, UpdatedAt)
-5. `Comment` (Id, Content, TaskItemId, AuthorId, CreatedAt)
+## 2. Core Architectural Principles
+* **Backend:** ASP.NET Core Web API (.NET 9) with Clean Architecture principles.
+* **Database & ORM:** PostgreSQL with Entity Framework Core, Code-First migrations, and Fluent API configurations.
+* **Authentication & Authorization:** JWT Bearer tokens with custom claims (`id`, `email`, `role`). Strict RBAC enforced on endpoints and frontend routing.
+* **Real-time Pipeline:** SignalR Hub for live board synchronization, task moves, assignments, and comment notifications.
+* **Frontend:** React 18+ (TypeScript), Vite, Tailwind CSS, Lucide icons, `@hello-pangea/dnd` for Kanban drag-and-drop.
 
-## 3. Strict Business Rules (Approved by Professor)
-These specific rules MUST be implemented in the domain/service layer:
-1. **Task Completion Constraint:** A task cannot change its status to "Done" (`ProjectTaskStatus.Done`) if it does not have an active assignee attached.
-2. **Admin Assignee Constraint:** Changing a task's assigned user (`AssigneeId`) can ONLY be performed by a user with `ADMIN` privileges within the given context.
-3. **Project Deletion Lock:** A project cannot be deleted (or archived) as long as it contains unresolved tasks (status other than Done) with a "Critical" priority (`TaskPriority.Critical`).
+## 3. Core Business Rules
+* **Rule 1 (Task Deletion Restriction):** A task can only be deleted if its status is `ToDo` or if the requesting user has the `Admin` role.
+* **Rule 2 (Single Critical Task Constraint):** A user cannot be assigned more than one active task with `Critical` priority at the same time across the entire system.
+* **Rule 3 (Restricted Project Creation):** Only users with the `Admin` role can create new projects and workspaces. Regular users may only create tasks and add comments.
 
-## 4. Academic Grading Requirements Matrix
-* **Grade 3.0:** Working backend, DB connection, 3 entities, CRUD, HTTP methods, layer separation, DTO pattern, input validation, global error handling, 1 business rule, persistent data, proper HTTP status codes.
-* **Grade 4.0:** All 3.0 + Authentication, Authorization (2 roles), role-based endpoint restriction, pagination, searching or filtering of data, Swagger/OpenAPI, 5 unit tests (business logic), 3 integration tests (API), DB migrations, config management, no raw secrets in repo.
-* **Grade 5.0:** All 4.0 + 5 entities, 3 business rules, frontend communicating with API, login/auth on frontend, frontend handling of listing/adding/editing/deleting/API errors, async mechanism (MediatR/Events), logic tests, Docker Compose (Backend + DB), detailed README, and one extended element (SignalR WebSockets).
+## 4. Completed Stages
+### [x] Stage 1-4: Analysis, Setup, Database Design, Logic Definition
+* Domain model specifications, database schema diagrams, REST API endpoints, business validation rules.
 
-## 5. Formal Deliverables Requirement
-* **README.md:** Must contain project description, technologies, run instructions, core features, ERD diagram, and API documentation.
-* **Demo Video (3-5 min):** Must explicitly explain the project architecture, request flow from endpoint to DB, data model, authentication/authorization mechanism, and demonstrate at least one business rule.
+### [x] Stage 5: Backend Core Implementation
+- [x] EF Core setup, Fluent API, Migrations, BCrypt, JWT.
+- [x] CRUD for Workspaces, Projects, Tasks, Comments.
+- [x] Domain validation for Business Rules 1, 2, and 3.
+- [x] MediatR pipeline for async background notifications on @mentions.
+- [x] SignalR hub infrastructure for live board synchronization.
+- [x] Automatic database seeder for Admin, User, Workspace, Project, Task, and Comment.
 
-## 6. A-to-Z Development Roadmap & Progress Checklist
+### [x] Stage 6: Frontend Core & Integration
+- [x] Authentication flows (Sliding auth view, Axios interceptors).
+- [x] Workspace & Project explorer views.
+- [x] Kanban board with Drag & Drop (`@hello-pangea/dnd`).
+- [x] SignalR client lifecycle integration.
+- [x] Global toast notifications (`react-hot-toast`) replacing flashing error states.
+- [x] Frontend RBAC decoding (Admin Panel, conditional action buttons, tabbed task details).
 
-### [x] Stages 1-3: Architecture, Environment & Base Auth
-- [x] ERD, Roles, Rules defined.
-- [x] Git, Docker DB, ASP.NET Core init, React init.
-- [x] EF Core models, Fluent API, Migrations.
-- [x] BCrypt, JWT Provider, AuthController (register/login).
+### [x] Stage 7: Polish & Architectural Clean-Up
+- [x] Standardize code styling, remove redundant comments, and enforce professional single-line English documentation.
+- [x] Patch SignalR WebSockets integration (JWT URL parsing, React strict mode mounting safeguards).
+- [x] Refine Role-Based Access Control (RBAC) to allow global read access while strictly locking modifications to admins.
+- [x] Implement robust user assignment via dedicated PATCH endpoint.
+- [x] Implement Edit and Delete functionality for Workspaces and Projects.
+- [x] Introduce `ThemeColor` enums internally stored as string, seamlessly mapped to UI ribbons and tags.
 
-### [x] Stage 4: Business Logic & REST API
-- [x] **Core Infrastructure:** Global Error Handling Middleware (ProblemDetails), FluentValidation pipeline, Pagination & Filtering shared DTOs.
-- [x] **Swagger:** OpenAPI configured with JWT Bearer auth.
-- [x] **Workspaces Feature:** DTOs, Service logic, Role-based constraints, WorkspacesController.
-- [x] **Projects Feature:** Implement CRUD for Projects. Enforce **Business Rule 3** (Cannot delete project with critical unresolved tasks).
-- [x] **Tasks Feature:** Implement CRUD for TaskItems. Enforce **Business Rule 1** (Cannot close unassigned task) and **Business Rule 2** (Only Admin can reassign).
-- [x] **Comments Feature:** Implement basic CRUD for Comments (foundation for Stage 5).
+### [x] Stage 8: Feature Expansion & Soft Delete Architecture
+- [x] **Soft Delete Architecture**: Implement `IsDeleted` / `DeletedAt` fields across major entities. Do not permanently delete database records; update global query filters to exclude deleted items on backend and frontend.
+- [x] **My Tasks View**: Implement a dedicated view displaying all tasks assigned to the current user, featuring quick links traversing `Workspace -> Project -> Task` or a unified accessible interface.
+- [x] **User Management**: Implement the Administration panel for managing users (Add, Edit, Soft Delete), explicitly including a password reset/override capability for forgotten passwords.
+- [x] **Settings & Profile View**: Allow users to modify their profile details (First Name, Last Name, Avatar URL). Implement system-wide user preferences including App Theme Accent Color (overriding default fiery orange) and Language selection.
+- [x] **Kanban & Comments Profile Integration**:
+  - Replace static "AS" placeholder avatar with real assignee avatar preset and first name display on Kanban cards.
+  - Display author avatar and full name on comments instead of raw user identifiers.
+- [x] **End-to-End Localization (i18n)**:
+  - Backend request localization via `Accept-Language` header, localized DTO validation errors, and bilingual service exception messages.
+  - Comprehensive frontend translation dictionary across all modals, pages, tabs, toasts, and dynamic browser page titles.
+- [x] **Notifications & Messaging System (New Entity)**:
+  - `Notification` entity with PostgreSQL soft-delete, indexes, and EF Core migration `AddNotificationsSystem`.
+  - MediatR + SignalR pipeline: `@admin` and `@username` (matching email prefixes with dot handling) trigger persistent notifications and live WebSocket broadcasts.
+  - Task assignment and reassignment notifications (`TaskAssigned`).
+  - Direct Messaging (`DirectMessage`): Users send messages to Administrators; Administrators reply directly to users.
+  - `NotificationsController` with complete RESTful endpoints for feed, badge count, mark as read, mark all as read, delete, and direct messaging.
+  - Global `NotificationContext` with SignalR group management, real-time toast delivery, and sidebar unread badge.
+  - `Notifications` view with role differentiation (contact form for users, reply panel for admins) and deep linking to Kanban board with automatic task modal popup.
+  - Dynamic template-based i18n localization for notification titles and descriptions, preserving live user messages across language switches.
+  - Automated initial notifications seeding for seeded users (`@frontend.dev`, `@admin`, task assignment).
+  - Deep-link task modal integration in My Tasks view directly navigating to the details tab.
+  - Instant assignee modal closure and Kanban board assignee name and avatar update without page reload.
 
-### [x] Stage 5: Advanced Requirements (Grade 5.0 target)
-- [x] **Async Mechanism:** Integrate MediatR (or BackgroundService) to asynchronously process mention notifications in comments (@user) without blocking the HTTP thread.
-- [x] **Extended Element (WebSockets):** Integrate SignalR to instantly push Kanban board state changes (task moves/updates) to all connected clients in a workspace.
+### [ ] Stage 9: Stress Testing, Data Scaling & Glassmorphism Redesign
+- [ ] **High-Volume Data Stress Testing & Layout Optimization**:
+  - Temporarily inject large-scale mock datasets via seeder (high volume of comments, projects, tasks, users, and notifications).
+  - Verify and stress-test layout responsiveness, text wrapping, horizontal/vertical scrollbars, virtual lists, and pagination behaviors.
+  - Implement structural corrections and performance optimizations across high-density views (Kanban columns, comment threads, task tables, user lists).
+- [ ] **Glassmorphism Redesign**:
+  - Overhaul the entire UI to a "Glassmorphism in shades of gray" design. Discard the basic layout in favor of a deeply polished, translucent grayscale esthetic (based on reference images to be provided) and set of animations / visual corrections.
 
-### [ ] Stage 6: Frontend Client (React)
-- [ ] Setup Axios client with JWT interceptors.
-- [ ] Auth State: Login & Registration views.
-- [ ] Views: Workspace List, Project Dashboard.
-- [ ] Views: Kanban Board (Drag & Drop functionality).
-- [ ] UI Error Handling: Catch API 400/403/404 errors and display user-friendly toasts/messages.
+### [ ] Stage 10: Quality Assurance & Deployment
+- [ ] Minimum 5 unit tests isolating Domain/Service logic (Rules 1, 2, 3).
+- [ ] Minimum 3 integration tests using `WebApplicationFactory` .
+- [ ] Multi-stage Dockerfile and Docker Compose orchestration.
+- [ ] Technical README.md documentation and video demonstration recording.
 
-### [ ] Stage 7: Quality Assurance (xUnit)
-- [ ] **Unit Tests:** Minimum 5 tests isolating Domain/Service logic (focusing strictly on Business Rules 1, 2, and 3).
-- [ ] **Integration Tests:** Minimum 3 tests using WebApplicationFactory (e.g., Auth flow, Workspace creation).
+## 7. AI Guidelines
+* **Code Style:** Clean architecture, DTOs for external boundaries, Fluent API for EF Core.
+* **Comments:** Concise, module-specific comments in English ONLY.
+* **Tone:** Objective, technical, candidate for Grade 5.0 evaluation.
+* **Formatting:** Strictly NO emojis in code, documentation, or chat.
 
-### [ ] Stage 8: Deployment & Documentation
-- [ ] Update `docker-compose.yml` to include the Backend image.
-- [ ] Write `README.md` containing all required academic sections.
-- [ ] Record 3-5 min Demo Video explaining request flow and rules.
-
-## 7. Strict AI Communication & Coding Guidelines
-* **Code Style:** Clean Code. Use DTOs for external communication. Fluent API instead of Data Annotations for EF Core.
-* **Comments:** Write concise, module-specific comments in English ONLY. Do not comment standard framework behavior.
-* **Tone:** Objective, cool-headed, highly substantive. Point out architectural flaws early and correct them.
-* **Formatting:** DO NOT use emojis in code, documentation, or chat unless explicitly asked.
-* **Commits:** Upon the "commit time" command, summarize changes and generate a Conventional Commits message.
+## 8. Recent Modifications & Reflections
+* **Notifications & Messaging System Integration:**
+  - Designed and deployed full-stack notification infrastructure: PostgreSQL entity, EF Core migration, and SignalR personal group dispatching.
+  - Asynchronous mention processing via `CommentCreatedEventHandler` supporting `@admin` and `@username` (matching email prefixes, including dots, e.g. `@kacper.gumulak`).
+  - Direct messaging between regular users and system administrators with inline response capabilities.
+  - Deep linking from notifications to the project Kanban board, automatically loading project state and opening the task modal in details or comments mode.
+  - Deep linking from My Tasks directly opening the task modal on the details tab.
+  - Instant assignee update in task modal closing the modal and updating assignee name and avatar on Kanban board immediately without reload.
+  - Dynamic i18n localization templates ensuring real-time notification translation synchronization without hardcoded strings in database records.
+  - Real-time unread badge counter integrated seamlessly into the navigation sidebar between My Tasks and Settings.
+* **Comprehensive Bilingual Localization (i18n):**
+  - Backend: Added `app.UseRequestLocalization` supporting `en` and `pl`. Created `LocalizationMessages` for bilingual FluentValidation rules and service exception details based on `CultureInfo.CurrentUICulture`.
+  - Frontend: Configured `axiosClient` to automatically attach `Accept-Language: localStorage.getItem('app_language') || 'en'` on every HTTP request.
+  - Expanded `src/i18n` with full translations for all modals, pages, toasts, and dynamic browser page titles.
+* **Database Seeder Scale-up:** Dynamic GUIDs simulate a realistic organizational structure with multiple workspaces, projects, users, tasks, comments, and initial notifications.
+* **Soft Delete Architecture:** Integrated an EF Core `ISoftDeletable` system with query filters.

@@ -1,0 +1,50 @@
+﻿import axios from 'axios';
+
+// Dynamically inject the API URL from environment variables
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+export const axiosClient = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+// Request Interceptor: Attach JWT token and current UI language
+axiosClient.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token && config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        const language = localStorage.getItem('app_language') || 'en';
+        if (config.headers) {
+            config.headers['Accept-Language'] = language;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response Interceptor: Handle global errors like 401 Unauthorized
+axiosClient.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        if (error.response) {
+            const isLoginRequest = error.config?.url?.includes('/auth/login');
+            
+            // If the token is expired or invalid, remove it and redirect to login
+            if (error.response.status === 401 && !isLoginRequest) {
+                localStorage.removeItem('token');
+                if (window.location.pathname !== '/auth') {
+                    window.location.href = '/auth';
+                }
+            }
+        }
+        return Promise.reject(error);
+    }
+);

@@ -6,6 +6,7 @@ namespace ProjectHub.Api.Services.Tasks;
 
 public interface ITaskItemService
 {
+    Task<IEnumerable<MyTaskResponse>> GetMyTasksAsync(Guid userId, CancellationToken ct = default);
     Task<PagedResponse<TaskItemResponse>> GetPagedByProjectAsync(Guid projectId, PagedRequest request, Guid userId, UserRole role, CancellationToken ct = default);
     Task<TaskItemResponse> GetByIdAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default);
     Task<TaskItemResponse> CreateAsync(CreateTaskItemRequest request, Guid userId, UserRole role, CancellationToken ct = default);

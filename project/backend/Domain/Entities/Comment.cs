@@ -1,12 +1,16 @@
-﻿namespace ProjectHub.Api.Domain.Entities;
+﻿using ProjectHub.Api.Domain.Common;
 
-public class Comment
+namespace ProjectHub.Api.Domain.Entities;
+
+public class Comment : ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Content { get; set; } = string.Empty;
     public Guid TaskItemId { get; set; }
     public Guid AuthorId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
     public TaskItem TaskItem { get; set; } = null!;

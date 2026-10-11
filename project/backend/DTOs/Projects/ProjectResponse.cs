@@ -1,3 +1,3 @@
 ﻿namespace ProjectHub.Api.DTOs.Projects;
 
-public record ProjectResponse(Guid Id, string Name, string? Description, Guid WorkspaceId, DateTime CreatedAt);
+public record ProjectResponse(Guid Id, string Name, string? Description, ProjectHub.Api.Domain.Enums.ThemeColor ThemeColor, Guid WorkspaceId, DateTime CreatedAt);

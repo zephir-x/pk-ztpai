@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using ProjectHub.Api.Infrastructure.Localization;
 
 namespace ProjectHub.Api.DTOs.Projects;
 
@@ -7,14 +8,17 @@ public class CreateProjectRequestValidator : AbstractValidator<CreateProjectRequ
     public CreateProjectRequestValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Project name is required.")
-            .MaximumLength(100).WithMessage("Project name cannot exceed 100 characters.");
+            .NotEmpty().WithMessage(_ => LocalizationMessages.ProjectNameRequired)
+            .MaximumLength(100).WithMessage(_ => LocalizationMessages.ProjectNameMax(100));
 
         RuleFor(x => x.Description)
-            .MaximumLength(500).WithMessage("Description cannot exceed 500 characters.");
+            .MaximumLength(500).WithMessage(_ => LocalizationMessages.DescriptionMax(500));
+
+        RuleFor(x => x.ThemeColor)
+            .IsInEnum().WithMessage(_ => LocalizationMessages.InvalidThemeColor);
 
         RuleFor(x => x.WorkspaceId)
-            .NotEmpty().WithMessage("Workspace ID is required.");
+            .NotEmpty().WithMessage(_ => LocalizationMessages.WorkspaceIdRequired);
     }
 }
 
@@ -23,10 +27,13 @@ public class UpdateProjectRequestValidator : AbstractValidator<UpdateProjectRequ
     public UpdateProjectRequestValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Project name is required.")
-            .MaximumLength(100).WithMessage("Project name cannot exceed 100 characters.");
+            .NotEmpty().WithMessage(_ => LocalizationMessages.ProjectNameRequired)
+            .MaximumLength(100).WithMessage(_ => LocalizationMessages.ProjectNameMax(100));
 
         RuleFor(x => x.Description)
-            .MaximumLength(500).WithMessage("Description cannot exceed 500 characters.");
+            .MaximumLength(500).WithMessage(_ => LocalizationMessages.DescriptionMax(500));
+
+        RuleFor(x => x.ThemeColor)
+            .IsInEnum().WithMessage(_ => LocalizationMessages.InvalidThemeColor);
     }
 }

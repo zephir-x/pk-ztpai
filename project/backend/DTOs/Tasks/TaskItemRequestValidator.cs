@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using ProjectHub.Api.Infrastructure.Localization;
 
 namespace ProjectHub.Api.DTOs.Tasks;
 
@@ -7,11 +8,11 @@ public class CreateTaskItemRequestValidator : AbstractValidator<CreateTaskItemRe
     public CreateTaskItemRequestValidator()
     {
         RuleFor(x => x.Title)
-            .NotEmpty().WithMessage("Task title is required.")
-            .MaximumLength(200).WithMessage("Task title cannot exceed 200 characters.");
+            .NotEmpty().WithMessage(_ => LocalizationMessages.TaskTitleRequired)
+            .MaximumLength(200).WithMessage(_ => LocalizationMessages.TaskTitleMax(200));
             
         RuleFor(x => x.ProjectId)
-            .NotEmpty().WithMessage("Project ID is required.");
+            .NotEmpty().WithMessage(_ => LocalizationMessages.ProjectIdRequired);
     }
 }
 
@@ -20,7 +21,7 @@ public class UpdateTaskItemRequestValidator : AbstractValidator<UpdateTaskItemRe
     public UpdateTaskItemRequestValidator()
     {
         RuleFor(x => x.Title)
-            .NotEmpty().WithMessage("Task title is required.")
-            .MaximumLength(200).WithMessage("Task title cannot exceed 200 characters.");
+            .NotEmpty().WithMessage(_ => LocalizationMessages.TaskTitleRequired)
+            .MaximumLength(200).WithMessage(_ => LocalizationMessages.TaskTitleMax(200));
     }
 }

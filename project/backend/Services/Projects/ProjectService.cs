@@ -6,9 +6,15 @@ using ProjectHub.Api.DTOs.Common;
 using ProjectHub.Api.DTOs.Projects;
 using ProjectHub.Api.Infrastructure.Data;
 using ProjectHub.Api.Infrastructure.Extensions;
+using ProjectHub.Api.Infrastructure.Localization;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ProjectHub.Api.Services.Projects;
 
+// Service responsible for managing projects - handles CRUD operations, pagination, search filtering, and enforcing business rules
 public class ProjectService : IProjectService
 {
     private readonly ProjectHubDbContext _context;
@@ -17,11 +23,10 @@ public class ProjectService : IProjectService
     {
         _context = context;
     }
-
+    
+    // Retrieves a paginated and optionally filtered list of projects associated with a specific workspace
     public async Task<PagedResponse<ProjectResponse>> GetPagedByWorkspaceAsync(Guid workspaceId, PagedRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        await ValidateWorkspaceAccessAsync(workspaceId, userId, role, ct);
-
         var query = _context.Projects
             .AsNoTracking()
             .Where(p => p.WorkspaceId == workspaceId);
@@ -36,7 +41,7 @@ public class ProjectService : IProjectService
             .ToPagedResponseAsync(request.PageNumber, request.PageSize, ct);
 
         var mappedItems = pagedData.Items
-            .Select(p => new ProjectResponse(p.Id, p.Name, p.Description, p.WorkspaceId, p.CreatedAt))
+            .Select(p => new ProjectResponse(p.Id, p.Name, p.Description, p.ThemeColor, p.WorkspaceId, p.CreatedAt))
             .ToList();
 
         return new PagedResponse<ProjectResponse>
@@ -47,19 +52,19 @@ public class ProjectService : IProjectService
             PageSize = pagedData.PageSize
         };
     }
-
+    
+    // Retrieves the details of a specific project by its unique identifier
     public async Task<ProjectResponse> GetByIdAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var project = await _context.Projects
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id, ct) 
-            ?? throw new NotFoundException($"Project with ID {id} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Project", id));
 
-        await ValidateWorkspaceAccessAsync(project.WorkspaceId, userId, role, ct);
-
-        return new ProjectResponse(project.Id, project.Name, project.Description, project.WorkspaceId, project.CreatedAt);
+        return new ProjectResponse(project.Id, project.Name, project.Description, project.ThemeColor, project.WorkspaceId, project.CreatedAt);
     }
-
+    
+    // Creates a new project within a specified workspace - requires appropriate workspace access
     public async Task<ProjectResponse> CreateAsync(CreateProjectRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
         await ValidateWorkspaceAccessAsync(request.WorkspaceId, userId, role, ct);
@@ -69,6 +74,7 @@ public class ProjectService : IProjectService
             Id = Guid.NewGuid(),
             Name = request.Name,
             Description = request.Description,
+            ThemeColor = request.ThemeColor,
             WorkspaceId = request.WorkspaceId,
             CreatedAt = DateTime.UtcNow
         };
@@ -76,30 +82,34 @@ public class ProjectService : IProjectService
         _context.Projects.Add(project);
         await _context.SaveChangesAsync(ct);
 
-        return new ProjectResponse(project.Id, project.Name, project.Description, project.WorkspaceId, project.CreatedAt);
+        return new ProjectResponse(project.Id, project.Name, project.Description, project.ThemeColor, project.WorkspaceId, project.CreatedAt);
     }
-
+    
+    // Updates the core details (name, description) of an existing project
     public async Task UpdateAsync(Guid id, UpdateProjectRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == id, ct) 
-            ?? throw new NotFoundException($"Project with ID {id} was not found.");
+        var project = await _context.Projects
+            .Include(p => p.Tasks).ThenInclude(t => t.Comments)
+            .FirstOrDefaultAsync(p => p.Id == id, ct) 
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Project", id));
 
         await ValidateWorkspaceAccessAsync(project.WorkspaceId, userId, role, ct);
 
         project.Name = request.Name;
         project.Description = request.Description;
+        project.ThemeColor = request.ThemeColor;
         
         await _context.SaveChangesAsync(ct);
     }
-
+    
+    // Deletes a project - enforces a business rule preventing the deletion of projects containing unresolved tasks with a critical priority
     public async Task DeleteAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == id, ct) 
-            ?? throw new NotFoundException($"Project with ID {id} was not found.");
+        var project = await _context.Projects.Include(p => p.Tasks).ThenInclude(t => t.Comments).FirstOrDefaultAsync(p => p.Id == id, ct) 
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Project", id));
 
         await ValidateWorkspaceAccessAsync(project.WorkspaceId, userId, role, ct);
 
-        // Enforce Business Rule 3: Project Deletion Lock
         var hasCriticalUnresolvedTasks = await _context.Tasks
             .AnyAsync(t => t.ProjectId == id 
                         && t.Priority == TaskPriority.Critical 
@@ -107,14 +117,14 @@ public class ProjectService : IProjectService
 
         if (hasCriticalUnresolvedTasks)
         {
-            throw new ConflictException("Cannot delete a project that contains unresolved critical tasks.");
+            throw new ConflictException(LocalizationMessages.CannotDeleteProjectCriticalTasks);
         }
 
         _context.Projects.Remove(project);
         await _context.SaveChangesAsync(ct);
     }
 
-    // Ensures user has access to the underlying workspace before performing project operations
+    // Verifies that the user has administrative privileges or owns the target workspace - used primarily to restrict modification operations
     private async Task ValidateWorkspaceAccessAsync(Guid workspaceId, Guid userId, UserRole role, CancellationToken ct)
     {
         if (role == UserRole.Admin) return;
@@ -122,11 +132,11 @@ public class ProjectService : IProjectService
         var workspace = await _context.Workspaces
             .AsNoTracking()
             .FirstOrDefaultAsync(w => w.Id == workspaceId, ct)
-            ?? throw new NotFoundException($"Workspace with ID {workspaceId} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Workspace", workspaceId));
 
         if (workspace.OwnerId != userId)
         {
-            throw new ForbiddenException("You do not have permission to access projects in this workspace.");
+            throw new ForbiddenException(LocalizationMessages.NoProjectPermission);
         }
     }
 }

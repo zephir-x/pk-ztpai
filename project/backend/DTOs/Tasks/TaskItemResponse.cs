@@ -1,4 +1,5 @@
 ﻿using ProjectHub.Api.Domain.Enums;
+using System;
 
 namespace ProjectHub.Api.DTOs.Tasks;
 
@@ -10,6 +11,8 @@ public record TaskItemResponse(
     TaskPriority Priority, 
     Guid ProjectId, 
     Guid? AssigneeId, 
+    string? AssigneeFirstName,
+    string? AssigneeLastName,
+    string? AssigneeAvatarUrl,
     DateTime CreatedAt, 
     DateTime? UpdatedAt);
-    
