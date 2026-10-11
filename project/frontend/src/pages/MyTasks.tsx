@@ -86,7 +86,14 @@ export default function MyTasks() {
                     {tasks.map(task => (
                         <div 
                             key={task.id}
-                            onClick={() => navigate('/projects/' + task.projectId)}
+                            onClick={() => navigate(`/projects/${task.projectId}`, {
+                                state: {
+                                    openTaskId: task.id,
+                                    openTaskMode: 'details',
+                                    projectName: task.projectName,
+                                    workspaceId: task.workspaceId
+                                }
+                            })}
                             className="glass-panel relative overflow-hidden p-5 flex flex-col hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-100 hover:border-fiery/30"
                         >
                             <div className="absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300" style={{ backgroundColor: THEME_COLOR_MAP[task.projectThemeColor] }}></div>

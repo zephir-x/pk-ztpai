@@ -57,6 +57,62 @@ namespace ProjectHub.Api.Migrations
                     b.ToTable("Comments");
                 });
 
+            modelBuilder.Entity("ProjectHub.Api.Domain.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RecipientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SenderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TaskItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("RecipientId");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("TaskItemId");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("ProjectHub.Api.Domain.Entities.Project", b =>
                 {
                     b.Property<Guid>("Id")
@@ -252,6 +308,38 @@ namespace ProjectHub.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Author");
+
+                    b.Navigation("TaskItem");
+                });
+
+            modelBuilder.Entity("ProjectHub.Api.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("ProjectHub.Api.Domain.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("ProjectHub.Api.Domain.Entities.User", "Recipient")
+                        .WithMany()
+                        .HasForeignKey("RecipientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ProjectHub.Api.Domain.Entities.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ProjectHub.Api.Domain.Entities.TaskItem", "TaskItem")
+                        .WithMany()
+                        .HasForeignKey("TaskItemId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Recipient");
+
+                    b.Navigation("Sender");
 
                     b.Navigation("TaskItem");
                 });

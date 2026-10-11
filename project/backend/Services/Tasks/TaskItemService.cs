@@ -9,6 +9,7 @@ using ProjectHub.Api.Infrastructure.Data;
 using ProjectHub.Api.Infrastructure.Extensions;
 using ProjectHub.Api.Infrastructure.Localization;
 using ProjectHub.Api.Infrastructure.SignalR;
+using ProjectHub.Api.Services.Notifications;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,11 +23,16 @@ public class TaskItemService : ITaskItemService
 {
     private readonly ProjectHubDbContext _context;
     private readonly IHubContext<KanbanHub> _hubContext;
+    private readonly INotificationService _notificationService;
 
-    public TaskItemService(ProjectHubDbContext context, IHubContext<KanbanHub> hubContext)
+    public TaskItemService(
+        ProjectHubDbContext context,
+        IHubContext<KanbanHub> hubContext,
+        INotificationService notificationService)
     {
         _context = context;
         _hubContext = hubContext;
+        _notificationService = notificationService;
     }
     
     // Retrieves a paginated and optionally filtered list of tasks for a specific project
@@ -159,6 +165,20 @@ public class TaskItemService : ITaskItemService
         _context.Tasks.Add(task);
         await _context.SaveChangesAsync(ct);
 
+        // Notifies assigned user if task is assigned on creation
+        if (task.AssigneeId.HasValue && task.AssigneeId.Value != userId)
+        {
+            await _notificationService.CreateNotificationAsync(
+                task.AssigneeId.Value,
+                userId,
+                NotificationType.TaskAssigned,
+                "Task Assigned",
+                $"You have been assigned to task \"{task.Title}\"",
+                task.Id,
+                task.ProjectId,
+                ct);
+        }
+
         return new TaskItemResponse(
             task.Id, 
             task.Title, 
@@ -230,10 +250,25 @@ public class TaskItemService : ITaskItemService
             throw new ForbiddenException(LocalizationMessages.TaskAssignAdminOnly);
         }
 
+        var previousAssigneeId = task.AssigneeId;
         task.AssigneeId = request.AssigneeId;
         task.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(ct);
+
+        // Notifies newly assigned user if assignee changed
+        if (request.AssigneeId.HasValue && request.AssigneeId.Value != userId && request.AssigneeId != previousAssigneeId)
+        {
+            await _notificationService.CreateNotificationAsync(
+                request.AssigneeId.Value,
+                userId,
+                NotificationType.TaskAssigned,
+                "Task Assigned",
+                $"You have been assigned to task \"{task.Title}\"",
+                task.Id,
+                task.ProjectId,
+                ct);
+        }
 
         User? newAssignee = null;
         if (request.AssigneeId.HasValue)

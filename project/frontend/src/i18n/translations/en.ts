@@ -19,9 +19,51 @@ export const en: Translations = {
     navigation: {
         dashboard: 'Dashboard',
         myTasks: 'My Tasks',
+        notifications: 'Notifications',
         adminPanel: 'Admin Panel',
         settings: 'Settings',
         logout: 'Log out'
+    },
+    notificationsView: {
+        pageTitle: 'Notifications',
+        title: 'Notifications & Messages',
+        subtitle: 'Stay updated with your mentions, task assignments, and direct communications.',
+        markAllAsRead: 'Mark all as read',
+        noNotifications: 'No notifications',
+        noNotificationsDesc: 'You do not have any notifications yet. Everything is caught up!',
+        loading: 'Loading notifications...',
+        fetchError: 'Failed to retrieve notifications.',
+        types: {
+            mention: 'Mention',
+            taskAssigned: 'Task Assignment',
+            directMessage: 'Direct Message'
+        },
+        templates: {
+            mentionTitle: 'Mention in comment',
+            mentionDesc: (taskTitle: string) => `You were mentioned in task: ${taskTitle}`,
+            assignedTitle: 'Task assignment',
+            assignedDesc: (taskTitle: string) => `You were assigned to task: ${taskTitle}`,
+            fromUserTitle: (senderName: string) => `Message from ${senderName}`,
+            fromAdminTitle: (senderName: string) => `Administrative reply from ${senderName}`
+        },
+        directMessageCard: {
+            userTitle: 'Contact Administrator',
+            userSubtitle: 'Have a question or encounter an issue? Send a direct message to system administrators.',
+            placeholder: 'Type your message for administrators here...',
+            sendButton: 'Send Message',
+            sending: 'Sending...',
+            sendSuccess: 'Your message has been delivered to administrators.',
+            replyTitle: 'Reply to User',
+            replyPlaceholder: 'Write your administrative reply...',
+            replyButton: 'Send Reply',
+            replying: 'Sending...',
+            replySuccess: 'Your reply has been delivered to the user.'
+        },
+        actions: {
+            openTask: 'View Task',
+            reply: 'Reply',
+            delete: 'Delete'
+        }
     },
     auth: {
         signIn: 'Sign In',

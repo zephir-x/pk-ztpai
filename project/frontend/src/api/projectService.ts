@@ -6,6 +6,10 @@ export const projectService = {
         const response = await axiosClient.get(`/projects/workspace/${workspaceId}`);
         return response.data.items || response.data;
     },
+    getById: async (id: string): Promise<ProjectResponse> => {
+        const response = await axiosClient.get(`/projects/${id}`);
+        return response.data;
+    },
     create: async (name: string, description: string | null, themeColor: ThemeColor, workspaceId: string): Promise<ProjectResponse> => {
         const response = await axiosClient.post('/projects', { name, description, themeColor, workspaceId });
         return response.data;

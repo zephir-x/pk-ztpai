@@ -35,10 +35,13 @@ public static class LocalizationMessages
     public static string CommentContentRequired => IsPolish ? "Treść komentarza jest wymagana." : "Comment content is required.";
     public static string CommentContentMax(int max = 1000) => IsPolish ? $"Treść komentarza nie może przekraczać {max} znaków." : $"Comment cannot exceed {max} characters.";
     public static string TaskIdRequired => IsPolish ? "Identyfikator zadania jest wymagany." : "Task ID is required.";
+    public static string MessageRequired => IsPolish ? "Treść wiadomości jest wymagana." : "Message content is required.";
+    public static string MessageMax(int max = 2000) => IsPolish ? $"Treść wiadomości nie może przekraczać {max} znaków." : $"Message cannot exceed {max} characters.";
+    public static string RecipientIdRequired => IsPolish ? "Identyfikator odbiorcy jest wymagany." : "Recipient ID is required.";
 
     // Service & Auth messages
     public static string UserAlreadyExists => IsPolish ? "Użytkownik o podanym adresie email już istnieje." : "User with this email already exists.";
-    public static string InvalidCredentials => IsPolish ? "Nieprawidłowy adres email lub hasło." : "Invalid email or password.";
+    public static string InvalidCredentials => IsPolish ? "Nieprawidlowy adres email lub hasło." : "Invalid email or password.";
     public static string CurrentPasswordIncorrect => IsPolish ? "Aktualne hasło jest nieprawidłowe lub nie zostało podane." : "Current password is missing or incorrect.";
     public static string CannotDeleteOwnAccount => IsPolish ? "Nie możesz usunąć własnego konta użytkownika." : "You cannot delete your own user account.";
     public static string AdminOnlyOperation => IsPolish ? "Tylko administrator może wykonać tę operację." : "Only administrators can perform this operation.";
@@ -50,6 +53,14 @@ public static class LocalizationMessages
     public static string NoProjectPermission => IsPolish ? "Nie masz uprawnień dostępu do projektów w tym obszarze roboczym." : "You do not have permission to access projects in this workspace.";
     public static string NoTaskPermission => IsPolish ? "Nie masz uprawnień dostępu do zadań w tym projekcie." : "You do not have permission to access tasks in this project.";
     public static string CannotDeleteProjectCriticalTasks => IsPolish ? "Nie można usunąć projektu zawierającego nierozwiązane zadania krytyczne." : "Cannot delete a project that contains unresolved critical tasks.";
+
+    // Notifications
+    public static string NotificationMentionTitle => IsPolish ? "Wzmianka w komentarzu" : "Mentioned in comment";
+    public static string NotificationMentionMessage(string taskTitle) => IsPolish ? $"Wspomniano o Tobie w komentarzu do zadania \"{taskTitle}\"" : $"You were mentioned in a comment on task \"{taskTitle}\"";
+    public static string NotificationAssignedTitle => IsPolish ? "Przypisano zadanie" : "Task Assigned";
+    public static string NotificationAssignedMessage(string taskTitle) => IsPolish ? $"Zostałeś przypisany do zadania \"{taskTitle}\"" : $"You have been assigned to task \"{taskTitle}\"";
+    public static string NotificationDirectFromUserTitle => IsPolish ? "Wiadomość od użytkownika" : "Direct Message from User";
+    public static string NotificationDirectFromAdminTitle => IsPolish ? "Wiadomość od administratora" : "Direct Message from Administrator";
 
     public static string NotFound(string entity, Guid id) => IsPolish
         ? $"{entity} o identyfikatorze {id} nie został(a) odnaleziony(a)."

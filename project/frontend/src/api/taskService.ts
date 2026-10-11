@@ -1,8 +1,7 @@
 ﻿import { axiosClient } from './axiosClient';
-import type {TaskItemResponse, CreateTaskRequest, UpdateTaskRequest, MyTaskResponse} from '../types/api';
+import type { TaskItemResponse, CreateTaskRequest, UpdateTaskRequest, MyTaskResponse } from '../types/api';
 
 export const taskService = {
-
     getMyTasks: async (): Promise<MyTaskResponse[]> => {
         const response = await axiosClient.get('/taskitems/my-tasks');
         return response.data.items || response.data;
@@ -11,6 +10,11 @@ export const taskService = {
     getByProject: async (projectId: string): Promise<TaskItemResponse[]> => {
         const response = await axiosClient.get(`/taskitems/project/${projectId}`);
         return response.data.items || response.data;
+    },
+
+    getById: async (id: string): Promise<TaskItemResponse> => {
+        const response = await axiosClient.get(`/taskitems/${id}`);
+        return response.data;
     },
 
     create: async (request: CreateTaskRequest): Promise<TaskItemResponse> => {

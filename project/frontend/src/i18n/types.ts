@@ -19,9 +19,51 @@ export interface Translations {
     navigation: {
         dashboard: string;
         myTasks: string;
+        notifications: string;
         adminPanel: string;
         settings: string;
         logout: string;
+    };
+    notificationsView: {
+        pageTitle: string;
+        title: string;
+        subtitle: string;
+        markAllAsRead: string;
+        noNotifications: string;
+        noNotificationsDesc: string;
+        loading: string;
+        fetchError: string;
+        types: {
+            mention: string;
+            taskAssigned: string;
+            directMessage: string;
+        };
+        templates: {
+            mentionTitle: string;
+            mentionDesc: (taskTitle: string) => string;
+            assignedTitle: string;
+            assignedDesc: (taskTitle: string) => string;
+            fromUserTitle: (senderName: string) => string;
+            fromAdminTitle: (senderName: string) => string;
+        };
+        directMessageCard: {
+            userTitle: string;
+            userSubtitle: string;
+            placeholder: string;
+            sendButton: string;
+            sending: string;
+            sendSuccess: string;
+            replyTitle: string;
+            replyPlaceholder: string;
+            replyButton: string;
+            replying: string;
+            replySuccess: string;
+        };
+        actions: {
+            openTask: string;
+            reply: string;
+            delete: string;
+        };
     };
     auth: {
         signIn: string;

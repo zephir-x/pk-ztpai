@@ -15,6 +15,7 @@ public class ProjectHubDbContext : DbContext
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,7 +27,7 @@ public class ProjectHubDbContext : DbContext
         modelBuilder.Entity<Project>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<TaskItem>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<Comment>().HasQueryFilter(e => !e.IsDeleted);
-
+        modelBuilder.Entity<Notification>().HasQueryFilter(e => !e.IsDeleted);
 
         // Configures User entity constraints
         modelBuilder.Entity<User>(entity =>
@@ -84,6 +85,30 @@ public class ProjectHubDbContext : DbContext
                   .WithMany(u => u.Comments)
                   .HasForeignKey(c => c.AuthorId)
                   .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configures Notification constraints and relations
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Message).IsRequired().HasMaxLength(2000);
+            entity.Property(e => e.Type).HasConversion<int>().IsRequired();
+            entity.HasOne(n => n.Recipient)
+                  .WithMany()
+                  .HasForeignKey(n => n.RecipientId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(n => n.Sender)
+                  .WithMany()
+                  .HasForeignKey(n => n.SenderId)
+                  .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(n => n.TaskItem)
+                  .WithMany()
+                  .HasForeignKey(n => n.TaskItemId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(n => n.Project)
+                  .WithMany()
+                  .HasForeignKey(n => n.ProjectId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

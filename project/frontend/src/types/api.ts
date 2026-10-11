@@ -178,3 +178,37 @@ export interface CreateCommentRequest {
     content: string;
     taskItemId: string;
 }
+
+// === Notification and Messaging DTOs ===
+export const NotificationType = {
+    Mention: 0,
+    TaskAssigned: 1,
+    DirectMessage: 2
+} as const;
+
+export type NotificationType = typeof NotificationType[keyof typeof NotificationType];
+
+export interface NotificationResponse {
+    id: string;
+    recipientId: string;
+    senderId: string | null;
+    senderName: string | null;
+    senderAvatarUrl: string | null;
+    type: NotificationType;
+    title: string;
+    message: string;
+    taskItemId: string | null;
+    taskTitle?: string | null;
+    projectId: string | null;
+    isRead: boolean;
+    createdAt: string;
+}
+
+export interface SendUserMessageRequest {
+    message: string;
+}
+
+export interface ReplyMessageRequest {
+    recipientId: string;
+    message: string;
+}

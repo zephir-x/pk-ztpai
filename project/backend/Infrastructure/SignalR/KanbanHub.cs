@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using System;
+using System.Threading.Tasks;
 
 namespace ProjectHub.Api.Infrastructure.SignalR;
 
@@ -16,5 +18,16 @@ public class KanbanHub : Hub
     public async Task LeaveWorkspaceGroup(Guid workspaceId)
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, workspaceId.ToString());
+    }
+
+    // Allows the client to subscribe to personal notifications
+    public async Task JoinUserGroup(Guid userId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, "user_" + userId);
+    }
+
+    public async Task LeaveUserGroup(Guid userId)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, "user_" + userId);
     }
 }

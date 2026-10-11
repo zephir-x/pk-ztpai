@@ -2,6 +2,7 @@
 using ProjectHub.Api.Domain.Entities;
 using ProjectHub.Api.Domain.Enums;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ProjectHub.Api.Infrastructure.Data;
@@ -10,9 +11,13 @@ public static class DatabaseSeeder
 {
     public static async Task SeedAsync(ProjectHubDbContext context)
     {
-        // Skip seeding if any users already exist
+        // If users already exist, check if notifications need initial seeding
         if (await context.Users.AnyAsync())
         {
+            if (!await context.Notifications.AnyAsync())
+            {
+                await SeedInitialNotificationsAsync(context);
+            }
             return;
         }
 
@@ -27,8 +32,8 @@ public static class DatabaseSeeder
             Email = "admin@projecthub.com",
             PasswordHash = defaultPassword,
             Role = UserRole.Admin,
-            FirstName = "Alex",
-            LastName = "Vance",
+            FirstName = "Kacper",
+            LastName = "Gumulak",
             AvatarUrl = "avatar-1",
             Language = "en",
             AccentColor = "fiery",
@@ -42,8 +47,8 @@ public static class DatabaseSeeder
             Email = "frontend.dev@projecthub.com",
             PasswordHash = defaultPassword,
             Role = UserRole.User,
-            FirstName = "Elena",
-            LastName = "Rostova",
+            FirstName = "Zofia",
+            LastName = "Mazur",
             AvatarUrl = "avatar-2",
             Language = "en",
             AccentColor = "purple",
@@ -57,10 +62,10 @@ public static class DatabaseSeeder
             Email = "backend.eng@projecthub.com",
             PasswordHash = defaultPassword,
             Role = UserRole.User,
-            FirstName = "Marcus",
-            LastName = "Brody",
+            FirstName = "Krzysztof",
+            LastName = "Dąbrowski",
             AvatarUrl = "avatar-3",
-            Language = "pl",
+            Language = "en",
             AccentColor = "blue",
             CreatedAt = now
         };
@@ -72,8 +77,8 @@ public static class DatabaseSeeder
             Email = "qa.tester@projecthub.com",
             PasswordHash = defaultPassword,
             Role = UserRole.User,
-            FirstName = "Sophia",
-            LastName = "Chen",
+            FirstName = "Zuzanna",
+            LastName = "Kamińska",
             AvatarUrl = "avatar-4",
             Language = "en",
             AccentColor = "green",
@@ -265,9 +270,113 @@ public static class DatabaseSeeder
             CreatedAt = now.AddMinutes(-30)
         };
 
-        await context.Comments.AddRangeAsync(c1, c2, c3, c4, c5);
+        var c6 = new Comment
+        {
+            Id = Guid.NewGuid(),
+            Content = "@admin Could you please review the latest Kanban board drag and drop changes?",
+            TaskItemId = task1Id,
+            AuthorId = dev1Id,
+            CreatedAt = now.AddMinutes(-45)
+        };
 
-        // Commit all generated entities
+        await context.Comments.AddRangeAsync(c1, c2, c3, c4, c5, c6);
+
+        // Commit core entities
+        await context.SaveChangesAsync();
+
+        // Seed notifications
+        await SeedInitialNotificationsAsync(context);
+    }
+
+    private static async Task SeedInitialNotificationsAsync(ProjectHubDbContext context)
+    {
+        var admin = await context.Users.FirstOrDefaultAsync(u => u.Role == UserRole.Admin);
+        var dev1 = await context.Users.FirstOrDefaultAsync(u => u.Email == "frontend.dev@projecthub.com");
+        var dev2 = await context.Users.FirstOrDefaultAsync(u => u.Email == "backend.eng@projecthub.com");
+        var qa = await context.Users.FirstOrDefaultAsync(u => u.Email == "qa.tester@projecthub.com");
+
+        var task1 = await context.Tasks.FirstOrDefaultAsync(t => t.Title == "Implement Kanban Board Drag & Drop");
+        var task2 = await context.Tasks.FirstOrDefaultAsync(t => t.Title == "Fix Auth Token Refresh Bug");
+        var task3 = await context.Tasks.FirstOrDefaultAsync(t => t.Title == "Configure PostgreSQL Connection Pool");
+
+        if (admin == null || dev1 == null || dev2 == null || qa == null) return;
+
+        var now = DateTime.UtcNow;
+        var notifications = new List<Notification>
+        {
+            // Mention notification for frontend.dev (dev1)
+            new Notification
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = dev1.Id,
+                SenderId = qa.Id,
+                Type = NotificationType.Mention,
+                Title = "Mentioned in comment",
+                Message = $"You were mentioned in a comment on task \"{task2?.Title ?? "Fix Auth Token Refresh Bug"}\"",
+                TaskItemId = task2?.Id,
+                ProjectId = task2?.ProjectId,
+                IsRead = false,
+                CreatedAt = now.AddMinutes(-30)
+            },
+            // Task assigned notification for frontend.dev (task1)
+            new Notification
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = dev1.Id,
+                SenderId = admin.Id,
+                Type = NotificationType.TaskAssigned,
+                Title = "Task Assigned",
+                Message = $"You have been assigned to task \"{task1?.Title ?? "Implement Kanban Board Drag & Drop"}\"",
+                TaskItemId = task1?.Id,
+                ProjectId = task1?.ProjectId,
+                IsRead = false,
+                CreatedAt = now.AddHours(-2)
+            },
+            // Mention notification for admin
+            new Notification
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = admin.Id,
+                SenderId = dev1.Id,
+                Type = NotificationType.Mention,
+                Title = "Mentioned in comment",
+                Message = $"You were mentioned in a comment on task \"{task1?.Title ?? "Implement Kanban Board Drag & Drop"}\"",
+                TaskItemId = task1?.Id,
+                ProjectId = task1?.ProjectId,
+                IsRead = false,
+                CreatedAt = now.AddMinutes(-45)
+            },
+            // Direct message from backend.eng to admin
+            new Notification
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = admin.Id,
+                SenderId = dev2.Id,
+                Type = NotificationType.DirectMessage,
+                Title = "Direct Message from User",
+                Message = "Hi Kacper! Could you please grant our team write permissions to the staging Docker registry?",
+                TaskItemId = null,
+                ProjectId = null,
+                IsRead = false,
+                CreatedAt = now.AddHours(-1)
+            },
+            // Task assigned notification for backend.eng
+            new Notification
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = dev2.Id,
+                SenderId = admin.Id,
+                Type = NotificationType.TaskAssigned,
+                Title = "Task Assigned",
+                Message = $"You have been assigned to task \"{task3?.Title ?? "Configure PostgreSQL Connection Pool"}\"",
+                TaskItemId = task3?.Id,
+                ProjectId = task3?.ProjectId,
+                IsRead = false,
+                CreatedAt = now.AddDays(-2)
+            }
+        };
+
+        await context.Notifications.AddRangeAsync(notifications);
         await context.SaveChangesAsync();
     }
 }

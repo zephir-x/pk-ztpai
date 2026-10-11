@@ -2,6 +2,7 @@
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { taskService } from '../api/taskService';
+import { projectService } from '../api/projectService';
 import { type TaskItemResponse, ProjectTaskStatus, TaskPriority } from '../types/api';
 import { CreateTaskModal } from '../components/modals/CreateTaskModal';
 import { TaskDetailsModal } from '../components/modals/TaskDetailsModal';
@@ -20,11 +21,11 @@ export default function ProjectKanban() {
     const { projectId } = useParams<{ projectId: string }>();
     const location = useLocation();
     const navigate = useNavigate();
-    const workspaceId = location.state?.workspaceId;
+    const [workspaceId, setWorkspaceId] = useState<string | null>(location.state?.workspaceId || null);
+    const [projectName, setProjectName] = useState<string>(location.state?.projectName || 'Project Board');
     const { isAdmin } = useAuth();
     const { t } = useTranslation();
 
-    const projectName = location.state?.projectName || 'Project Board';
     usePageTitle(`${projectName} - ${t.projectKanban.pageTitle}`);
 
     const kanbanColumns = useMemo(() => [
@@ -42,6 +43,22 @@ export default function ProjectKanban() {
 
     const [selectedTask, setSelectedTask] = useState<TaskItemResponse | null>(null);
     const [modalMode, setModalMode] = useState<ModalViewMode>('details');
+
+    // Resolves project and workspace details if missing from navigation state
+    useEffect(() => {
+        if (!projectId) return;
+
+        if (!workspaceId) {
+            projectService.getById(projectId)
+                .then(proj => {
+                    setWorkspaceId(proj.workspaceId);
+                    setProjectName(proj.name);
+                })
+                .catch(err => {
+                    console.error('Failed to resolve project details:', err);
+                });
+        }
+    }, [projectId, workspaceId]);
 
     useEffect(() => {
         if (projectId) fetchTasks(projectId);
@@ -118,6 +135,25 @@ export default function ProjectKanban() {
             setIsLoading(true);
             const data = await taskService.getByProject(id);
             setTasks(data);
+
+            // Handles deep-linking directly to specific task from notification
+            const openTaskId = location.state?.openTaskId;
+            const openMode = (location.state?.openTaskMode as ModalViewMode) || 'details';
+            if (openTaskId) {
+                const foundTask = data.find(item => item.id === openTaskId);
+                if (foundTask) {
+                    setSelectedTask(foundTask);
+                    setModalMode(openMode);
+                } else {
+                    try {
+                        const directTask = await taskService.getById(openTaskId);
+                        setSelectedTask(directTask);
+                        setModalMode(openMode);
+                    } catch (err) {
+                        console.error('Failed to load deep-linked task:', err);
+                    }
+                }
+            }
         } catch {
             toast.error(t.projectKanban.fetchError);
         } finally {

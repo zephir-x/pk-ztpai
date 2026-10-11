@@ -1,20 +1,23 @@
 ﻿import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
-import { LayoutDashboard, CheckSquare, LogOut, Settings, Shield } from 'lucide-react';
+import { useNotifications } from '../context/NotificationContext';
+import { LayoutDashboard, CheckSquare, Bell, LogOut, Settings, Shield } from 'lucide-react';
 import { Avatar } from './Avatar';
 
 export const Layout = () => {
     const { isAdmin, user, profile, logout } = useAuth();
+    const { unreadCount } = useNotifications();
     const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Dynamically inject Admin Panel if the user has the ADMIN role
+    // Dynamically inject navigation tabs with notifications badge count
     const navItems = [
         ...(isAdmin ? [{ name: t.navigation.adminPanel, path: '/admin', icon: Shield }] : []),
         { name: t.navigation.dashboard, path: '/dashboard', icon: LayoutDashboard },
         { name: t.navigation.myTasks, path: '/tasks', icon: CheckSquare },
+        { name: t.navigation.notifications, path: '/notifications', icon: Bell, badge: unreadCount },
         { name: t.navigation.settings, path: '/settings', icon: Settings }
     ];
 
@@ -43,14 +46,21 @@ export const Layout = () => {
                             <Link
                                 key={item.path}
                                 to={item.path}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                                className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
                                     isActive
                                         ? 'bg-gray-800/50 text-fiery-light border-l-2 border-fiery shadow-inner'
                                         : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                                 }`}
                             >
-                                <Icon size={20} className={isActive ? 'text-fiery' : ''} />
-                                <span className="font-medium">{item.name}</span>
+                                <div className="flex items-center gap-3">
+                                    <Icon size={20} className={isActive ? 'text-fiery' : ''} />
+                                    <span className="font-medium">{item.name}</span>
+                                </div>
+                                {item.badge !== undefined && item.badge > 0 && (
+                                    <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-fiery text-white shadow-sm">
+                                        {item.badge > 99 ? '99+' : item.badge}
+                                    </span>
+                                )}
                             </Link>
                         );
                     })}

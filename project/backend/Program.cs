@@ -10,6 +10,7 @@ using ProjectHub.Api.Services.Users;
 using ProjectHub.Api.Services.Projects;
 using ProjectHub.Api.Services.Tasks;
 using ProjectHub.Api.Services.Comments;
+using ProjectHub.Api.Services.Notifications;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using FluentValidation;
@@ -81,6 +82,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskItemService, TaskItemService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // === Async Mechanism (MediatR & Event Channel) ===
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());

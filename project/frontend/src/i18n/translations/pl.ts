@@ -19,9 +19,51 @@ export const pl: Translations = {
     navigation: {
         dashboard: 'Pulpit',
         myTasks: 'Moje zadania',
+        notifications: 'Powiadomienia',
         adminPanel: 'Panel administratora',
         settings: 'Ustawienia',
         logout: 'Wyloguj się'
+    },
+    notificationsView: {
+        pageTitle: 'Powiadomienia',
+        title: 'Powiadomienia i wiadomości',
+        subtitle: 'Bądź na bieżąco ze wzmiankami, przypisaniami do zadań oraz bezpośrednią komunikacją.',
+        markAllAsRead: 'Oznacz wszystkie jako przeczytane',
+        noNotifications: 'Brak powiadomień',
+        noNotificationsDesc: 'Nie masz jeszcze żadnych powiadomień. Wszystko jest aktualne!',
+        loading: 'Ładowanie powiadomień...',
+        fetchError: 'Nie udało się pobrać powiadomień.',
+        types: {
+            mention: 'Wzmianka',
+            taskAssigned: 'Przypisanie do zadania',
+            directMessage: 'Wiadomość bezpośrednia'
+        },
+        templates: {
+            mentionTitle: 'Oznaczenie w komentarzu',
+            mentionDesc: (taskTitle: string) => `Zostałeś oznaczony w zadaniu: ${taskTitle}`,
+            assignedTitle: 'Przypisanie do zadania',
+            assignedDesc: (taskTitle: string) => `Zostałeś przypisany do zadania: ${taskTitle}`,
+            fromUserTitle: (senderName: string) => `Wiadomość od ${senderName}`,
+            fromAdminTitle: (senderName: string) => `Odpowiedź administratora od ${senderName}`
+        },
+        directMessageCard: {
+            userTitle: 'Skontaktuj się z administratorem',
+            userSubtitle: 'Masz pytanie lub problem? Wyślij bezpośrednią wiadomość do administratorów systemu.',
+            placeholder: 'Napisz swoją wiadomość do administratorów tutaj...',
+            sendButton: 'Wyślij wiadomość',
+            sending: 'Wysyłanie...',
+            sendSuccess: 'Twoja wiadomość została dostarczona do administratorów.',
+            replyTitle: 'Odpowiedz użytkownikowi',
+            replyPlaceholder: 'Napisz odpowiedź do użytkownika...',
+            replyButton: 'Wyślij odpowiedź',
+            replying: 'Wysyłanie...',
+            replySuccess: 'Twoja odpowiedź została dostarczona do użytkownika.'
+        },
+        actions: {
+            openTask: 'Zobacz zadanie',
+            reply: 'Odpowiedz',
+            delete: 'Usuń'
+        }
     },
     auth: {
         signIn: 'Logowanie',
@@ -193,7 +235,7 @@ export const pl: Translations = {
             saveSuccess: 'Ustawienia profilu zostały pomyślnie zapisane.',
             saveError: 'Nie udało się zaktualizować ustawień profilu.',
             currentPasswordRequired: 'Aktualne hasło jest wymagane do zmiany hasła.',
-            minPasswordLength: 'Nowe hasło musi mieć co najmniej 6 znaków.',
+            minPasswordLength: 'Nowe hasło musi mieć co najmniej 8 znaków.',
             passwordsMismatch: 'Nowe hasła nie są identyczne.'
         }
     },

@@ -36,17 +36,23 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
     const [isLoading, setIsLoading] = useState(false);
     const [isCommenting, setIsCommenting] = useState(false);
 
-    // Sync local state when modal opens or task changes
+    // Synchronize tab mode when initialView changes or modal re-opens
+    useEffect(() => {
+        if (isOpen) {
+            setActiveTab(initialView);
+        }
+    }, [isOpen, initialView]);
+
+    // Synchronize local form and detail states when task changes
     useEffect(() => {
         if (isOpen && task) {
-            setActiveTab(initialView);
             setEditTitle(task.title);
             setEditDescription(task.description || '');
             setIsEditing(false);
             if (isAdmin) fetchUsers();
             fetchComments(task.id);
         }
-    }, [isOpen, task, initialView, isAdmin]);
+    }, [isOpen, task?.id, isAdmin]);
 
     const fetchUsers = async () => {
         try {
@@ -83,15 +89,23 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
         }
     };
 
-    // Optimistic UI update before API request completes
+    // Instant update handler for admin overrides
     const handleInstantUpdate = async (field: 'priority' | 'assigneeId', value: any) => {
-        const originalValue = task![field];
-        onUpdate({ ...task!, [field]: value });
-
         try {
             if (field === 'assigneeId') {
+                const selectedUser = value ? users.find(u => u.id === value) : null;
+                const updatedTask: TaskItemResponse = {
+                    ...task!,
+                    assigneeId: value,
+                    assigneeFirstName: selectedUser ? selectedUser.firstName : null,
+                    assigneeLastName: selectedUser ? selectedUser.lastName : null,
+                    assigneeAvatarUrl: selectedUser ? selectedUser.avatarUrl : null
+                };
+
                 await taskService.changeAssignee(task!.id, value);
+                onUpdate(updatedTask);
                 toast.success(t.modals.taskDetails.assignSuccess);
+                onClose();
             } else {
                 const updated = await taskService.update(task!.id, {
                     title: task!.title,
@@ -104,7 +118,6 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                 toast.success(t.modals.taskDetails.prioritySuccess);
             }
         } catch (err) {
-            onUpdate({ ...task!, [field]: originalValue });
             handleApiError(err);
         }
     };

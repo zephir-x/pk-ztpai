@@ -54,13 +54,26 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 - [x] **End-to-End Localization (i18n)**:
   - Backend request localization via `Accept-Language` header, localized DTO validation errors, and bilingual service exception messages.
   - Comprehensive frontend translation dictionary across all modals, pages, tabs, toasts, and dynamic browser page titles.
-- [ ] **Notifications & Messaging System (New Entity)**:
-  - Users receive alerts for task assignments, mentions, or comments.
-  - Users can send messages/support requests directly to Administrators.
-  - Administrators have a dedicated Notifications view to read and manage messages received from users or mentions.
+- [x] **Notifications & Messaging System (New Entity)**:
+  - `Notification` entity with PostgreSQL soft-delete, indexes, and EF Core migration `AddNotificationsSystem`.
+  - MediatR + SignalR pipeline: `@admin` and `@username` (matching email prefixes with dot handling) trigger persistent notifications and live WebSocket broadcasts.
+  - Task assignment and reassignment notifications (`TaskAssigned`).
+  - Direct Messaging (`DirectMessage`): Users send messages to Administrators; Administrators reply directly to users.
+  - `NotificationsController` with complete RESTful endpoints for feed, badge count, mark as read, mark all as read, delete, and direct messaging.
+  - Global `NotificationContext` with SignalR group management, real-time toast delivery, and sidebar unread badge.
+  - `Notifications` view with role differentiation (contact form for users, reply panel for admins) and deep linking to Kanban board with automatic task modal popup.
+  - Dynamic template-based i18n localization for notification titles and descriptions, preserving live user messages across language switches.
+  - Automated initial notifications seeding for seeded users (`@frontend.dev`, `@admin`, task assignment).
+  - Deep-link task modal integration in My Tasks view directly navigating to the details tab.
+  - Instant assignee modal closure and Kanban board assignee name and avatar update without page reload.
 
-### [ ] Stage 9: Glassmorphism Redesign
-- [ ] Overhaul the entire UI to a "Glassmorphism in shades of gray" design. Discard the basic layout in favor of a deeply polished, translucent grayscale esthetic (based on reference images to be provided) and set of animations / visual corrections.
+### [ ] Stage 9: Stress Testing, Data Scaling & Glassmorphism Redesign
+- [ ] **High-Volume Data Stress Testing & Layout Optimization**:
+  - Temporarily inject large-scale mock datasets via seeder (high volume of comments, projects, tasks, users, and notifications).
+  - Verify and stress-test layout responsiveness, text wrapping, horizontal/vertical scrollbars, virtual lists, and pagination behaviors.
+  - Implement structural corrections and performance optimizations across high-density views (Kanban columns, comment threads, task tables, user lists).
+- [ ] **Glassmorphism Redesign**:
+  - Overhaul the entire UI to a "Glassmorphism in shades of gray" design. Discard the basic layout in favor of a deeply polished, translucent grayscale esthetic (based on reference images to be provided) and set of animations / visual corrections.
 
 ### [ ] Stage 10: Quality Assurance & Deployment
 - [ ] Minimum 5 unit tests isolating Domain/Service logic (Rules 1, 2, 3).
@@ -75,16 +88,18 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 * **Formatting:** Strictly NO emojis in code, documentation, or chat.
 
 ## 8. Recent Modifications & Reflections
-* **Kanban & Comments Assignee / Author Integration:**
-  - Extended `TaskItemResponse` with `AssigneeFirstName`, `AssigneeLastName`, and `AssigneeAvatarUrl`. Projected across `TaskItemService` queries and SignalR events.
-  - Replaced the static "AS" badge on Kanban cards with the actual assignee `Avatar` component and their first name (leaving only the avatar if no first name is set; showing `?` if unassigned).
-  - Extended `CommentResponse` with `AuthorFirstName`, `AuthorLastName`, and `AuthorAvatarUrl`. Updated `CommentService` to project these fields.
-  - Replaced raw "User {id}" label in `TaskDetailsModal` with the author's avatar and full name.
+* **Notifications & Messaging System Integration:**
+  - Designed and deployed full-stack notification infrastructure: PostgreSQL entity, EF Core migration, and SignalR personal group dispatching.
+  - Asynchronous mention processing via `CommentCreatedEventHandler` supporting `@admin` and `@username` (matching email prefixes, including dots, e.g. `@kacper.gumulak`).
+  - Direct messaging between regular users and system administrators with inline response capabilities.
+  - Deep linking from notifications to the project Kanban board, automatically loading project state and opening the task modal in details or comments mode.
+  - Deep linking from My Tasks directly opening the task modal on the details tab.
+  - Instant assignee update in task modal closing the modal and updating assignee name and avatar on Kanban board immediately without reload.
+  - Dynamic i18n localization templates ensuring real-time notification translation synchronization without hardcoded strings in database records.
+  - Real-time unread badge counter integrated seamlessly into the navigation sidebar between My Tasks and Settings.
 * **Comprehensive Bilingual Localization (i18n):**
   - Backend: Added `app.UseRequestLocalization` supporting `en` and `pl`. Created `LocalizationMessages` for bilingual FluentValidation rules and service exception details based on `CultureInfo.CurrentUICulture`.
   - Frontend: Configured `axiosClient` to automatically attach `Accept-Language: localStorage.getItem('app_language') || 'en'` on every HTTP request.
-  - Expanded `src/i18n` with full translations for all modals (`WorkspaceModal`, `ProjectModal`, `CreateTaskModal`, `TaskDetailsModal`, `UserModal`) and pages (`WorkspaceDetails`, `ProjectKanban`, `Auth`, `Dashboard`, `MyTasks`, `AdminPanel`, `Settings`).
-  - Synced `LanguageContext` directly with the user profile on login and profile reload.
-  - Unified dynamic browser tab titles (`usePageTitle`) across all views to update synchronously upon language toggle.
-* **Database Seeder Scale-up:** Dynamic GUIDs simulate a realistic organizational structure with multiple workspaces, projects, users, tasks, and comments.
+  - Expanded `src/i18n` with full translations for all modals, pages, toasts, and dynamic browser page titles.
+* **Database Seeder Scale-up:** Dynamic GUIDs simulate a realistic organizational structure with multiple workspaces, projects, users, tasks, comments, and initial notifications.
 * **Soft Delete Architecture:** Integrated an EF Core `ISoftDeletable` system with query filters.
