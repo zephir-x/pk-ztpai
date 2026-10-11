@@ -5,6 +5,7 @@ using ProjectHub.Api.Domain.Exceptions;
 using ProjectHub.Api.DTOs.Users;
 using ProjectHub.Api.Infrastructure.Authentication;
 using ProjectHub.Api.Infrastructure.Data;
+using ProjectHub.Api.Infrastructure.Localization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,14 +25,72 @@ public class UserService : IUserService
         _passwordHasher = passwordHasher;
     }
 
-    // Retrieves all active users ordered by creation date
+    // Retrieves all active users ordered by role (Administrators first) and creation timestamp
     public async Task<IEnumerable<UserResponse>> GetAllAsync(CancellationToken ct = default)
     {
         return await _context.Users
             .AsNoTracking()
-            .OrderByDescending(u => u.CreatedAt)
-            .Select(u => new UserResponse(u.Id, u.Email, u.Role, u.CreatedAt))
+            .OrderBy(u => u.Role == UserRole.Admin ? 0 : 1)
+            .ThenBy(u => u.CreatedAt)
+            .Select(u => new UserResponse(u.Id, u.Email, u.Role, u.FirstName, u.LastName, u.AvatarUrl, u.CreatedAt))
             .ToListAsync(ct);
+    }
+
+    // Retrieves the current authenticated user's profile and preferences
+    public async Task<UserProfileResponse> GetProfileAsync(Guid userId, CancellationToken ct = default)
+    {
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, ct)
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("User", userId));
+
+        return new UserProfileResponse(
+            user.Id,
+            user.Email,
+            user.Role,
+            user.FirstName,
+            user.LastName,
+            user.AvatarUrl,
+            user.Language,
+            user.AccentColor,
+            user.CreatedAt);
+    }
+
+    // Updates personal details, theme preferences, and credentials for the current user
+    public async Task<UserProfileResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken ct = default)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, ct)
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("User", userId));
+
+        // Handle password change request when new password is submitted
+        if (!string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            if (string.IsNullOrWhiteSpace(request.CurrentPassword) || !_passwordHasher.Verify(request.CurrentPassword, user.PasswordHash))
+            {
+                throw new ConflictException(LocalizationMessages.CurrentPasswordIncorrect);
+            }
+
+            user.PasswordHash = _passwordHasher.Hash(request.NewPassword);
+        }
+
+        user.FirstName = request.FirstName?.Trim() ?? string.Empty;
+        user.LastName = request.LastName?.Trim() ?? string.Empty;
+        user.AvatarUrl = string.IsNullOrWhiteSpace(request.AvatarUrl) ? "anonymous" : request.AvatarUrl;
+        user.Language = request.Language;
+        user.AccentColor = request.AccentColor;
+
+        await _context.SaveChangesAsync(ct);
+
+        return new UserProfileResponse(
+            user.Id,
+            user.Email,
+            user.Role,
+            user.FirstName,
+            user.LastName,
+            user.AvatarUrl,
+            user.Language,
+            user.AccentColor,
+            user.CreatedAt);
     }
 
     // Creates a new system user with securely hashed credentials
@@ -42,7 +101,7 @@ public class UserService : IUserService
         // Enforce email uniqueness at the database level to prevent login conflicts
         if (await _context.Users.AnyAsync(u => u.Email == request.Email, ct))
         {
-            throw new ConflictException("User with this email already exists.");
+            throw new ConflictException(LocalizationMessages.UserAlreadyExists);
         }
 
         var user = new User
@@ -51,31 +110,31 @@ public class UserService : IUserService
             Email = request.Email,
             PasswordHash = _passwordHasher.Hash(request.Password),
             Role = request.Role,
+            FirstName = request.FirstName?.Trim() ?? string.Empty,
+            LastName = request.LastName?.Trim() ?? string.Empty,
+            AvatarUrl = string.IsNullOrWhiteSpace(request.AvatarUrl) ? "anonymous" : request.AvatarUrl,
             CreatedAt = DateTime.UtcNow
         };
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync(ct);
 
-        return new UserResponse(user.Id, user.Email, user.Role, user.CreatedAt);
+        return new UserResponse(user.Id, user.Email, user.Role, user.FirstName, user.LastName, user.AvatarUrl, user.CreatedAt);
     }
 
-    // Updates user details and resets password if requested by the administrator
+    // Updates user details and resets password if requested by the administrator (email remains immutable)
     public async Task UpdateAsync(Guid id, UpdateUserRequest request, Guid adminId, UserRole role, CancellationToken ct = default)
     {
         ValidateAdminAccess(role);
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id, ct) 
-            ?? throw new NotFoundException($"User with ID {id} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("User", id));
 
-        // Verify that the new email does not collide with an existing account
-        if (user.Email != request.Email && await _context.Users.AnyAsync(u => u.Email == request.Email, ct))
-        {
-            throw new ConflictException("User with this email already exists.");
-        }
-
-        user.Email = request.Email;
         user.Role = request.Role;
+
+        if (request.FirstName != null) user.FirstName = request.FirstName.Trim();
+        if (request.LastName != null) user.LastName = request.LastName.Trim();
+        if (!string.IsNullOrWhiteSpace(request.AvatarUrl)) user.AvatarUrl = request.AvatarUrl;
 
         // Apply new hashed password only if explicitly provided in the request
         if (!string.IsNullOrWhiteSpace(request.Password))
@@ -94,24 +153,22 @@ public class UserService : IUserService
         // Prevent self-deletion to guarantee at least one active administrator remains
         if (id == adminId)
         {
-            throw new ConflictException("You cannot delete your own admin account.");
+            throw new ConflictException(LocalizationMessages.CannotDeleteOwnAccount);
         }
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id, ct) 
-            ?? throw new NotFoundException($"User with ID {id} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("User", id));
 
         _context.Users.Remove(user);
-        
-        // EF Core interceptor intercepts the Remove call and applies IsDeleted = true
         await _context.SaveChangesAsync(ct);
     }
 
-    // Confirms that the caller has administrative privileges
+    // Verifies that the initiating caller holds administrative privileges
     private static void ValidateAdminAccess(UserRole role)
     {
         if (role != UserRole.Admin)
         {
-            throw new ForbiddenException("Only administrators can manage users.");
+            throw new ForbiddenException(LocalizationMessages.AdminOnlyOperation);
         }
     }
 }

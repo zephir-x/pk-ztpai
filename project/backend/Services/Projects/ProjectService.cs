@@ -6,6 +6,11 @@ using ProjectHub.Api.DTOs.Common;
 using ProjectHub.Api.DTOs.Projects;
 using ProjectHub.Api.Infrastructure.Data;
 using ProjectHub.Api.Infrastructure.Extensions;
+using ProjectHub.Api.Infrastructure.Localization;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ProjectHub.Api.Services.Projects;
 
@@ -54,7 +59,7 @@ public class ProjectService : IProjectService
         var project = await _context.Projects
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id, ct) 
-            ?? throw new NotFoundException($"Project with ID {id} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Project", id));
 
         return new ProjectResponse(project.Id, project.Name, project.Description, project.ThemeColor, project.WorkspaceId, project.CreatedAt);
     }
@@ -86,7 +91,7 @@ public class ProjectService : IProjectService
         var project = await _context.Projects
             .Include(p => p.Tasks).ThenInclude(t => t.Comments)
             .FirstOrDefaultAsync(p => p.Id == id, ct) 
-            ?? throw new NotFoundException($"Project with ID {id} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Project", id));
 
         await ValidateWorkspaceAccessAsync(project.WorkspaceId, userId, role, ct);
 
@@ -101,7 +106,7 @@ public class ProjectService : IProjectService
     public async Task DeleteAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var project = await _context.Projects.Include(p => p.Tasks).ThenInclude(t => t.Comments).FirstOrDefaultAsync(p => p.Id == id, ct) 
-            ?? throw new NotFoundException($"Project with ID {id} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Project", id));
 
         await ValidateWorkspaceAccessAsync(project.WorkspaceId, userId, role, ct);
 
@@ -112,7 +117,7 @@ public class ProjectService : IProjectService
 
         if (hasCriticalUnresolvedTasks)
         {
-            throw new ConflictException("Cannot delete a project that contains unresolved critical tasks.");
+            throw new ConflictException(LocalizationMessages.CannotDeleteProjectCriticalTasks);
         }
 
         _context.Projects.Remove(project);
@@ -127,11 +132,11 @@ public class ProjectService : IProjectService
         var workspace = await _context.Workspaces
             .AsNoTracking()
             .FirstOrDefaultAsync(w => w.Id == workspaceId, ct)
-            ?? throw new NotFoundException($"Workspace with ID {workspaceId} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Workspace", workspaceId));
 
         if (workspace.OwnerId != userId)
         {
-            throw new ForbiddenException("You do not have permission to access projects in this workspace.");
+            throw new ForbiddenException(LocalizationMessages.NoProjectPermission);
         }
     }
 }

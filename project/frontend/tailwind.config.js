@@ -1,4 +1,4 @@
-/** @type {import('tailwindcss').Config} */
+﻿/** @type {import('tailwindcss').Config} */
 export default {
   content: [
     "./index.html",
@@ -13,9 +13,9 @@ export default {
           dark: '#1f2937', // Gray 800
         },
         fiery: {
-          light: '#fbbf24', // Amber 400
-          DEFAULT: '#f97316', // Orange 500
-          dark: '#ea580c', // Orange 600
+          light: 'rgb(var(--accent-light-rgb, 251 191 36) / <alpha-value>)',
+          DEFAULT: 'rgb(var(--accent-rgb, 249 115 22) / <alpha-value>)',
+          dark: 'rgb(var(--accent-dark-rgb, 234 88 12) / <alpha-value>)',
         },
         glass: {
           DEFAULT: 'rgba(255, 255, 255, 0.7)',

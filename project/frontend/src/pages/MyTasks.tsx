@@ -4,11 +4,13 @@ import { taskService } from '../api/taskService';
 import { type MyTaskResponse, ProjectTaskStatus, TaskPriority } from '../types/api';
 import { THEME_COLOR_MAP } from '../components/modals/WorkspaceModal';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useTranslation } from '../context/LanguageContext';
 import { CheckSquare, ArrowRight, LayoutGrid, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function MyTasks() {
-    usePageTitle('My Tasks');
+    const { t } = useTranslation();
+    usePageTitle(t.myTasks.title);
     const navigate = useNavigate();
 
     const [tasks, setTasks] = useState<MyTaskResponse[]>([]);
@@ -24,7 +26,7 @@ export default function MyTasks() {
             const data = await taskService.getMyTasks();
             setTasks(data);
         } catch {
-            toast.error('Failed to retrieve your tasks.');
+            toast.error(t.myTasks.fetchError);
         } finally {
             setIsLoading(false);
         }
@@ -42,42 +44,42 @@ export default function MyTasks() {
 
     const getPriorityLabel = (priority: TaskPriority) => {
         switch (priority) {
-            case TaskPriority.Critical: return 'CRITICAL';
-            case TaskPriority.High: return 'HIGH';
-            case TaskPriority.Medium: return 'MEDIUM';
-            case TaskPriority.Low: return 'LOW';
-            default: return 'UNKNOWN';
+            case TaskPriority.Critical: return t.projectKanban.priorities.critical;
+            case TaskPriority.High: return t.projectKanban.priorities.high;
+            case TaskPriority.Medium: return t.projectKanban.priorities.medium;
+            case TaskPriority.Low: return t.projectKanban.priorities.low;
+            default: return t.projectKanban.priorities.unknown;
         }
     };
 
     const getStatusLabel = (status: ProjectTaskStatus) => {
         switch (status) {
-            case ProjectTaskStatus.ToDo: return 'To Do';
-            case ProjectTaskStatus.InProgress: return 'In Progress';
-            case ProjectTaskStatus.Review: return 'Review';
-            case ProjectTaskStatus.Done: return 'Done';
-            default: return 'Unknown';
+            case ProjectTaskStatus.ToDo: return t.projectKanban.columns.todo;
+            case ProjectTaskStatus.InProgress: return t.projectKanban.columns.inProgress;
+            case ProjectTaskStatus.Review: return t.projectKanban.columns.review;
+            case ProjectTaskStatus.Done: return t.projectKanban.columns.done;
+            default: return t.projectKanban.priorities.unknown;
         }
     };
 
-    if (isLoading) return <div className="text-gray-500 animate-pulse p-8">Loading your tasks...</div>;
+    if (isLoading) return <div className="text-gray-500 animate-pulse p-8">{t.myTasks.loading}</div>;
 
     return (
         <div className="h-full flex flex-col overflow-y-auto pr-2 pb-8">
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h2 className="text-2xl font-bold text-matte-dark flex items-center gap-2">
-                        <CheckSquare className="text-fiery" /> My Tasks
+                        <CheckSquare className="text-fiery" /> {t.myTasks.title}
                     </h2>
-                    <p className="text-gray-500 text-sm mt-1">All tasks currently assigned to you across workspaces.</p>
+                    <p className="text-gray-500 text-sm mt-1">{t.myTasks.subtitle}</p>
                 </div>
             </div>
 
             {tasks.length === 0 ? (
                 <div className="glass-panel p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-gray-300 mt-4">
                     <CheckSquare size={48} className="text-gray-300 mb-4" />
-                    <h3 className="text-lg font-semibold text-matte-dark mb-2">No assigned tasks</h3>
-                    <p className="text-gray-500 max-w-md">You are all caught up! There are no tasks currently assigned to you.</p>
+                    <h3 className="text-lg font-semibold text-matte-dark mb-2">{t.myTasks.noTasks}</h3>
+                    <p className="text-gray-500 max-w-2xl">{t.myTasks.noTasksDesc}</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -101,22 +103,24 @@ export default function MyTasks() {
                                 </span>
                             </div>
 
-                            <h3 className="text-lg font-bold text-matte-dark mb-2 pl-3 group-hover:text-fiery transition-colors">
+                            <h4 className="text-base font-bold text-matte-dark mb-2 pl-3 group-hover:text-fiery transition-colors line-clamp-2">
                                 {task.title}
-                            </h3>
-                            
-                            <p className="text-sm text-gray-500 line-clamp-2 mb-4 pl-3 flex-1">
-                                {task.description || 'No description provided.'}
-                            </p>
+                            </h4>
 
-                            <div className="flex items-center justify-between border-t border-gray-100 pt-3 mt-auto pl-3">
-                                <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
-                                    <Clock size={14} />
+                            {task.description && (
+                                <p className="text-xs text-gray-500 mb-4 pl-3 line-clamp-2 leading-relaxed">
+                                    {task.description}
+                                </p>
+                            )}
+
+                            <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 pl-3">
+                                <div className="flex items-center gap-1.5">
+                                    <Clock size={13} className="text-gray-400" />
+                                    <span>{new Date(task.createdAt).toLocaleDateString()}</span>
+                                </div>
+                                <span className="font-semibold text-matte-dark bg-gray-100 px-2.5 py-0.5 rounded text-[11px]">
                                     {getStatusLabel(task.status)}
-                                </div>
-                                <div className="text-xs text-gray-400 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    Go to board <ArrowRight size={14} />
-                                </div>
+                                </span>
                             </div>
                         </div>
                     ))}

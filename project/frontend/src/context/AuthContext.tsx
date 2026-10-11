@@ -1,5 +1,10 @@
 ﻿import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { userService } from '../api/userService';
+import { type UserProfileResponse } from '../types/api';
+import { applyAccentColor } from '../constants/theme';
+import { useLanguage } from './LanguageContext';
+import { type SupportedLanguage } from '../i18n/types';
 
 export interface UserPayload {
     id: string;
@@ -10,9 +15,12 @@ export interface UserPayload {
 interface AuthContextType {
     isAuthenticated: boolean;
     user: UserPayload | null;
+    profile: UserProfileResponse | null;
     isAdmin: boolean;
     login: (token: string) => void;
     logout: () => void;
+    refreshProfile: () => Promise<void>;
+    setProfile: React.Dispatch<React.SetStateAction<UserProfileResponse | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,6 +28,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [user, setUser] = useState<UserPayload | null>(null);
+    const [profile, setProfile] = useState<UserProfileResponse | null>(null);
+    const { setLanguage } = useLanguage();
+
+    // Default to the fiery brand accent for initial non-authenticated states
+    useEffect(() => {
+        if (!token) {
+            applyAccentColor('fiery');
+        }
+    }, [token]);
+
+    // Refresh profile from backend
+    const refreshProfile = async () => {
+        try {
+            const data = await userService.getProfile();
+            setProfile(data);
+            // Apply user custom accent color after authenticated profile fetch
+            if (data.accentColor) {
+                applyAccentColor(data.accentColor);
+            }
+            if (data.language === 'en' || data.language === 'pl') {
+                setLanguage(data.language as SupportedLanguage);
+            }
+        } catch (err) {
+            console.error('Failed to retrieve user profile:', err);
+        }
+    };
 
     // Decode and synchronize user payload whenever authentication token changes
     useEffect(() => {
@@ -33,13 +67,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decoded.role;
 
                 setUser({ id, email, role });
+                refreshProfile();
             } catch {
-                console.error("Invalid token format.");
-                // Invalidate session on malformed token
-                logout(); 
+                console.error('Invalid token format.');
+                logout();
             }
         } else {
             setUser(null);
+            setProfile(null);
+            applyAccentColor('fiery');
         }
     }, [token]);
 
@@ -51,13 +87,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logout = () => {
         localStorage.removeItem('token');
         setToken(null);
+        setProfile(null);
+        applyAccentColor('fiery');
     };
 
     // Evaluate administrative privileges globally
     const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated: !!token, user, isAdmin, login, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated: !!token, user, profile, isAdmin, login, logout, refreshProfile, setProfile }}>
             {children}
         </AuthContext.Provider>
     );

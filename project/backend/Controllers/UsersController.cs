@@ -19,15 +19,18 @@ public class UsersController : ControllerBase
     private readonly IUserService _userService;
     private readonly IValidator<CreateUserRequest> _createValidator;
     private readonly IValidator<UpdateUserRequest> _updateValidator;
+    private readonly IValidator<UpdateProfileRequest> _profileValidator;
 
     public UsersController(
         IUserService userService, 
         IValidator<CreateUserRequest> createValidator,
-        IValidator<UpdateUserRequest> updateValidator)
+        IValidator<UpdateUserRequest> updateValidator,
+        IValidator<UpdateProfileRequest> profileValidator)
     {
         _userService = userService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
+        _profileValidator = profileValidator;
     }
 
     [HttpGet]
@@ -37,12 +40,27 @@ public class UsersController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("me")]
+    public async Task<IActionResult> GetProfile(CancellationToken ct)
+    {
+        var response = await _userService.GetProfileAsync(GetUserId(), ct);
+        return Ok(response);
+    }
+
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken ct)
+    {
+        await _profileValidator.ValidateAndThrowAsync(request, cancellationToken: ct);
+        var response = await _userService.UpdateProfileAsync(GetUserId(), request, ct);
+        return Ok(response);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserRequest request, CancellationToken ct)
     {
         await _createValidator.ValidateAndThrowAsync(request, cancellationToken: ct);
         var response = await _userService.CreateAsync(request, GetUserId(), GetUserRole(), ct);
-        return StatusCode(201, response); // Returns 201 Created
+        return StatusCode(201, response);
     }
 
     [HttpPut("{id:guid}")]

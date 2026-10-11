@@ -2,6 +2,7 @@
 import { X, Check } from 'lucide-react';
 import { projectService } from '../../api/projectService';
 import { type ProjectResponse, ThemeColor } from '../../types/api';
+import { useTranslation } from '../../context/LanguageContext';
 import { AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
 import { THEME_COLOR_MAP } from './WorkspaceModal';
@@ -17,6 +18,7 @@ interface ProjectModalProps {
 }
 
 export const ProjectModal = ({ isOpen, onClose, onSaved, workspaceId, initialData }: ProjectModalProps) => {
+    const { t } = useTranslation();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [themeColor, setThemeColor] = useState<ThemeColor>(ThemeColor.Blue);
@@ -43,11 +45,11 @@ export const ProjectModal = ({ isOpen, onClose, onSaved, workspaceId, initialDat
             if (initialData) {
                 await projectService.update(initialData.id, name, description || null, themeColor);
                 onSaved({ ...initialData, name, description: description || null, themeColor }, true);
-                toast.success('The project has been updated.');
+                toast.success(t.modals.project.updateSuccess);
             } else {
                 const newProject = await projectService.create(name, description || null, themeColor, workspaceId);
                 onSaved(newProject, false);
-                toast.success('The project has been successfully created.');
+                toast.success(t.modals.project.createSuccess);
             }
             onClose();
         } catch (err) {
@@ -56,10 +58,10 @@ export const ProjectModal = ({ isOpen, onClose, onSaved, workspaceId, initialDat
                 if (data.errors) {
                     setError(Object.values(data.errors).flat().join(' '));
                 } else {
-                    setError(data.message || 'A write error occurred.');
+                    setError(data.message || data.detail || t.workspaceDetails.deleteError);
                 }
             } else {
-                setError('An unexpected error occurred.');
+                setError(t.modals.taskDetails.apiErrors.serverError);
             }
         } finally {
             setIsLoading(false);
@@ -77,7 +79,7 @@ export const ProjectModal = ({ isOpen, onClose, onSaved, workspaceId, initialDat
                 </button>
 
                 <h3 className="text-xl font-bold text-matte-dark mb-4">
-                    {initialData ? 'Edit Project' : 'Create New Project'}
+                    {initialData ? t.modals.project.editTitle : t.modals.project.createTitle}
                 </h3>
 
                 {error && (
@@ -88,32 +90,32 @@ export const ProjectModal = ({ isOpen, onClose, onSaved, workspaceId, initialDat
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-semibold text-matte-dark mb-1">Project Name</label>
+                        <label className="block text-sm font-semibold text-matte-dark mb-1">{t.modals.project.nameLabel}</label>
                         <input
                             type="text"
                             required
                             className="input-glass"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Website Redesign"
+                            placeholder={t.modals.project.namePlaceholder}
                             maxLength={100}
                         />
                     </div>
                     
                     <div>
-                        <label className="block text-sm font-semibold text-matte-dark mb-1">Description (Optional)</label>
+                        <label className="block text-sm font-semibold text-matte-dark mb-1">{t.modals.project.descriptionLabel}</label>
                         <textarea
                             className="input-glass resize-none"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Briefly describe the project..."
+                            placeholder={t.modals.project.descriptionPlaceholder}
                             rows={3}
                             maxLength={500}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-matte-dark mb-2">Theme Color</label>
+                        <label className="block text-sm font-semibold text-matte-dark mb-2">{t.modals.project.themeColorLabel}</label>
                         <div className="flex gap-3">
                             {THEME_COLORS.map(colorEnum => (
                                 <button
@@ -135,14 +137,14 @@ export const ProjectModal = ({ isOpen, onClose, onSaved, workspaceId, initialDat
                             onClick={onClose}
                             className="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-colors"
                         >
-                            Cancel
+                            {t.common.cancel}
                         </button>
                         <button
                             type="submit"
                             disabled={isLoading || !name.trim()}
                             className="btn-fiery"
                         >
-                            {isLoading ? 'Saving...' : (initialData ? 'Save Changes' : 'Create Project')}
+                            {isLoading ? t.common.saving : (initialData ? t.common.save : t.common.create)}
                         </button>
                     </div>
                 </form>

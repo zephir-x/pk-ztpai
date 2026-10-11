@@ -1,14 +1,21 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosClient } from '../api/axiosClient';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/LanguageContext';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { applyAccentColor } from '../constants/theme';
 import { AxiosError } from 'axios';
 
 export default function Auth() {
-    // State determining which form is active (default: Login)
+    const { t } = useTranslation();
     const [isLogin, setIsLogin] = useState(true);
-    usePageTitle(isLogin ? 'Sign In' : 'Sign Up');
+    usePageTitle(isLogin ? t.auth.signIn : t.auth.signUp);
+
+    // Always enforce the default fiery orange brand theme on authentication screen
+    useEffect(() => {
+        applyAccentColor('fiery');
+    }, []);
 
     // Form
     const [email, setEmail] = useState('');
@@ -33,7 +40,7 @@ export default function Auth() {
         setError(null);
 
         if (!isLogin && password !== confirmPassword) {
-            setError("Passwords do not match.");
+            setError(t.auth.passwordsMismatch);
             return;
         }
 
@@ -56,12 +63,15 @@ export default function Auth() {
             if (err instanceof AxiosError && err.response?.data) {
                 const data = err.response.data;
                 if (data.errors) {
-                    setError(Object.values(data.errors).flat().join(' '));
+                    const errorList = Object.values(data.errors).flat() as string[];
+                    setError(errorList[0] || t.auth.unexpectedError);
                 } else if (data.message) {
                     setError(data.message);
+                } else if (data.detail) {
+                    setError(data.detail);
                 }
             } else {
-                setError('An unexpected error occurred. Please try again.');
+                setError(t.auth.unexpectedError);
             }
         } finally {
             setIsLoading(false);
@@ -85,10 +95,10 @@ export default function Auth() {
                             <div className="text-center mb-8">
                                 <img src="/logo.png" alt="ProjectHub Logo" className="w-20 h-auto mx-auto mb-6 drop-shadow-sm" />
                                 <h2 className="text-3xl font-bold text-matte-dark">
-                                    Welcome back
+                                    {t.auth.welcomeBack}
                                 </h2>
                                 <p className="text-gray-500 mt-2">
-                                    Sign in to access your workspaces
+                                    {t.auth.welcomeBackSubtitle}
                                 </p>
                             </div>
 
@@ -100,19 +110,19 @@ export default function Auth() {
 
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-matte-dark mb-1">Email Address</label>
+                                    <label className="block text-sm font-semibold text-matte-dark mb-1">{t.auth.email}</label>
                                     <input
                                         type="email"
                                         required
                                         className="input-glass"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="name@company.com"
+                                        placeholder={t.auth.emailPlaceholder}
                                     />
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-sm font-semibold text-matte-dark">Password</label>
+                                        <label className="block text-sm font-semibold text-matte-dark">{t.auth.password}</label>
                                     </div>
                                     <input
                                         type="password"
@@ -120,12 +130,12 @@ export default function Auth() {
                                         className="input-glass"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••"
+                                        placeholder={t.auth.passwordPlaceholder}
                                     />
                                 </div>
 
                                 <button type="submit" disabled={isLoading} className="btn-fiery w-full mt-4 py-3 text-base">
-                                    {isLoading ? 'Processing...' : 'Sign In'}
+                                    {isLoading ? t.auth.processing : t.auth.signInBtn}
                                 </button>
                             </form>
                         </div>
@@ -135,10 +145,10 @@ export default function Auth() {
                             <div className="text-center mb-8">
                                 <img src="/logo.png" alt="ProjectHub Logo" className="w-20 h-auto mx-auto mb-6 drop-shadow-sm" />
                                 <h2 className="text-3xl font-bold text-matte-dark">
-                                    Create Account
+                                    {t.auth.createAccount}
                                 </h2>
                                 <p className="text-gray-500 mt-2">
-                                    Set up your profile in seconds
+                                    {t.auth.createAccountSubtitle}
                                 </p>
                             </div>
 
@@ -150,19 +160,19 @@ export default function Auth() {
 
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-matte-dark mb-1">Email Address</label>
+                                    <label className="block text-sm font-semibold text-matte-dark mb-1">{t.auth.email}</label>
                                     <input
                                         type="email"
                                         required
                                         className="input-glass"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="name@company.com"
+                                        placeholder={t.auth.emailPlaceholder}
                                     />
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-sm font-semibold text-matte-dark">Password</label>
+                                        <label className="block text-sm font-semibold text-matte-dark">{t.auth.password}</label>
                                     </div>
                                     <input
                                         type="password"
@@ -170,13 +180,13 @@ export default function Auth() {
                                         className="input-glass"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="Min. 8 chars (A-Z, a-z, 0-9)"
+                                        placeholder={t.auth.passwordPlaceholder}
                                     />
                                 </div>
                                 
                                 <div>
                                     <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-sm font-semibold text-matte-dark">Confirm Password</label>
+                                        <label className="block text-sm font-semibold text-matte-dark">{t.auth.confirmPassword}</label>
                                     </div>
                                     <input
                                         type="password"
@@ -188,12 +198,12 @@ export default function Auth() {
                                         )}
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="••••••••"
+                                        placeholder={t.auth.confirmPasswordPlaceholder}
                                     />
                                 </div>
 
                                 <button type="submit" disabled={isLoading} className="btn-fiery w-full mt-4 py-3 text-base">
-                                    {isLoading ? 'Processing...' : 'Sign Up'}
+                                    {isLoading ? t.auth.processing : t.auth.signUpBtn}
                                 </button>
                             </form>
                         </div>
@@ -202,31 +212,31 @@ export default function Auth() {
                 
                 {/* Background Text for Login (Left Side) */}
                 <div className={`w-1/2 h-full flex flex-col items-center justify-center p-12 text-center z-10 transition-opacity duration-700 ${isLogin ? 'opacity-100' : 'opacity-0'}`}>
-                    <h2 className="text-4xl font-extrabold text-white tracking-wide mb-4">Passionately Curious.</h2>
+                    <h2 className="text-4xl font-extrabold text-white tracking-wide mb-4">{t.auth.heroLoginTitle}</h2>
                     <p className="text-gray-400 text-lg mb-8">
-                        Manage your projects with extreme precision. Experience the clarity of thought and execution.
+                        {t.auth.heroLoginSubtitle}
                     </p>
-                    <p className="text-gray-500 text-sm">Don't have an account yet?</p>
+                    <p className="text-gray-500 text-sm">{t.auth.noAccountYet}</p>
                     <button
                         onClick={toggleMode}
                         className="mt-4 px-8 py-2 rounded-full border border-gray-500 text-white hover:border-fiery hover:text-fiery transition-colors duration-300"
                     >
-                        Switch to Sign Up
+                        {t.auth.switchToSignUp}
                     </button>
                 </div>
                 
                 {/* Background Text for Registration (Right Side) */}
                 <div className={`w-1/2 h-full flex flex-col items-center justify-center p-12 text-center z-10 transition-opacity duration-700 ${!isLogin ? 'opacity-100' : 'opacity-0'}`}>
-                    <h2 className="text-4xl font-extrabold text-white tracking-wide mb-4">Built for Teams.</h2>
+                    <h2 className="text-4xl font-extrabold text-white tracking-wide mb-4">{t.auth.heroRegisterTitle}</h2>
                     <p className="text-gray-400 text-lg mb-8">
-                        Join ProjectHub and bring order to chaos. Your workspaces await.
+                        {t.auth.heroRegisterSubtitle}
                     </p>
-                    <p className="text-gray-500 text-sm">Already part of the team?</p>
+                    <p className="text-gray-500 text-sm">{t.auth.alreadyHaveAccount}</p>
                     <button
                         onClick={toggleMode}
                         className="mt-4 px-8 py-2 rounded-full border border-gray-500 text-white hover:border-fiery hover:text-fiery transition-colors duration-300"
                     >
-                        Switch to Sign In
+                        {t.auth.switchToSignIn}
                     </button>
                 </div>
 

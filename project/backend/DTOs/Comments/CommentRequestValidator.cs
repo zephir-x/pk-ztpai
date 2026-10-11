@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using ProjectHub.Api.Infrastructure.Localization;
 
 namespace ProjectHub.Api.DTOs.Comments;
 
@@ -7,11 +8,11 @@ public class CreateCommentRequestValidator : AbstractValidator<CreateCommentRequ
     public CreateCommentRequestValidator()
     {
         RuleFor(x => x.Content)
-            .NotEmpty().WithMessage("Comment content is required.")
-            .MaximumLength(1000).WithMessage("Comment cannot exceed 1000 characters.");
+            .NotEmpty().WithMessage(_ => LocalizationMessages.CommentContentRequired)
+            .MaximumLength(1000).WithMessage(_ => LocalizationMessages.CommentContentMax(1000));
 
         RuleFor(x => x.TaskItemId)
-            .NotEmpty().WithMessage("Task ID is required.");
+            .NotEmpty().WithMessage(_ => LocalizationMessages.TaskIdRequired);
     }
 }
 
@@ -20,7 +21,7 @@ public class UpdateCommentRequestValidator : AbstractValidator<UpdateCommentRequ
     public UpdateCommentRequestValidator()
     {
         RuleFor(x => x.Content)
-            .NotEmpty().WithMessage("Comment content is required.")
-            .MaximumLength(1000).WithMessage("Comment cannot exceed 1000 characters.");
+            .NotEmpty().WithMessage(_ => LocalizationMessages.CommentContentRequired)
+            .MaximumLength(1000).WithMessage(_ => LocalizationMessages.CommentContentMax(1000));
     }
 }

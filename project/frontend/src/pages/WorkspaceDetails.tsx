@@ -1,44 +1,41 @@
 import { useEffect, useState } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { projectService } from '../api/projectService';
 import { type ProjectResponse } from '../types/api';
 import { ProjectModal } from '../components/modals/ProjectModal';
 import { THEME_COLOR_MAP } from '../components/modals/WorkspaceModal';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/LanguageContext';
 import { LayoutGrid, Plus, ArrowLeft, Edit2, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function WorkspaceDetails() {
     const { workspaceId } = useParams<{ workspaceId: string }>();
-    const location = useLocation();
     const navigate = useNavigate();
     const { isAdmin } = useAuth();
-
-    // Fallback to default name if accessed directly without router state
-    const workspaceName = location.state?.workspaceName || 'Workspace';
-
-    usePageTitle(workspaceName + ' Projects');
+    const { t } = useTranslation();
+    usePageTitle(t.workspaceDetails.pageTitle);
 
     const [projects, setProjects] = useState<ProjectResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editProject, setEditProject] = useState<ProjectResponse | null>(null);
 
-    // Fetch available projects on component mount
+    // Fetch projects scoped to current workspace
     useEffect(() => {
         if (workspaceId) {
             fetchProjects(workspaceId);
         }
     }, [workspaceId]);
 
-    const fetchProjects = async (id: string) => {
+    const fetchProjects = async (wsId: string) => {
         try {
             setIsLoading(true);
-            const data = await projectService.getByWorkspace(id);
+            const data = await projectService.getByWorkspace(wsId);
             setProjects(data);
         } catch {
-            toast.error('Failed to download projects.');
+            toast.error(t.workspaceDetails.fetchError);
         } finally {
             setIsLoading(false);
         }
@@ -53,40 +50,43 @@ export default function WorkspaceDetails() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this project? This operation cannot be undone.')) return;
+        if (!confirm(t.workspaceDetails.deleteConfirm)) return;
         try {
             await projectService.delete(id);
             setProjects(prev => prev.filter(p => p.id !== id));
-            toast.success('The project has been deleted.');
+            toast.success(t.workspaceDetails.deleteSuccess);
         } catch {
-            toast.error('Failed to delete the project.');
+            toast.error(t.workspaceDetails.deleteError);
         }
     };
 
     // Prevent rendering board before data completes loading
-    if (isLoading) return <div className="text-gray-500 animate-pulse p-8">Loading projects...</div>;
+    if (isLoading) return <div className="text-gray-500 animate-pulse p-8">{t.workspaceDetails.loading}</div>;
 
     return (
-        <div>
+        <div className="h-full flex flex-col">
             {/* Top Navigation */}
             <button
                 onClick={() => navigate('/dashboard')}
                 className="flex items-center gap-2 text-sm text-gray-500 hover:text-fiery transition-colors mb-6 font-medium"
             >
                 <ArrowLeft size={16} />
-                Back to Workspaces
+                {t.workspaceDetails.backButton}
             </button>
 
             {/* Header Section */}
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h2 className="text-2xl font-bold text-matte-dark">{workspaceName}</h2>
-                    <p className="text-gray-500 text-sm mt-1">Select a project to view its Kanban board</p>
+                    <h2 className="text-2xl font-bold text-matte-dark flex items-center gap-2">
+                        <LayoutGrid className="text-fiery" /> {t.workspaceDetails.title}
+                    </h2>
+                    <p className="text-gray-500 text-sm mt-1">{t.workspaceDetails.subtitle}</p>
                 </div>
+
                 {isAdmin && (
                     <button onClick={() => { setEditProject(null); setIsModalOpen(true); }} className="btn-fiery flex items-center gap-2">
                         <Plus size={18} />
-                        <span>New Project</span>
+                        <span>{t.workspaceDetails.newProject}</span>
                     </button>
                 )}
             </div>
@@ -95,8 +95,8 @@ export default function WorkspaceDetails() {
             {projects.length === 0 ? (
                 <div className="glass-panel p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-gray-300">
                     <LayoutGrid size={48} className="text-gray-400 mb-4" />
-                    <h3 className="text-lg font-semibold text-matte-dark mb-2">No projects found</h3>
-                    <p className="text-gray-500 max-w-md">This workspace is currently empty.</p>
+                    <h3 className="text-lg font-semibold text-matte-dark mb-2">{t.workspaceDetails.noProjects}</h3>
+                    <p className="text-gray-500 max-w-2xl">{t.workspaceDetails.noProjectsDesc}</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -118,19 +118,15 @@ export default function WorkspaceDetails() {
                                     </button>
                                 </div>
                             )}
-                            <p className="text-sm text-gray-500 line-clamp-2 mb-4">
-                                {project.description || 'No description provided.'}
-                            </p>
-                            <div className="text-xs font-medium text-gray-400">
-                                Opened {new Date(project.createdAt).toLocaleDateString()}
-                            </div>
+                            <p className="text-sm text-gray-500 mb-4 line-clamp-2">{project.description || t.workspaceDetails.noDescription}</p>
+                            <p className="text-xs text-gray-400">{t.workspaceDetails.createdOn} {new Date(project.createdAt).toLocaleDateString()}</p>
                         </div>
                     ))}
                 </div>
             )}
 
             {/* Modals */}
-            {workspaceId && isAdmin && (
+            {isAdmin && workspaceId && (
                 <ProjectModal
                     isOpen={isModalOpen}
                     workspaceId={workspaceId}

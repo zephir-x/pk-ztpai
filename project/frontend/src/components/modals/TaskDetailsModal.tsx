@@ -5,6 +5,8 @@ import { userService } from '../../api/userService';
 import { commentService } from '../../api/commentService';
 import { type TaskItemResponse, TaskPriority, type UserResponse, type CommentResponse } from '../../types/api';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from '../../context/LanguageContext';
+import { Avatar } from '../Avatar';
 import { AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
 import type { ModalViewMode } from '../../pages/ProjectKanban';
@@ -20,6 +22,7 @@ interface TaskDetailsModalProps {
 
 export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate, onDelete }: TaskDetailsModalProps) => {
     const { isAdmin } = useAuth();
+    const { t } = useTranslation();
 
     const [activeTab, setActiveTab] = useState<ModalViewMode>(initialView);
     const [isEditing, setIsEditing] = useState(false);
@@ -50,14 +53,14 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
             const data = await userService.getAll();
             setUsers(data);
         } catch {}
-    }
+    };
 
     const fetchComments = async (taskId: string) => {
         try {
             const data = await commentService.getByTask(taskId);
             setComments(data);
         } catch {}
-    }
+    };
 
     const handleSaveEdits = async () => {
         if (!editTitle.trim()) return;
@@ -72,7 +75,7 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
             });
             onUpdate(updated);
             setIsEditing(false);
-            toast.success('The task details have been updated.');
+            toast.success(t.modals.taskDetails.updateSuccess);
         } catch (err) {
             handleApiError(err);
         } finally {
@@ -88,7 +91,7 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
         try {
             if (field === 'assigneeId') {
                 await taskService.changeAssignee(task!.id, value);
-                toast.success('The user has been assigned to the task.');
+                toast.success(t.modals.taskDetails.assignSuccess);
             } else {
                 const updated = await taskService.update(task!.id, {
                     title: task!.title,
@@ -98,7 +101,7 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                     assigneeId: task!.assigneeId
                 });
                 onUpdate(updated);
-                toast.success('The task priority has been updated.');
+                toast.success(t.modals.taskDetails.prioritySuccess);
             }
         } catch (err) {
             onUpdate({ ...task!, [field]: originalValue });
@@ -108,12 +111,12 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
 
     // Ensure task deletion cascades properly on the frontend list
     const handleDelete = async () => {
-        if (!window.confirm("Are you sure you want to delete this task?")) return;
+        if (!window.confirm(t.modals.taskDetails.deleteConfirm)) return;
         setIsLoading(true);
         try {
             await taskService.delete(task!.id);
             onDelete(task!.id);
-            toast.success('The task has been permanently deleted.');
+            toast.success(t.modals.taskDetails.deleteSuccess);
             onClose();
         } catch (err) {
             handleApiError(err);
@@ -141,11 +144,11 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
     const handleApiError = (err: unknown) => {
         if (err instanceof AxiosError && err.response) {
             const { status, data } = err.response;
-            if (status === 409) toast.error(data?.message || "The operation cannot be performed due to a business logic conflict.");
-            else if (status === 403) toast.error("Only the administrator can perform this activity.");
-            else toast.error(data?.message || "An unexpected server error occurred.");
+            if (status === 409) toast.error(data?.message || data?.detail || t.modals.taskDetails.apiErrors.conflict);
+            else if (status === 403) toast.error(t.modals.taskDetails.apiErrors.forbidden);
+            else toast.error(data?.message || data?.detail || t.modals.taskDetails.apiErrors.serverError);
         } else {
-            toast.error("Server connection error.");
+            toast.error(t.modals.taskDetails.apiErrors.connectionError);
         }
     };
 
@@ -164,20 +167,20 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                             onClick={() => setActiveTab('details')}
                             className={`pb-4 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'details' ? 'border-fiery text-fiery' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
                         >
-                            <AlignLeft size={16} /> Details
+                            <AlignLeft size={16} /> {t.modals.taskDetails.tabs.details}
                         </button>
                         <button
                             onClick={() => setActiveTab('comments')}
                             className={`pb-4 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'comments' ? 'border-fiery text-fiery' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
                         >
-                            <MessageSquare size={16} /> Comments ({comments.length})
+                            <MessageSquare size={16} /> {t.modals.taskDetails.tabs.comments} ({comments.length})
                         </button>
                         {isAdmin && (
                             <button
                                 onClick={() => setActiveTab('admin')}
                                 className={`pb-4 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'admin' ? 'border-red-500 text-red-500' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
                             >
-                                <ShieldAlert size={16} /> Admin
+                                <ShieldAlert size={16} /> {t.modals.taskDetails.tabs.admin}
                             </button>
                         )}
                     </div>
@@ -194,8 +197,8 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                                     <input type="text" className="input-glass border-gray-300 bg-white" value={editTitle} onChange={e => setEditTitle(e.target.value)} />
                                     <textarea className="input-glass border-gray-300 bg-white min-h-[150px] resize-none" value={editDescription} onChange={e => setEditDescription(e.target.value)} />
                                     <div className="flex gap-2 pt-2">
-                                        <button onClick={handleSaveEdits} disabled={isLoading} className="btn-fiery text-sm px-4 py-2 flex items-center gap-2"><Save size={16} /> Save Changes</button>
-                                        <button onClick={() => setIsEditing(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                                        <button onClick={handleSaveEdits} disabled={isLoading} className="btn-fiery text-sm px-4 py-2 flex items-center gap-2"><Save size={16} /> {t.common.save}</button>
+                                        <button onClick={() => setIsEditing(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">{t.common.cancel}</button>
                                     </div>
                                 </div>
                             ) : (
@@ -205,7 +208,7 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                                         {isAdmin && (<button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-fiery transition-colors p-2 rounded hover:bg-gray-200/50"><Edit2 size={16} /></button>)}
                                     </div>
                                     <div className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                                        {task.description || <span className="text-gray-400 italic">No description provided.</span>}
+                                        {task.description || <span className="text-gray-400 italic">{t.modals.taskDetails.noDescription}</span>}
                                     </div>
                                 </div>
                             )}
@@ -217,24 +220,35 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                         <div className="flex flex-col h-full animate-fade-in max-w-2xl">
                             <div className="flex-1 space-y-4 mb-6">
                                 {comments.length === 0 ? (
-                                    <p className="text-gray-500 italic text-sm text-center py-8">No comments yet.</p>
+                                    <p className="text-gray-500 italic text-sm text-center py-8">{t.modals.taskDetails.commentsSection.noComments}</p>
                                 ) : (
-                                    comments.map(comment => (
-                                        <div key={comment.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <span className="font-bold text-sm text-matte-dark">User {comment.authorId.substring(0, 8)}</span>
-                                                <span className="text-xs text-gray-400">{new Date(comment.createdAt).toLocaleString()}</span>
+                                    comments.map(comment => {
+                                        const authorFullName = `${comment.authorFirstName || ''} ${comment.authorLastName || ''}`.trim();
+                                        const authorDisplayName = authorFullName || `User ${comment.authorId.substring(0, 8)}`;
+                                        return (
+                                            <div key={comment.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <Avatar
+                                                            avatarUrl={comment.authorAvatarUrl}
+                                                            name={authorDisplayName}
+                                                            size="xs"
+                                                        />
+                                                        <span className="font-bold text-sm text-matte-dark">{authorDisplayName}</span>
+                                                    </div>
+                                                    <span className="text-xs text-gray-400">{new Date(comment.createdAt).toLocaleString()}</span>
+                                                </div>
+                                                <p className="text-gray-700 text-sm pl-8">{comment.content}</p>
                                             </div>
-                                            <p className="text-gray-700 text-sm">{comment.content}</p>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                             <form onSubmit={handleAddComment} className="flex gap-2 shrink-0 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
                                 <input
                                     type="text"
                                     className="flex-1 px-4 py-2 bg-transparent outline-none text-sm"
-                                    placeholder="Write a comment... use @ to mention"
+                                    placeholder={t.modals.taskDetails.commentsSection.placeholder}
                                     value={newComment}
                                     onChange={e => setNewComment(e.target.value)}
                                     disabled={isCommenting}
@@ -251,28 +265,32 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                         <div className="max-w-md space-y-6 animate-fade-in">
                             <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-5">
                                 <div>
-                                    <label className="block text-xs font-bold text-matte-dark uppercase tracking-wider mb-2">Priority Override</label>
+                                    <label className="block text-xs font-bold text-matte-dark uppercase tracking-wider mb-2">{t.modals.taskDetails.adminSection.priorityOverride}</label>
                                     <select className="w-full input-glass border-gray-200 bg-gray-50 cursor-pointer" value={task.priority} onChange={(e) => handleInstantUpdate('priority', Number(e.target.value))} disabled={isLoading}>
-                                        <option value={TaskPriority.Low}>Low</option>
-                                        <option value={TaskPriority.Medium}>Medium</option>
-                                        <option value={TaskPriority.High}>High</option>
-                                        <option value={TaskPriority.Critical}>Critical</option>
+                                        <option value={TaskPriority.Low}>{t.projectKanban.priorities.low}</option>
+                                        <option value={TaskPriority.Medium}>{t.projectKanban.priorities.medium}</option>
+                                        <option value={TaskPriority.High}>{t.projectKanban.priorities.high}</option>
+                                        <option value={TaskPriority.Critical}>{t.projectKanban.priorities.critical}</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-matte-dark uppercase tracking-wider mb-2">Assignee Management</label>
+                                    <label className="block text-xs font-bold text-matte-dark uppercase tracking-wider mb-2">{t.modals.taskDetails.adminSection.assigneeManagement}</label>
                                     <select className="w-full input-glass border-gray-200 bg-gray-50 cursor-pointer" value={task.assigneeId || ''} onChange={(e) => handleInstantUpdate('assigneeId', e.target.value || null)} disabled={isLoading}>
-                                        <option value="">Unassigned</option>
-                                        {users.map(u => <option key={u.id} value={u.id}>{u.email}</option>)}
+                                        <option value="">{t.modals.taskDetails.adminSection.unassigned}</option>
+                                        {users.map(u => {
+                                            const uName = `${u.firstName || ''} ${u.lastName || ''}`.trim();
+                                            const label = uName ? `${uName} (${u.email})` : u.email;
+                                            return <option key={u.id} value={u.id}>{label}</option>;
+                                        })}
                                     </select>
                                 </div>
                             </div>
 
                             <div className="bg-red-50 p-5 rounded-xl border border-red-100">
-                                <h4 className="text-sm font-bold text-red-700 mb-2">Danger Zone</h4>
-                                <p className="text-xs text-red-500 mb-4">Deleting a task cannot be undone. All associated comments will be lost.</p>
+                                <h4 className="text-sm font-bold text-red-700 mb-2">{t.modals.taskDetails.adminSection.dangerZone}</h4>
+                                <p className="text-xs text-red-500 mb-4">{t.modals.taskDetails.adminSection.dangerDesc}</p>
                                 <button onClick={handleDelete} disabled={isLoading} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">
-                                    <Trash2 size={16} /> Delete Task Permanently
+                                    <Trash2 size={16} /> {t.modals.taskDetails.adminSection.deletePermanently}
                                 </button>
                             </div>
                         </div>

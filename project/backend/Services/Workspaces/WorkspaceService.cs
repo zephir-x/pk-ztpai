@@ -6,6 +6,11 @@ using ProjectHub.Api.DTOs.Common;
 using ProjectHub.Api.DTOs.Workspaces;
 using ProjectHub.Api.Infrastructure.Data;
 using ProjectHub.Api.Infrastructure.Extensions;
+using ProjectHub.Api.Infrastructure.Localization;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ProjectHub.Api.Services.Workspaces;
 
@@ -52,7 +57,7 @@ public class WorkspaceService : IWorkspaceService
         var workspace = await _context.Workspaces
             .AsNoTracking()
             .FirstOrDefaultAsync(w => w.Id == id, ct) 
-            ?? throw new NotFoundException($"Workspace with ID {id} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Workspace", id));
 
         return new WorkspaceResponse(workspace.Id, workspace.Name, workspace.ThemeColor, workspace.OwnerId, workspace.CreatedAt);
     }
@@ -81,7 +86,7 @@ public class WorkspaceService : IWorkspaceService
         var workspace = await _context.Workspaces
             .Include(w => w.Projects).ThenInclude(p => p.Tasks).ThenInclude(t => t.Comments)
             .FirstOrDefaultAsync(w => w.Id == id, ct) 
-            ?? throw new NotFoundException($"Workspace with ID {id} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Workspace", id));
 
         ValidateAccess(workspace, userId, role);
 
@@ -93,8 +98,10 @@ public class WorkspaceService : IWorkspaceService
     // Deletes a workspace. Deletion strictly requires ownership or admin rights
     public async Task DeleteAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        var workspace = await _context.Workspaces.Include(w => w.Projects).ThenInclude(p => p.Tasks).ThenInclude(t => t.Comments).FirstOrDefaultAsync(w => w.Id == id, ct) 
-            ?? throw new NotFoundException($"Workspace with ID {id} was not found.");
+        var workspace = await _context.Workspaces
+            .Include(w => w.Projects).ThenInclude(p => p.Tasks).ThenInclude(t => t.Comments)
+            .FirstOrDefaultAsync(w => w.Id == id, ct) 
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Workspace", id));
 
         ValidateAccess(workspace, userId, role);
 
@@ -107,7 +114,7 @@ public class WorkspaceService : IWorkspaceService
     {
         if (workspace.OwnerId != userId && role != UserRole.Admin)
         {
-            throw new ForbiddenException("You do not have permission to access or modify this workspace.");
+            throw new ForbiddenException(LocalizationMessages.NoWorkspacePermission);
         }
     }
 }

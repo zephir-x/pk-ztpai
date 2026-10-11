@@ -2,9 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+    --accent: #f97316;
+    --accent-light: #fbbf24;
+    --accent-dark: #ea580c;
+    --accent-rgb: 249 115 22;
+    --accent-light-rgb: 251 191 36;
+    --accent-dark-rgb: 234 88 12;
+}
+
 @layer base {
     body {
         @apply text-matte antialiased min-h-screen bg-gray-50;
+    }
+
+    /* Hide scrollbars globally across all browsers while maintaining full scrolling functionality */
+    * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    *::-webkit-scrollbar {
+        display: none;
     }
 }
 
@@ -28,7 +46,7 @@
         @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-sm rounded-xl;
     }
 
-    /* Fiery button – stripped down to the essentials, without unnecessary permanent shadows */
+    /* Fiery button – dynamically themed using CSS variables */
     .btn-fiery {
         @apply bg-gradient-to-r from-fiery to-fiery-dark text-white font-medium px-4 py-2 rounded-lg transition-all duration-300 hover:shadow-[0_4px_15px_rgba(249,115,22,0.3)] active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
     }

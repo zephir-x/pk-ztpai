@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using ProjectHub.Api.Infrastructure.Localization;
 
 namespace ProjectHub.Api.DTOs.Workspaces;
 
@@ -7,11 +8,11 @@ public class CreateWorkspaceRequestValidator : AbstractValidator<CreateWorkspace
     public CreateWorkspaceRequestValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Workspace name is required.")
-            .MaximumLength(100).WithMessage("Workspace name cannot exceed 100 characters.");
+            .NotEmpty().WithMessage(_ => LocalizationMessages.WorkspaceNameRequired)
+            .MaximumLength(100).WithMessage(_ => LocalizationMessages.WorkspaceNameMax(100));
 
         RuleFor(x => x.ThemeColor)
-            .IsInEnum().WithMessage("Invalid ThemeColor.");
+            .IsInEnum().WithMessage(_ => LocalizationMessages.InvalidThemeColor);
     }
 }
 
@@ -20,7 +21,7 @@ public class UpdateWorkspaceRequestValidator : AbstractValidator<UpdateWorkspace
     public UpdateWorkspaceRequestValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Workspace name is required.")
-            .MaximumLength(100).WithMessage("Workspace name cannot exceed 100 characters.");
+            .NotEmpty().WithMessage(_ => LocalizationMessages.WorkspaceNameRequired)
+            .MaximumLength(100).WithMessage(_ => LocalizationMessages.WorkspaceNameMax(100));
     }
 }

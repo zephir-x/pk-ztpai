@@ -2,6 +2,7 @@
 import { X, Check } from 'lucide-react';
 import { workspaceService } from '../../api/workspaceService';
 import { type WorkspaceResponse, ThemeColor } from '../../types/api';
+import { useTranslation } from '../../context/LanguageContext';
 import { AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -25,6 +26,7 @@ interface WorkspaceModalProps {
 }
 
 export const WorkspaceModal = ({ isOpen, onClose, onSaved, initialData }: WorkspaceModalProps) => {
+    const { t } = useTranslation();
     const [name, setName] = useState('');
     const [themeColor, setThemeColor] = useState<ThemeColor>(ThemeColor.Blue);
     const [error, setError] = useState<string | null>(null);
@@ -49,11 +51,11 @@ export const WorkspaceModal = ({ isOpen, onClose, onSaved, initialData }: Worksp
             if (initialData) {
                 await workspaceService.update(initialData.id, name, themeColor);
                 onSaved({ ...initialData, name, themeColor }, true);
-                toast.success('The workspace has been updated.');
+                toast.success(t.modals.workspace.updateSuccess);
             } else {
                 const newWorkspace = await workspaceService.create(name, themeColor);
                 onSaved(newWorkspace, false);
-                toast.success('The workspace has been successfully created.');
+                toast.success(t.modals.workspace.createSuccess);
             }
             onClose();
         } catch (err) {
@@ -62,10 +64,10 @@ export const WorkspaceModal = ({ isOpen, onClose, onSaved, initialData }: Worksp
                 if (data.errors) {
                     setError(Object.values(data.errors).flat().join(' '));
                 } else {
-                    setError(data.message || 'A write error occurred.');
+                    setError(data.message || data.detail || t.dashboard.deleteError);
                 }
             } else {
-                setError('An unexpected error occurred.');
+                setError(t.modals.taskDetails.apiErrors.serverError);
             }
         } finally {
             setIsLoading(false);
@@ -83,7 +85,7 @@ export const WorkspaceModal = ({ isOpen, onClose, onSaved, initialData }: Worksp
                 </button>
 
                 <h3 className="text-xl font-bold text-matte-dark mb-4">
-                    {initialData ? 'Edit Workspace' : 'Create New Workspace'}
+                    {initialData ? t.modals.workspace.editTitle : t.modals.workspace.createTitle}
                 </h3>
 
                 {error && (
@@ -94,20 +96,20 @@ export const WorkspaceModal = ({ isOpen, onClose, onSaved, initialData }: Worksp
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-semibold text-matte-dark mb-1">Workspace Name</label>
+                        <label className="block text-sm font-semibold text-matte-dark mb-1">{t.modals.workspace.nameLabel}</label>
                         <input
                             type="text"
                             required
                             className="input-glass"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Engineering Team"
+                            placeholder={t.modals.workspace.namePlaceholder}
                             maxLength={100}
                         />
                     </div>
                     
                     <div>
-                        <label className="block text-sm font-semibold text-matte-dark mb-2">Theme Color</label>
+                        <label className="block text-sm font-semibold text-matte-dark mb-2">{t.modals.workspace.themeColorLabel}</label>
                         <div className="flex gap-3">
                             {THEME_COLORS.map(colorEnum => (
                                 <button
@@ -129,14 +131,14 @@ export const WorkspaceModal = ({ isOpen, onClose, onSaved, initialData }: Worksp
                             onClick={onClose}
                             className="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-colors"
                         >
-                            Cancel
+                            {t.common.cancel}
                         </button>
                         <button
                             type="submit"
                             disabled={isLoading || !name.trim()}
                             className="btn-fiery"
                         >
-                            {isLoading ? 'Saving...' : (initialData ? 'Save Changes' : 'Create Workspace')}
+                            {isLoading ? t.common.saving : (initialData ? t.common.save : t.common.create)}
                         </button>
                     </div>
                 </form>

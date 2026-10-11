@@ -27,6 +27,11 @@ public static class DatabaseSeeder
             Email = "admin@projecthub.com",
             PasswordHash = defaultPassword,
             Role = UserRole.Admin,
+            FirstName = "Alex",
+            LastName = "Vance",
+            AvatarUrl = "avatar-1",
+            Language = "en",
+            AccentColor = "fiery",
             CreatedAt = now
         };
 
@@ -37,6 +42,11 @@ public static class DatabaseSeeder
             Email = "frontend.dev@projecthub.com",
             PasswordHash = defaultPassword,
             Role = UserRole.User,
+            FirstName = "Elena",
+            LastName = "Rostova",
+            AvatarUrl = "avatar-2",
+            Language = "en",
+            AccentColor = "purple",
             CreatedAt = now
         };
 
@@ -47,6 +57,11 @@ public static class DatabaseSeeder
             Email = "backend.eng@projecthub.com",
             PasswordHash = defaultPassword,
             Role = UserRole.User,
+            FirstName = "Marcus",
+            LastName = "Brody",
+            AvatarUrl = "avatar-3",
+            Language = "pl",
+            AccentColor = "blue",
             CreatedAt = now
         };
 
@@ -57,6 +72,11 @@ public static class DatabaseSeeder
             Email = "qa.tester@projecthub.com",
             PasswordHash = defaultPassword,
             Role = UserRole.User,
+            FirstName = "Sophia",
+            LastName = "Chen",
+            AvatarUrl = "avatar-4",
+            Language = "en",
+            AccentColor = "green",
             CreatedAt = now
         };
 

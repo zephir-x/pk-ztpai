@@ -6,6 +6,7 @@ using ProjectHub.Api.Domain.Enums;
 using ProjectHub.Api.DTOs.Auth;
 using ProjectHub.Api.Infrastructure.Authentication;
 using ProjectHub.Api.Infrastructure.Data;
+using ProjectHub.Api.Infrastructure.Localization;
 
 namespace ProjectHub.Api.Controllers;
 
@@ -43,7 +44,7 @@ public class AuthController : ControllerBase
         // Enforce email uniqueness to prevent duplicate accounts
         if (await _context.Users.AnyAsync(u => u.Email == request.Email))
         {
-            return Conflict(new { message = "User with this email already exists." });
+            return Conflict(new { message = LocalizationMessages.UserAlreadyExists });
         }
 
         // Initialize user with a securely hashed password and default authorization role
@@ -72,7 +73,7 @@ public class AuthController : ControllerBase
         // Verify credentials against the stored hash securely to mitigate timing attacks
         if (user is null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
-            return Unauthorized(new { message = "Invalid email or password." });
+            return Unauthorized(new { message = LocalizationMessages.InvalidCredentials });
         }
 
         // Issue a stateless JWT containing user identity and role claims

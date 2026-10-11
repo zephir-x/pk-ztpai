@@ -7,7 +7,13 @@ using ProjectHub.Api.DTOs.Common;
 using ProjectHub.Api.DTOs.Tasks;
 using ProjectHub.Api.Infrastructure.Data;
 using ProjectHub.Api.Infrastructure.Extensions;
+using ProjectHub.Api.Infrastructure.Localization;
 using ProjectHub.Api.Infrastructure.SignalR;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ProjectHub.Api.Services.Tasks;
 
@@ -56,6 +62,7 @@ public class TaskItemService : ITaskItemService
     {
         var query = _context.Tasks
             .AsNoTracking()
+            .Include(t => t.Assignee)
             .Where(t => t.ProjectId == projectId);
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -68,7 +75,19 @@ public class TaskItemService : ITaskItemService
             .ToPagedResponseAsync(request.PageNumber, request.PageSize, ct);
 
         var mappedItems = pagedData.Items
-            .Select(t => new TaskItemResponse(t.Id, t.Title, t.Description, t.Status, t.Priority, t.ProjectId, t.AssigneeId, t.CreatedAt, t.UpdatedAt))
+            .Select(t => new TaskItemResponse(
+                t.Id, 
+                t.Title, 
+                t.Description, 
+                t.Status, 
+                t.Priority, 
+                t.ProjectId, 
+                t.AssigneeId, 
+                t.Assignee != null ? t.Assignee.FirstName : null,
+                t.Assignee != null ? t.Assignee.LastName : null,
+                t.Assignee != null ? t.Assignee.AvatarUrl : null,
+                t.CreatedAt, 
+                t.UpdatedAt))
             .ToList();
 
         return new PagedResponse<TaskItemResponse>
@@ -85,10 +104,23 @@ public class TaskItemService : ITaskItemService
     {
         var task = await _context.Tasks
             .AsNoTracking()
+            .Include(t => t.Assignee)
             .FirstOrDefaultAsync(t => t.Id == id, ct) 
-            ?? throw new NotFoundException($"Task with ID {id} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Task", id));
 
-        return new TaskItemResponse(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.CreatedAt, task.UpdatedAt);
+        return new TaskItemResponse(
+            task.Id, 
+            task.Title, 
+            task.Description, 
+            task.Status, 
+            task.Priority, 
+            task.ProjectId, 
+            task.AssigneeId, 
+            task.Assignee?.FirstName,
+            task.Assignee?.LastName,
+            task.Assignee?.AvatarUrl,
+            task.CreatedAt, 
+            task.UpdatedAt);
     }
     
     // Creates a new task item and validates assignment constraints
@@ -98,12 +130,18 @@ public class TaskItemService : ITaskItemService
 
         if (request.Status == ProjectTaskStatus.Done && request.AssigneeId == null)
         {
-            throw new ConflictException("A task cannot be created with 'Done' status if it does not have an assignee.");
+            throw new ConflictException(LocalizationMessages.TaskDoneCreateRequiresAssignee);
         }
 
         if (request.AssigneeId != null && role != UserRole.Admin)
         {
-            throw new ForbiddenException("Only users with ADMIN privileges can assign tasks to a user.");
+            throw new ForbiddenException(LocalizationMessages.TaskAssignAdminOnly);
+        }
+
+        User? assignee = null;
+        if (request.AssigneeId.HasValue)
+        {
+            assignee = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == request.AssigneeId.Value, ct);
         }
 
         var task = new TaskItem
@@ -121,22 +159,35 @@ public class TaskItemService : ITaskItemService
         _context.Tasks.Add(task);
         await _context.SaveChangesAsync(ct);
 
-        return new TaskItemResponse(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.CreatedAt, task.UpdatedAt);
+        return new TaskItemResponse(
+            task.Id, 
+            task.Title, 
+            task.Description, 
+            task.Status, 
+            task.Priority, 
+            task.ProjectId, 
+            task.AssigneeId, 
+            assignee?.FirstName,
+            assignee?.LastName,
+            assignee?.AvatarUrl,
+            task.CreatedAt, 
+            task.UpdatedAt);
     }
     
     // Updates general details of a task and broadcasts the update to clients via SignalR
     public async Task UpdateAsync(Guid id, UpdateTaskItemRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var task = await _context.Tasks
-                       .Include(t => t.Project)
-                       .FirstOrDefaultAsync(t => t.Id == id, ct) 
-                        ?? throw new NotFoundException($"Task with ID {id} was not found.");
+            .Include(t => t.Project)
+            .Include(t => t.Assignee)
+            .FirstOrDefaultAsync(t => t.Id == id, ct) 
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Task", id));
 
         await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);
 
         if (request.Status == ProjectTaskStatus.Done && task.AssigneeId == null)
         {
-            throw new ConflictException("A task cannot be marked as 'Done' if it does not have an active assignee attached.");
+            throw new ConflictException(LocalizationMessages.TaskDoneRequiresAssignee);
         }
 
         task.Title = request.Title;
@@ -148,31 +199,56 @@ public class TaskItemService : ITaskItemService
         await _context.SaveChangesAsync(ct);
         
         await _hubContext.Clients.Group(task.Project.WorkspaceId.ToString())
-            .SendAsync("TaskUpdated", new TaskItemResponse(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.CreatedAt, task.UpdatedAt), ct);
+            .SendAsync("TaskUpdated", new TaskItemResponse(
+                task.Id, 
+                task.Title, 
+                task.Description, 
+                task.Status, 
+                task.Priority, 
+                task.ProjectId, 
+                task.AssigneeId, 
+                task.Assignee?.FirstName,
+                task.Assignee?.LastName,
+                task.Assignee?.AvatarUrl,
+                task.CreatedAt, 
+                task.UpdatedAt), ct);
     }
     
     // Reassigns a task to a different user - requires administrative privileges - dispatches real-time assignment notifications via SignalR
     public async Task ChangeAssigneeAsync(Guid id, ChangeAssigneeRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var task = await _context.Tasks
-                       .Include(t => t.Project)
-                       .FirstOrDefaultAsync(t => t.Id == id, ct) 
-                        ?? throw new NotFoundException($"Task with ID {id} was not found.");
+            .Include(t => t.Project)
+            .Include(t => t.Assignee)
+            .FirstOrDefaultAsync(t => t.Id == id, ct) 
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Task", id));
 
         await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);
 
         if (role != UserRole.Admin)
         {
-            throw new ForbiddenException("Changing a task's assigned user can ONLY be performed by a user with ADMIN privileges.");
+            throw new ForbiddenException(LocalizationMessages.TaskAssignAdminOnly);
         }
 
         task.AssigneeId = request.AssigneeId;
         task.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(ct);
+
+        User? newAssignee = null;
+        if (request.AssigneeId.HasValue)
+        {
+            newAssignee = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == request.AssigneeId.Value, ct);
+        }
         
         await _hubContext.Clients.Group(task.Project.WorkspaceId.ToString())
-            .SendAsync("TaskAssigneeChanged", new { TaskId = task.Id, AssigneeId = task.AssigneeId }, ct);
+            .SendAsync("TaskAssigneeChanged", new { 
+                TaskId = task.Id, 
+                AssigneeId = task.AssigneeId,
+                AssigneeFirstName = newAssignee?.FirstName,
+                AssigneeLastName = newAssignee?.LastName,
+                AssigneeAvatarUrl = newAssignee?.AvatarUrl
+            }, ct);
     }
     
     // Deletes a task item
@@ -181,7 +257,7 @@ public class TaskItemService : ITaskItemService
         var task = await _context.Tasks
             .Include(t => t.Comments)
             .FirstOrDefaultAsync(t => t.Id == id, ct) 
-            ?? throw new NotFoundException($"Task with ID {id} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Task", id));
 
         await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);
 
@@ -198,11 +274,11 @@ public class TaskItemService : ITaskItemService
             .Include(p => p.Workspace)
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == projectId, ct)
-            ?? throw new NotFoundException($"Project with ID {projectId} was not found.");
+            ?? throw new NotFoundException(LocalizationMessages.NotFound("Project", projectId));
 
         if (project.Workspace.OwnerId != userId)
         {
-            throw new ForbiddenException("You do not have permission to access tasks in this project.");
+            throw new ForbiddenException(LocalizationMessages.NoTaskPermission);
         }
     }
 }

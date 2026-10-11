@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useEffect, useState, useMemo } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { taskService } from '../api/taskService';
@@ -7,17 +7,12 @@ import { CreateTaskModal } from '../components/modals/CreateTaskModal';
 import { TaskDetailsModal } from '../components/modals/TaskDetailsModal';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/LanguageContext';
+import { Avatar } from '../components/Avatar';
 import { Plus, ArrowLeft, MoreHorizontal, MessageSquare } from 'lucide-react';
 import * as signalR from '@microsoft/signalr';
 import { AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
-
-const KANBAN_COLUMNS = [
-    { id: ProjectTaskStatus.ToDo, title: 'To Do', border: 'border-gray-300' },
-    { id: ProjectTaskStatus.InProgress, title: 'In Progress', border: 'border-blue-400' },
-    { id: ProjectTaskStatus.Review, title: 'Review', border: 'border-amber-400' },
-    { id: ProjectTaskStatus.Done, title: 'Done', border: 'border-emerald-400' }
-];
 
 export type ModalViewMode = 'details' | 'comments' | 'admin';
 
@@ -27,9 +22,17 @@ export default function ProjectKanban() {
     const navigate = useNavigate();
     const workspaceId = location.state?.workspaceId;
     const { isAdmin } = useAuth();
+    const { t } = useTranslation();
 
     const projectName = location.state?.projectName || 'Project Board';
-    usePageTitle(projectName);
+    usePageTitle(`${projectName} - ${t.projectKanban.pageTitle}`);
+
+    const kanbanColumns = useMemo(() => [
+        { id: ProjectTaskStatus.ToDo, title: t.projectKanban.columns.todo, border: 'border-gray-300' },
+        { id: ProjectTaskStatus.InProgress, title: t.projectKanban.columns.inProgress, border: 'border-blue-400' },
+        { id: ProjectTaskStatus.Review, title: t.projectKanban.columns.review, border: 'border-amber-400' },
+        { id: ProjectTaskStatus.Done, title: t.projectKanban.columns.done, border: 'border-emerald-400' }
+    ], [t]);
 
     const [tasks, setTasks] = useState<TaskItemResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -56,8 +59,8 @@ export default function ProjectKanban() {
 
         let isMounted = true;
         hubConnection.start()
-            .then(() => { if(isMounted) hubConnection.invoke('JoinWorkspaceGroup', workspaceId); })
-            .catch(() => { if(isMounted) toast.error('Failed to connect to the live update server.'); });
+            .then(() => { if (isMounted) hubConnection.invoke('JoinWorkspaceGroup', workspaceId); })
+            .catch(() => { if (isMounted) toast.error(t.projectKanban.liveConnectError); });
 
         hubConnection.on("TaskUpdated", (updatedTask: TaskItemResponse) => {
             setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
@@ -73,6 +76,33 @@ export default function ProjectKanban() {
             setSelectedTask(prev => prev?.id === deletedId ? null : prev);
         });
 
+        hubConnection.on("TaskAssigneeChanged", (data: { TaskId: string; AssigneeId: string | null; AssigneeFirstName?: string | null; AssigneeLastName?: string | null; AssigneeAvatarUrl?: string | null }) => {
+            setTasks(prev => prev.map(task => {
+                if (task.id === data.TaskId) {
+                    return {
+                        ...task,
+                        assigneeId: data.AssigneeId,
+                        assigneeFirstName: data.AssigneeFirstName,
+                        assigneeLastName: data.AssigneeLastName,
+                        assigneeAvatarUrl: data.AssigneeAvatarUrl
+                    };
+                }
+                return task;
+            }));
+            setSelectedTask(prev => {
+                if (prev && prev.id === data.TaskId) {
+                    return {
+                        ...prev,
+                        assigneeId: data.AssigneeId,
+                        assigneeFirstName: data.AssigneeFirstName,
+                        assigneeLastName: data.AssigneeLastName,
+                        assigneeAvatarUrl: data.AssigneeAvatarUrl
+                    };
+                }
+                return prev;
+            });
+        });
+
         return () => {
             isMounted = false;
             if (hubConnection.state === signalR.HubConnectionState.Connected) {
@@ -81,7 +111,7 @@ export default function ProjectKanban() {
                 hubConnection.stop();
             }
         };
-    }, [projectId, workspaceId]);
+    }, [projectId, workspaceId, t]);
 
     const fetchTasks = async (id: string) => {
         try {
@@ -89,7 +119,7 @@ export default function ProjectKanban() {
             const data = await taskService.getByProject(id);
             setTasks(data);
         } catch {
-            toast.error('Failed to retrieve the task list from the server.');
+            toast.error(t.projectKanban.fetchError);
         } finally {
             setIsLoading(false);
         }
@@ -137,11 +167,11 @@ export default function ProjectKanban() {
             setTasks(prev => prev.map(t => t.id === draggableId ? { ...t, status: originalStatus } : t));
 
             if (err instanceof AxiosError && err.response?.status === 409) {
-                toast.error(err.response.data?.message || 'Operation impossible: the task cannot be closed without an assigned user.');
+                toast.error(err.response.data?.message || err.response.data?.detail || t.projectKanban.cannotCloseWithoutAssignee);
             } else if (err instanceof AxiosError && err.response?.status === 403) {
-                toast.error('Only the administrator can perform this activity.');
+                toast.error(t.projectKanban.adminOnlyAction);
             } else {
-                toast.error('An error occurred while updating the task status.');
+                toast.error(t.projectKanban.statusUpdateError);
             }
         }
     };
@@ -158,15 +188,15 @@ export default function ProjectKanban() {
 
     const getPriorityLabel = (priority: TaskPriority) => {
         switch (priority) {
-            case TaskPriority.Critical: return 'CRITICAL';
-            case TaskPriority.High: return 'HIGH';
-            case TaskPriority.Medium: return 'MEDIUM';
-            case TaskPriority.Low: return 'LOW';
-            default: return 'UNKNOWN';
+            case TaskPriority.Critical: return t.projectKanban.priorities.critical;
+            case TaskPriority.High: return t.projectKanban.priorities.high;
+            case TaskPriority.Medium: return t.projectKanban.priorities.medium;
+            case TaskPriority.Low: return t.projectKanban.priorities.low;
+            default: return t.projectKanban.priorities.unknown;
         }
     };
 
-    if (isLoading) return <div className="text-gray-500 animate-pulse p-8">Loading tasks...</div>;
+    if (isLoading) return <div className="text-gray-500 animate-pulse p-8">{t.projectKanban.loading}</div>;
 
     return (
         <div className="h-full flex flex-col">
@@ -176,14 +206,14 @@ export default function ProjectKanban() {
                 className="flex items-center gap-2 text-sm text-gray-500 hover:text-fiery transition-colors mb-6 font-medium"
             >
                 <ArrowLeft size={16} />
-                Back to Projects
+                {t.projectKanban.backButton}
             </button>
 
             {/* Header Section */}
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h2 className="text-2xl font-bold text-matte-dark">{projectName}</h2>
-                    <p className="text-gray-500 text-sm mt-1">Kanban Board</p>
+                    <p className="text-gray-500 text-sm mt-1">{t.projectKanban.subtitle}</p>
                 </div>
             </div>
 
@@ -191,7 +221,7 @@ export default function ProjectKanban() {
             <div className="flex-1 overflow-x-auto overflow-y-hidden pb-4">
                 <DragDropContext onDragEnd={onDragEnd}>
                     <div className="flex gap-6 h-full min-w-max items-start">
-                        {KANBAN_COLUMNS.map(column => {
+                        {kanbanColumns.map(column => {
                             const columnTasks = tasks.filter(t => t.status === column.id);
 
                             return (
@@ -249,12 +279,32 @@ export default function ProjectKanban() {
                                                                 </h4>
 
                                                                 <div className="flex items-center justify-between mt-auto">
-                                                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500 border border-white">
-                                                                        {task.assigneeId ? 'AS' : '?'}
+                                                                    <div className="flex items-center gap-2 min-w-0">
+                                                                        {task.assigneeId ? (
+                                                                            <>
+                                                                                <Avatar
+                                                                                    avatarUrl={task.assigneeAvatarUrl}
+                                                                                    name={task.assigneeFirstName}
+                                                                                    size="xs"
+                                                                                />
+                                                                                {task.assigneeFirstName && (
+                                                                                    <span className="text-xs text-gray-600 font-medium truncate max-w-[110px]" title={task.assigneeFirstName}>
+                                                                                        {task.assigneeFirstName}
+                                                                                    </span>
+                                                                                )}
+                                                                            </>
+                                                                        ) : (
+                                                                            <div
+                                                                                className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-400 border border-white shrink-0"
+                                                                                title={t.projectKanban.unassigned}
+                                                                            >
+                                                                                ?
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                     <button 
                                                                         onClick={(e) => openTaskModal(task, 'comments', e)}
-                                                                        className="flex items-center text-gray-400 hover:text-fiery transition-colors gap-1 text-xs cursor-pointer"
+                                                                        className="flex items-center text-gray-400 hover:text-fiery transition-colors gap-1 text-xs cursor-pointer ml-auto"
                                                                     >
                                                                         <MessageSquare size={14} />
                                                                     </button>

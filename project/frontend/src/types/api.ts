@@ -81,6 +81,9 @@ export interface TaskItemResponse {
     priority: TaskPriority;
     projectId: string;
     assigneeId: string | null;
+    assigneeFirstName?: string | null;
+    assigneeLastName?: string | null;
+    assigneeAvatarUrl?: string | null;
     createdAt: string;
     updatedAt: string | null;
 }
@@ -110,31 +113,64 @@ export const UserRole = {
 
 export type UserRole = typeof UserRole[keyof typeof UserRole];
 
-
 export interface UserResponse {
     id: string;
     email: string;
     role: string | UserRole;
+    firstName: string;
+    lastName: string;
+    avatarUrl: string;
     createdAt: string;
 }
+
+export interface UserProfileResponse {
+    id: string;
+    email: string;
+    role: string | UserRole;
+    firstName: string;
+    lastName: string;
+    avatarUrl: string;
+    language: string;
+    accentColor: string;
+    createdAt: string;
+}
+
+export interface UpdateProfileRequest {
+    firstName: string;
+    lastName: string;
+    avatarUrl: string;
+    language: string;
+    accentColor: string;
+    currentPassword?: string;
+    newPassword?: string;
+}
+
 export interface CreateUserRequest {
     email: string;
     password?: string;
     role: UserRole;
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string;
 }
 
 export interface UpdateUserRequest {
     email: string;
     password?: string;
     role: UserRole;
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string;
 }
-
 
 export interface CommentResponse {
     id: string;
     content: string;
     taskItemId: string;
     authorId: string;
+    authorFirstName?: string | null;
+    authorLastName?: string | null;
+    authorAvatarUrl?: string | null;
     createdAt: string;
 }
 

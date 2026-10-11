@@ -10,6 +10,8 @@ namespace ProjectHub.Api.Services.Users;
 public interface IUserService
 {
     Task<IEnumerable<UserResponse>> GetAllAsync(CancellationToken ct = default);
+    Task<UserProfileResponse> GetProfileAsync(Guid userId, CancellationToken ct = default);
+    Task<UserProfileResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken ct = default);
     Task<UserResponse> CreateAsync(CreateUserRequest request, Guid adminId, UserRole role, CancellationToken ct = default);
     Task UpdateAsync(Guid id, UpdateUserRequest request, Guid adminId, UserRole role, CancellationToken ct = default);
     Task DeleteAsync(Guid id, Guid adminId, UserRole role, CancellationToken ct = default);

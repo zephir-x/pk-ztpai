@@ -141,6 +141,15 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// === Localization Setup ===
+var supportedCultures = new[] { "en", "pl" };
+var localizationOptions = new RequestLocalizationOptions()
+    .SetDefaultCulture("en")
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures);
+
+app.UseRequestLocalization(localizationOptions);
+
 // === HTTP Request Pipeline ===
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
