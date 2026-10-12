@@ -31,7 +31,8 @@ export const ThemeColor = {
     Yellow: 3,
     Purple: 4,
     Pink: 5,
-    Gray: 6
+    Gray: 6,
+    Cyan: 7
 } as const;
 
 export type ThemeColor = typeof ThemeColor[keyof typeof ThemeColor];

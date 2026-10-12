@@ -62,7 +62,8 @@ export const en: Translations = {
         actions: {
             openTask: 'View Task',
             reply: 'Reply',
-            delete: 'Delete'
+            delete: 'Delete',
+            markAsRead: 'Mark as read'
         }
     },
     auth: {
@@ -94,7 +95,7 @@ export const en: Translations = {
     },
     dashboard: {
         title: 'Workspaces',
-        subtitle: 'Manage your team environments',
+        subtitle: 'Manage your team environment',
         newWorkspace: 'New Workspace',
         noWorkspaces: 'No workspaces found',
         noWorkspacesDesc: "You don't have access to any workspaces yet.",
@@ -160,6 +161,8 @@ export const en: Translations = {
         subtitle: 'Manage platform users and global settings',
         addUser: 'Add User',
         emailAccount: 'Email Account',
+        fullName: 'Full Name',
+        notSpecified: 'Not specified',
         role: 'Role',
         actions: 'Actions',
         noUsers: 'No users found in the system.',
@@ -187,7 +190,8 @@ export const en: Translations = {
                 'avatar-3': 'Innovator',
                 'avatar-4': 'Wizard',
                 'avatar-5': 'Android',
-                'avatar-6': 'Leader'
+                'avatar-6': 'Leader',
+                'avatar-7': 'Firestarter'
             }
         },
         personalInfo: {
@@ -255,7 +259,7 @@ export const en: Translations = {
             nameLabel: 'Project Name',
             namePlaceholder: 'e.g. Website Redesign',
             descriptionLabel: 'Description (Optional)',
-            descriptionPlaceholder: 'Briefly describe the project...',
+            descriptionPlaceholder: 'Briefly describe the project... ',
             themeColorLabel: 'Theme Color',
             createSuccess: 'The project has been successfully created.',
             updateSuccess: 'The project has been updated.'

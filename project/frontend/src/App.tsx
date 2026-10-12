@@ -15,7 +15,7 @@ import Settings from './pages/Settings';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
-    // Global Application State & Routing Setup
+    // Global Application State & Routing Setup with Glassmorphism Theme
     return (
         <LanguageProvider>
             <AuthProvider>
@@ -25,15 +25,33 @@ function App() {
                         toastOptions={{
                             duration: 4000,
                             style: {
-                                background: '#374151',
-                                color: '#fff',
-                                borderRadius: '8px',
+                                background: 'rgba(26, 33, 39, 0.94)',
+                                color: '#f1f5f9',
+                                backdropFilter: 'blur(16px)',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                borderRadius: '12px',
+                                boxShadow: '0 12px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                                padding: '12px 16px',
+                                fontSize: '14px',
+                            },
+                            success: {
+                                iconTheme: {
+                                    primary: '#10b981',
+                                    secondary: '#ffffff',
+                                },
+                                style: {
+                                    border: '1px solid rgba(52, 211, 153, 0.35)',
+                                    boxShadow: '0 0 20px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+                                },
                             },
                             error: {
+                                iconTheme: {
+                                    primary: '#ef4444',
+                                    secondary: '#ffffff',
+                                },
                                 style: {
-                                    background: '#fee2e2',
-                                    color: '#b91c1c',
-                                    border: '1px solid #fca5a5',
+                                    border: '1px solid rgba(248, 113, 113, 0.35)',
+                                    boxShadow: '0 0 20px rgba(239, 68, 68, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
                                 },
                             },
                         }}

@@ -62,7 +62,8 @@ export const pl: Translations = {
         actions: {
             openTask: 'Zobacz zadanie',
             reply: 'Odpowiedz',
-            delete: 'Usuń'
+            delete: 'Usuń',
+            markAsRead: 'Oznacz jako przeczytane'
         }
     },
     auth: {
@@ -93,76 +94,78 @@ export const pl: Translations = {
         unexpectedError: 'Wystąpił nieoczekiwany błąd. Spróbuj ponownie.'
     },
     dashboard: {
-        title: 'Obszary robocze',
-        subtitle: 'Zarządzaj środowiskami swojego zespołu',
+        title: 'Workspaces',
+        subtitle: 'Manage your team environment',
         newWorkspace: 'Nowy obszar roboczy',
         noWorkspaces: 'Nie znaleziono obszarów roboczych',
-        noWorkspacesDesc: 'Nie masz jeszcze dostępu do żadnych obszarów roboczych.',
+        noWorkspacesDesc: 'Nie należysz jeszcze do żadnego obszaru roboczego. Poproś administratora o zaproszenie lub utwórz nowy, jeśli posiadasz uprawnienia.',
         createWorkspace: 'Utwórz obszar roboczy',
         loading: 'Ładowanie obszarów roboczych...',
         createdOn: 'Utworzono',
-        deleteConfirm: 'Czy na pewno chcesz usunąć ten obszar roboczy? Tej operacji nie można cofnąć.',
-        deleteSuccess: 'Obszar roboczy został usunięty.',
+        deleteConfirm: 'Czy na pewno chcesz usunąć ten obszar roboczy? Wszystkie zawarte w nim projekty i zadania zostaną bezpowrotnie utracone.',
+        deleteSuccess: 'Obszar roboczy został pomyślnie usunięty.',
         deleteError: 'Nie udało się usunąć obszaru roboczego.',
         fetchError: 'Nie udało się pobrać obszarów roboczych.'
     },
     workspaceDetails: {
-        title: 'Projekty obszaru',
+        title: 'Eksplorator projektów',
         pageTitle: 'Szczegóły obszaru roboczego',
         subtitle: 'Zarządzaj aktywnymi projektami w tym obszarze roboczym',
-        backButton: 'Powrót do obszarów roboczych',
+        backButton: 'Wróć do listy',
         newProject: 'Nowy projekt',
         noProjects: 'Nie znaleziono projektów',
-        noProjectsDesc: 'Ten obszar roboczy jest obecnie pusty.',
-        loading: 'Ładowanie projektów obszaru roboczego...',
+        noProjectsDesc: 'Ten obszar roboczy nie zawiera jeszcze żadnych projektów. Utwórz pierwszy projekt, aby rozpocząć organizację zadań.',
+        loading: 'Ładowanie projektów...',
         createdOn: 'Utworzono',
-        noDescription: 'Brak opisu projektu.',
-        deleteConfirm: 'Czy na pewno chcesz usunąć ten projekt? Tej operacji nie można cofnąć.',
+        noDescription: 'Brak opisu.',
+        deleteConfirm: 'Czy na pewno chcesz usunąć ten projekt? Ta operacja jest nieodwracalna.',
         deleteSuccess: 'Projekt został pomyślnie usunięty.',
         deleteError: 'Nie udało się usunąć projektu.',
         fetchError: 'Nie udało się pobrać projektów obszaru roboczego.'
     },
     projectKanban: {
-        pageTitle: 'Tablica Kanban',
-        subtitle: 'Tablica Kanban',
-        backButton: 'Powrót do projektów',
+        pageTitle: 'Kanban Board',
+        subtitle: 'Kanban Board',
+        backButton: 'Back to Projects',
         loading: 'Ładowanie zadań...',
         liveConnectError: 'Nie udało się połączyć z serwerem aktualizacji na żywo.',
         fetchError: 'Nie udało się pobrać listy zadań z serwera.',
-        cannotCloseWithoutAssignee: 'Operacja niemożliwa: zadanie nie może zostać ukończone bez przypisanego użytkownika.',
-        adminOnlyAction: 'Tylko administrator może wykonać tę czynność.',
+        cannotCloseWithoutAssignee: 'Operacja niemożliwa: zadanie nie może zostać zamknięte bez przypisanego użytkownika.',
+        adminOnlyAction: 'Tylko administrator może wykonać tę operację.',
         statusUpdateError: 'Wystąpił błąd podczas aktualizacji statusu zadania.',
         unassigned: 'Nieprzypisany',
         columns: {
             todo: 'Do zrobienia',
             inProgress: 'W trakcie',
             review: 'Przegląd',
-            done: 'Zrobione'
+            done: 'Zakończone'
         },
         priorities: {
-            low: 'NISKI',
-            medium: 'ŚREDNI',
-            high: 'WYSOKI',
-            critical: 'KRYTYCZNY',
-            unknown: 'NIEZNANY'
+            low: 'Niski',
+            medium: 'Średni',
+            high: 'Wysoki',
+            critical: 'Krytyczny',
+            unknown: 'Nieznany'
         }
     },
     myTasks: {
         title: 'Moje zadania',
-        subtitle: 'Wszystkie zadania przypisane do Ciebie we wszystkich obszarach.',
+        subtitle: 'Wszystkie zadania przypisane do Twojego konta w różnych projektach i przestrzeniach.',
         noTasks: 'Brak przypisanych zadań',
-        noTasksDesc: 'Wszystko zrobione! Nie masz obecnie żadnych przypisanych zadań.',
-        loading: 'Ładowanie Twoich zadań...',
+        noTasksDesc: 'Nie masz obecnie żadnych otwartych zadań przypisanych do Twojego profilu.',
+        loading: 'Pobieranie Twoich zadań...',
         fetchError: 'Nie udało się pobrać Twoich zadań.'
     },
     adminPanel: {
-        title: 'Administracja systemem',
-        subtitle: 'Zarządzaj użytkownikami platformy i ustawieniami globalnymi',
+        title: 'Panel administratora',
+        subtitle: 'Zarządzaj kontami użytkowników, rolami oraz uprawnieniami w systemie.',
         addUser: 'Dodaj użytkownika',
-        emailAccount: 'Konto email',
+        emailAccount: 'Konto e-mail',
+        fullName: 'Imię i nazwisko',
+        notSpecified: 'Nie podano',
         role: 'Rola',
         actions: 'Akcje',
-        noUsers: 'Brak użytkowników w systemie.',
+        noUsers: 'Brak zarejestrowanych użytkowników w systemie.',
         deleteConfirm: 'Czy na pewno chcesz usunąć tego użytkownika?',
         deleteSuccess: 'Użytkownik został pomyślnie usunięty.',
         deleteError: 'Nie udało się usunąć użytkownika.',
@@ -187,7 +190,8 @@ export const pl: Translations = {
                 'avatar-3': 'Innowator',
                 'avatar-4': 'Czarodziej',
                 'avatar-5': 'Android',
-                'avatar-6': 'Lider'
+                'avatar-6': 'Lider',
+                'avatar-7': 'Ognik'
             }
         },
         personalInfo: {

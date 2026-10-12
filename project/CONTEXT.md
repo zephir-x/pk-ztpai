@@ -38,8 +38,7 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 ### [x] Stage 7: Polish & Architectural Clean-Up
 - [x] Standardize code styling, remove redundant comments, and enforce professional single-line English documentation.
 - [x] Patch SignalR WebSockets integration (JWT URL parsing, React strict mode mounting safeguards).
-- [x] Refine Role-Based Access Control (RBAC) to allow global read access while strictly locking modifications to admins.
-- [x] Implement robust user assignment via dedicated PATCH endpoint.
+- [x] Refine Role-Based Access Control (RBAC) to allow global read access while strictly locking modifications to admins.\n- [x] Implement robust user assignment via dedicated PATCH endpoint.
 - [x] Implement Edit and Delete functionality for Workspaces and Projects.
 - [x] Introduce `ThemeColor` enums internally stored as string, seamlessly mapped to UI ribbons and tags.
 
@@ -67,13 +66,18 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
   - Deep-link task modal integration in My Tasks view directly navigating to the details tab.
   - Instant assignee modal closure and Kanban board assignee name and avatar update without page reload.
 
-### [ ] Stage 9: Stress Testing, Data Scaling & Glassmorphism Redesign
+### [~] Stage 9: Stress Testing, Data Scaling & Glassmorphism Redesign
+- [x] **Glassmorphism Redesign**:
+  - Complete overhaul of the entire user interface to an atmospheric futuristic grayscale glassmorphism aesthetic (`#4f5f6e` body, `#556677` silvery rain glass gradients, translucent panels with backdrop blur, fine laser rim highlights, and dynamic fiery accent themes).
+  - Global CSS border beam animations with linear sweeps across Kanban columns and input fields with zero background bleeding.
+  - Seamless atmospheric top vignette fading right below page headers with aligned sidebar dividing beam (210px).
+  - Unified card styling across Workspaces, Projects, Kanban boards, My Tasks, Notifications, Admin Panel, and Settings.
+  - Fluid CSS grid accordion reply animations for notifications direct messaging.
+  - Enhanced avatar presets (expanded with Firestarter/Flame) and theme color palette (expanded with Cyan).
 - [ ] **High-Volume Data Stress Testing & Layout Optimization**:
   - Temporarily inject large-scale mock datasets via seeder (high volume of comments, projects, tasks, users, and notifications).
   - Verify and stress-test layout responsiveness, text wrapping, horizontal/vertical scrollbars, virtual lists, and pagination behaviors.
   - Implement structural corrections and performance optimizations across high-density views (Kanban columns, comment threads, task tables, user lists).
-- [ ] **Glassmorphism Redesign**:
-  - Overhaul the entire UI to a "Glassmorphism in shades of gray" design. Discard the basic layout in favor of a deeply polished, translucent grayscale esthetic (based on reference images to be provided) and set of animations / visual corrections.
 
 ### [ ] Stage 10: Quality Assurance & Deployment
 - [ ] Minimum 5 unit tests isolating Domain/Service logic (Rules 1, 2, 3).
@@ -88,6 +92,14 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 * **Formatting:** Strictly NO emojis in code, documentation, or chat.
 
 ## 8. Recent Modifications & Reflections
+* **Full Glassmorphism & Visual Redesign (Stage 9 Milestone):**
+  - Atmospheric Deep Glass System: Engineered cohesive dark-slate glassmorphism across all application views anchored in silvery-rain tones (`bg-glass-rain`), translucent backdrop-blur panels, and sharp 1px laser rims.
+  - Luminous Border Beams: Designed single-pass border ray animations (`singleBeamSweep` and `inputBeamSweep`) using conic gradients and CSS property interpolation (`@property --beam-angle`), ensuring the ray shines only on the outline without bleeding into inputs or cards.
+  - Seamless Vignette Alignment: Integrated a 210px top horizontal atmospheric darkening gradient aligned flush with the left sidebar's vertical fiery accent line.
+  - Drag-and-Drop Optimization: Resolved `@hello-pangea/dnd` transform containing block issues by avoiding outer CSS transforms on the page container, ensuring cards snap smoothly directly beneath the cursor.
+  - Responsive Modal Refinements: Restructured modal headers with fixed non-overlapping close buttons (`X`) and separated scrollable form bodies, eliminating click freeze states.
+  - Settings & Admin Panel Modernization: Modernized Settings into clean 3x2 equal-size accent grid, centered avatar selectors, lightened `.input-glass` field backgrounds, eliminated straight-line shadow artifacts, and added an expanded user identity column in Admin Panel.
+  - Extended Design Tokens: Added `Cyan` (`#06b6d4`) to backend and frontend `ThemeColor` enums and added `Firestarter` (`avatar-7` with flame icon) to avatar presets.
 * **Notifications & Messaging System Integration:**
   - Designed and deployed full-stack notification infrastructure: PostgreSQL entity, EF Core migration, and SignalR personal group dispatching.
   - Asynchronous mention processing via `CommentCreatedEventHandler` supporting `@admin` and `@username` (matching email prefixes, including dots, e.g. `@kacper.gumulak`).

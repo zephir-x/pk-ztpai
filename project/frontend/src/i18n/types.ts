@@ -1,4 +1,4 @@
-﻿export type SupportedLanguage = 'en' | 'pl';
+export type SupportedLanguage = 'en' | 'pl';
 
 export interface Translations {
     common: {
@@ -63,6 +63,7 @@ export interface Translations {
             openTask: string;
             reply: string;
             delete: string;
+            markAsRead: string;
         };
     };
     auth: {
@@ -160,6 +161,8 @@ export interface Translations {
         subtitle: string;
         addUser: string;
         emailAccount: string;
+        fullName: string;
+        notSpecified: string;
         role: string;
         actions: string;
         noUsers: string;

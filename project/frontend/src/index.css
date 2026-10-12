@@ -11,9 +11,22 @@
     --accent-dark-rgb: 234 88 12;
 }
 
+@property --beam-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@property --beam-alpha {
+    syntax: '<number>';
+    initial-value: 0.25;
+    inherits: false;
+}
+
 @layer base {
     body {
-        @apply text-matte antialiased min-h-screen bg-gray-50;
+        @apply antialiased min-h-screen text-rain-100 selection:bg-fiery selection:text-white;
+        background-color: #4f5f6e;
     }
 
     /* Hide scrollbars globally across all browsers while maintaining full scrolling functionality */
@@ -27,35 +40,292 @@
 }
 
 @layer utilities {
-    /* Dark background with subtle lights */
-    .bg-spotlight {
-        background-color: #111827; /* Very dark matte */
+    /* Moody silvery rain-gray atmosphere anchored around #647688 */
+    .bg-glass-rain {
+        background-color: #556677;
         background-image:
-                radial-gradient(circle at 15% 30%, rgba(255, 255, 255, 0.04) 0%, transparent 40%),
-                radial-gradient(circle at 85% 70%, rgba(255, 255, 255, 0.04) 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+            radial-gradient(ellipse 90% 65% at 50% -15%, rgba(255, 255, 255, 0.28), transparent 75%),
+            radial-gradient(circle at 12% 20%, rgba(255, 255, 255, 0.18) 0%, transparent 45%),
+            radial-gradient(circle at 88% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 45%),
+            radial-gradient(circle at 50% 50%, rgba(85, 102, 119, 0.45) 0%, transparent 70%),
+            linear-gradient(180deg, #647688 0%, #546474 45%, #465360 100%);
     }
 
-    /* Glass for the main authorization container */
-    .glass-auth-panel {
-        @apply bg-white/90 backdrop-blur-2xl shadow-[0_0_40px_rgba(0,0,0,0.2)];
+    /* Outer atmospheric spotlight for focused layouts */
+    .bg-spotlight {
+        background-color: #4c5b6b;
+        background-image:
+            radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.22) 0%, transparent 40%),
+            radial-gradient(circle at 80% 85%, rgba(255, 255, 255, 0.18) 0%, transparent 45%),
+            radial-gradient(circle at 50% 50%, rgba(95, 113, 131, 0.45) 0%, transparent 65%),
+            linear-gradient(180deg, #5a6b7c 0%, #445260 100%);
     }
 
-    /* Smaller glass panels (e.g., dashboard cards) */
+    /* Primary frosted glass card */
     .glass-panel {
-        @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-sm rounded-xl;
+        @apply bg-rain-850/80 backdrop-blur-2xl border border-white/20 shadow-glass-sm rounded-2xl transition-all duration-300;
+        box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.30);
     }
 
-    /* Fiery button – dynamically themed using CSS variables */
+    .glass-panel:hover {
+        @apply border-white/35;
+    }
+
+    /* Elevated frosted glass container with pronounced white rim lighting */
+    .glass-panel-elevated {
+        @apply bg-rain-900/85 backdrop-blur-3xl border border-white/25 shadow-glass-lg rounded-3xl;
+        box-shadow: 0 25px 60px 0 rgba(0, 0, 0, 0.45), inset 0 1px 2px 0 rgba(255, 255, 255, 0.40);
+    }
+
+    /* Sidebar frosted glass container with deep atmospheric depth */
+    .glass-sidebar {
+        @apply bg-rain-950/80 backdrop-blur-3xl border-r border-white/15;
+        box-shadow: inset -1px 0 0 0 rgba(255, 255, 255, 0.15), 16px 0 45px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Navigation item with frosted hover and active fiery glow */
+    .glass-nav-item {
+        @apply flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 font-medium cursor-pointer;
+    }
+
+    .glass-nav-item-active {
+        @apply bg-white/10 text-fiery border border-white/25 shadow-glow-accent;
+        box-shadow: 0 0 22px -2px rgba(var(--accent-rgb), 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    }
+
+    .glass-nav-item-inactive {
+        @apply text-rain-200 hover:text-white hover:bg-white/10 hover:border hover:border-white/15 border border-transparent;
+    }
+
+    /* Kanban column border beam: default outline in column color - lighter slate-glass tone, constant linear speed, full brightness through 70%, sharp fade to 100% */
+    .kanban-column-beam {
+        position: relative;
+        background-color: rgba(28, 36, 48, 0.88);
+        border: 1.5px solid var(--column-border, rgba(255, 255, 255, 0.2));
+    }
+
+    .kanban-column-beam::before {
+        content: '';
+        position: absolute;
+        inset: -1.5px;
+        border-radius: inherit;
+        padding: 1.5px;
+        background: conic-gradient(
+            from var(--beam-angle, 0deg),
+            transparent 0deg,
+            transparent 72%,
+            var(--column-color, #ffffff) 88%,
+            #ffffff 95%,
+            var(--column-color, #ffffff) 99%,
+            transparent 100%
+        );
+        -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        pointer-events: none;
+        z-index: 10;
+        opacity: 0;
+    }
+
+    .kanban-column-beam:hover::before {
+        animation: singleBeamSweep 0.65s linear forwards;
+    }
+
+    /* Unified slate-glass card style matching kanban column fields */
+    .glass-card-unified {
+        background-color: rgba(28, 36, 48, 0.88);
+    }
+
+    /* Interactive inputs: default dark-gray border - solid inner shield, constant speed beam, seamless homogeneous finish with lightened glass background */
+    .input-glass {
+        @apply w-full px-4 py-3 backdrop-blur-md rounded-xl text-white placeholder-rain-300 focus:outline-none;
+        appearance: none;
+        -webkit-appearance: none;
+        box-sizing: border-box;
+        background-color: rgba(36, 48, 64, 0.70);
+        border: 1.5px solid rgba(255, 255, 255, 0.18);
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .input-glass:focus {
+        background:
+            linear-gradient(#202b3a, #202b3a) padding-box,
+            conic-gradient(
+                from var(--beam-angle, 0deg),
+                rgba(255, 255, 255, 0.25) 0deg,
+                rgba(255, 255, 255, 0.25) 70%,
+                rgb(255 255 255 / var(--beam-alpha, 0.25)) 95%,
+                rgba(255, 255, 255, 0.25) 100%
+            ) border-box;
+        border: 1.5px solid transparent;
+        animation: inputBeamSweep 0.65s linear forwards;
+    }
+
+    /* Dynamic accent button with liquid-smooth color rotation on hover and radiant accent text */
     .btn-fiery {
-        @apply bg-gradient-to-r from-fiery to-fiery-dark text-white font-medium px-4 py-2 rounded-lg transition-all duration-300 hover:shadow-[0_4px_15px_rgba(249,115,22,0.3)] active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+        @apply relative inline-flex items-center justify-center overflow-hidden font-semibold px-5 py-3 rounded-xl transition-all duration-700 ease-in-out hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer;
+        background-color: rgba(20, 26, 32, 0.70);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1.5px solid rgb(var(--accent-rgb));
+        color: #ffffff;
+        box-shadow: 0 0 28px 2px rgba(var(--accent-rgb), 0.70), inset 0 0 16px rgba(var(--accent-rgb), 0.30), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    }
+
+    .btn-fiery::after {
+        content: '';
+        position: absolute;
+        inset: -1.5px;
+        border-radius: inherit;
+        background: linear-gradient(135deg, rgb(var(--accent-rgb)), rgb(var(--accent-dark-rgb)));
+        border: 1.5px solid rgba(0, 0, 0, 0.55);
+        box-shadow: 0 4px 18px rgba(var(--accent-rgb), 0.40), inset 0 1px 1px rgba(255, 255, 255, 0.40);
+        opacity: 1;
+        transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .btn-fiery:hover::after {
+        opacity: 0;
+    }
+
+    .btn-fiery > * {
+        position: relative;
+        z-index: 2;
+        transition: color 0.65s cubic-bezier(0.16, 1, 0.3, 1), text-shadow 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-fiery:hover > * {
+        color: rgb(var(--accent-light-rgb));
+        text-shadow: 0 0 14px rgba(var(--accent-rgb), 0.65);
+    }
+
+    .btn-fiery::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.40), transparent);
+        transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 3;
+        pointer-events: none;
+    }
+
+    .btn-fiery:hover::before {
+        transform: translateX(200%);
+    }
+
+    /* Translucent glass ghost button with white edge highlight and zoom */
+    .glass-btn-ghost {
+        @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/40 text-white font-medium transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:shadow-glow-white cursor-pointer;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.20);
+    }
+
+    /* Glass pill badge for statuses and indicators with colored glow support */
+    .glass-pill {
+        @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-md border border-white/25 shadow-sm;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
     }
 
     .text-gradient-fiery {
-        @apply bg-clip-text text-transparent bg-gradient-to-r from-fiery-light to-fiery-dark;
+        @apply bg-clip-text text-transparent bg-gradient-to-r from-fiery-light via-fiery to-fiery-dark;
     }
 
-    .input-glass {
-        @apply w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fiery/50 transition-all text-matte-dark placeholder-gray-400;
+    /* Crisp white edge laser line */
+    .white-rim {
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.35), 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* High contrast text shadow for supreme legibility over transparent glass */
+    .text-glass-crisp {
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Smooth blur-dissolve transitions for panels and tabs */
+    .glass-fade-active {
+        @apply opacity-100 blur-0 scale-100 pointer-events-auto transition-all duration-500 ease-in-out;
+    }
+
+    .glass-fade-inactive {
+        @apply opacity-0 blur-sm scale-[0.98] pointer-events-none transition-all duration-500 ease-in-out;
+    }
+
+    /* Pure opacity page transition: zero transform/filter to prevent containing block trap for fixed positioning / DnD */
+    .animate-page-slide-in {
+        animation: pageFadeIn 0.35s ease-out forwards;
+    }
+
+    /* Silky smooth modal entrance with scale, deblur, and fade */
+    .animate-modal-enter {
+        animation: modalEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+}
+
+@keyframes pageFadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes modalEnter {
+    0% {
+        opacity: 0;
+        filter: blur(8px);
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+}
+
+@keyframes singleBeamSweep {
+    0% {
+        --beam-angle: 0deg;
+        opacity: 1;
+    }
+    70% {
+        --beam-angle: 252deg;
+        opacity: 1;
+    }
+    100% {
+        --beam-angle: 360deg;
+        opacity: 0;
+    }
+}
+
+@keyframes inputBeamSweep {
+    0% {
+        --beam-angle: 0deg;
+        --beam-alpha: 0.25;
+        border-color: transparent;
+    }
+    5% {
+        --beam-alpha: 1;
+    }
+    70% {
+        --beam-angle: 252deg;
+        --beam-alpha: 1;
+        border-color: transparent;
+    }
+    100% {
+        --beam-angle: 360deg;
+        --beam-alpha: 0.25;
+        border-color: rgba(255, 255, 255, 0.28);
+        background:
+            linear-gradient(#202b3a, #202b3a) padding-box,
+            linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.28)) border-box;
     }
 }
