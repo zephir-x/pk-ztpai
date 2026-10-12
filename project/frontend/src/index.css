@@ -168,13 +168,26 @@
 
     /* Dynamic accent button with liquid-smooth color rotation on hover and radiant accent text */
     .btn-fiery {
-        @apply relative inline-flex items-center justify-center overflow-hidden font-semibold px-5 py-3 rounded-xl transition-all duration-700 ease-in-out hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer;
+        @apply relative inline-flex items-center justify-center overflow-hidden font-semibold px-5 py-3 rounded-xl transition-all duration-700 ease-in-out hover:scale-[1.02] active:scale-[0.98] cursor-pointer;
         background-color: rgba(20, 26, 32, 0.70);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border: 1.5px solid rgb(var(--accent-rgb));
         color: #ffffff;
         box-shadow: 0 0 28px 2px rgba(var(--accent-rgb), 0.70), inset 0 0 16px rgba(var(--accent-rgb), 0.30), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    }
+
+    .btn-fiery:disabled {
+        opacity: 0.45 !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: none !important;
+        pointer-events: auto !important;
+    }
+
+    .btn-fiery:disabled::before,
+    .btn-fiery:disabled::after {
+        display: none !important;
     }
 
     .btn-fiery::after {
@@ -191,7 +204,7 @@
         pointer-events: none;
     }
 
-    .btn-fiery:hover::after {
+    .btn-fiery:hover:not(:disabled)::after {
         opacity: 0;
     }
 
@@ -201,7 +214,7 @@
         transition: color 0.65s cubic-bezier(0.16, 1, 0.3, 1), text-shadow 0.65s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .btn-fiery:hover > * {
+    .btn-fiery:hover:not(:disabled) > * {
         color: rgb(var(--accent-light-rgb));
         text-shadow: 0 0 14px rgba(var(--accent-rgb), 0.65);
     }
@@ -219,7 +232,7 @@
         pointer-events: none;
     }
 
-    .btn-fiery:hover::before {
+    .btn-fiery:hover:not(:disabled)::before {
         transform: translateX(200%);
     }
 
@@ -227,6 +240,13 @@
     .glass-btn-ghost {
         @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/40 text-white font-medium transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:shadow-glow-white cursor-pointer;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.20);
+    }
+
+    .glass-btn-ghost:disabled {
+        opacity: 0.40 !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        pointer-events: auto !important;
     }
 
     /* Glass pill badge for statuses and indicators with colored glow support */
@@ -263,6 +283,15 @@
         animation: pageFadeIn 0.35s ease-out forwards;
     }
 
+    /* Directional page slide transitions with deblur & fade */
+    .animate-slide-right {
+        animation: slideInFromRight 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .animate-slide-left {
+        animation: slideInFromLeft 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
     /* Silky smooth modal entrance with scale, deblur, and fade */
     .animate-modal-enter {
         animation: modalEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -275,6 +304,32 @@
     }
     100% {
         opacity: 1;
+    }
+}
+
+@keyframes slideInFromRight {
+    0% {
+        opacity: 0;
+        filter: blur(8px);
+        transform: translateX(24px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInFromLeft {
+    0% {
+        opacity: 0;
+        filter: blur(8px);
+        transform: translateX(-24px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: translateX(0);
     }
 }
 

@@ -14,7 +14,12 @@ export const pl: Translations = {
         confirm: 'Potwierdź',
         admin: 'Administrator',
         user: 'Użytkownik',
-        unassigned: 'Nieprzypisany'
+        unassigned: 'Nieprzypisany',
+        pagination: {
+            showing: (from: number, to: number, total: number) => `Wyświetlanie ${from}–${to} z ${total}`,
+            previous: 'Poprzednia',
+            next: 'Następna'
+        }
     },
     navigation: {
         dashboard: 'Pulpit',
@@ -170,11 +175,31 @@ export const pl: Translations = {
         deleteSuccess: 'Użytkownik został pomyślnie usunięty.',
         deleteError: 'Nie udało się usunąć użytkownika.',
         loading: 'Ładowanie panelu administratora...',
-        youBadge: '(Twoje konto)'
+        youBadge: '(Twoje konto)',
+        pagination: {
+            showing: (from: number, to: number, total: number) => `Wyświetlanie ${from}–${to} z ${total} użytkowników`,
+            previous: 'Poprzednia',
+            next: 'Następna'
+        },
+        stressTest: {
+            title: 'Testy obciążeniowe systemu',
+            subtitle: 'Moduł diagnostyczny dużej skali danych do weryfikacji responsywności, przewijania i stabilności interfejsu.',
+            statusTitle: 'Aktualny stan bazy danych',
+            statusActive: 'Aktywny zestaw obciążeniowy (wysoka gęstość danych)',
+            statusClean: 'Podstawowy stan danych (czysty profil startowy)',
+            statsSummary: (ws, p, t, u, c, n) => `${ws} obszarów, ${p} projektów, ${t} zadań, ${u} użytkowników, ${c} komentarzy, ${n} powiadomień`,
+            seedBtn: 'Załaduj dane obciążeniowe',
+            seeding: 'Generowanie danych...',
+            cleanupBtn: 'Wyczyść dane i przywróć stan bazowy',
+            cleaning: 'Czyszczenie bazy...',
+            seedSuccess: 'Pomyślnie załadowano zestaw obciążeniowy do bazy danych.',
+            cleanupSuccess: 'Pomyślnie usunięto dane testowe i przywrócono stan bazowy.',
+            confirmCleanup: 'Czy na pewno chcesz usunąć wszystkie dane stress testu i przywrócić pierwotny stan aplikacji?'
+        }
     },
     settings: {
         title: 'Ustawienia i profil',
-        subtitle: 'Zarządzaj informacjami o swoim profilu, wyglądem aplikacji oraz bezpieczeństwem konta.',
+        subtitle: 'Zarzadzaj informacjami o swoim profilu, wyglądem aplikacji oraz bezpieczeństwem konta.',
         profileOverview: {
             memberSince: 'Członek od',
             administrator: 'Administrator',

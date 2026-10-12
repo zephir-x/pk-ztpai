@@ -382,9 +382,9 @@ export default function ProjectKanban() {
     }
 
     return (
-        <div className="h-full flex flex-col">
+        <div className="h-full min-h-0 flex flex-col">
             {/* Header Section: Aligned with identical coordinates as Dashboard & WorkspaceDetails */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8 relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-7 relative z-10 shrink-0">
                 <div>
                     {/* Back Navigation Button: Bright white text with luminous fiery arrow */}
                     <button
@@ -407,7 +407,7 @@ export default function ProjectKanban() {
             </div>
 
             {/* Kanban Board Area: Evenly fills available horizontal space with flowing border beam on hover */}
-            <div className="flex-1 overflow-auto pb-4">
+            <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden pt-8 pb-4">
                 <DragDropContext onDragEnd={onDragEnd}>
                     <div className="flex gap-6 h-full w-full min-w-[1100px] items-start">
                         {kanbanColumns.map(column => {
@@ -421,14 +421,22 @@ export default function ProjectKanban() {
                                         '--column-color': column.color,
                                         '--column-border': column.borderColor
                                     } as React.CSSProperties}
-                                    className="flex-1 min-w-[260px] kanban-column-beam rounded-2xl shadow-glass-md shrink-0 self-start"
+                                    className="flex-1 min-w-[260px] kanban-column-beam rounded-2xl shadow-none shrink-0 flex flex-col max-h-full"
                                 >
-                                    <div className="flex flex-col rounded-2xl overflow-hidden">
+                                    <div className="flex flex-col rounded-2xl max-h-full overflow-hidden">
                                         {/* Column Header */}
-                                        <div className={`p-3.5 border-t-2 ${column.border} bg-white/5 border-b border-white/10 flex justify-between items-center rounded-t-2xl`}>
+                                        <div className={`p-3.5 border-t-2 ${column.border} bg-white/5 border-b border-white/10 flex justify-between items-center rounded-t-2xl shrink-0`}>
                                             <div className="flex items-center gap-2.5">
                                                 <h3 className="font-bold text-white text-sm tracking-wide">{column.title}</h3>
-                                                <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-white/10 border border-white/15 text-white/90 shadow-sm">
+                                                <span
+                                                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-all select-none"
+                                                    style={{
+                                                        backgroundColor: `${column.color}25`,
+                                                        borderColor: column.color,
+                                                        color: column.color,
+                                                        boxShadow: `0 0 10px ${column.color}40`
+                                                    }}
+                                                >
                                                     {columnTasks.length}
                                                 </span>
                                             </div>
@@ -443,20 +451,20 @@ export default function ProjectKanban() {
                                             )}
                                         </div>
 
-                                        {/* Droppable Task Column: maximally collapsed when empty */}
+                                        {/* Droppable Task Column: scrollable when tasks overflow! */}
                                         <Droppable droppableId={column.id.toString()}>
                                             {(provided, snapshot) => (
                                                 <div
                                                     ref={provided.innerRef}
                                                     {...provided.droppableProps}
-                                                    className={`transition-colors duration-150 rounded-b-2xl ${
+                                                    className={`flex-1 min-h-0 overflow-y-auto transition-colors duration-150 rounded-b-2xl ${
                                                         isEmpty
-                                                            ? `min-h-[38px] p-2 flex items-center justify-center ${
+                                                            ? `p-2 flex items-center justify-center ${
                                                                 snapshot.isDraggingOver ? 'bg-white/10 ring-1 ring-white/25' : 'bg-transparent'
                                                               }`
-                                                            : `p-3 space-y-3 min-h-[50px] ${
+                                                            : `p-3 space-y-3 ${
                                                                 snapshot.isDraggingOver ? 'bg-white/5' : ''
-                                                              }`
+                                                             }`
                                                     }`}
                                                 >
                                                     {columnTasks.map((task, index) => (

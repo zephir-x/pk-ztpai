@@ -412,7 +412,8 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                         {/* Comments Tab */}
                         {activeTab === 'comments' && (
                             <div className="w-full flex flex-col space-y-5">
-                                <div className="space-y-3.5 max-h-[46vh] overflow-y-auto pr-1">
+                                <div className="relative w-full [mask-image:linear-gradient(to_bottom,transparent_0%,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_32px,black_calc(100%-32px),transparent_100%)]">
+                                    <div className="space-y-3.5 max-h-[46vh] overflow-y-auto pr-1 py-4">
                                     {comments.length === 0 ? (
                                         <div className="py-12 flex flex-col items-center justify-center text-center">
                                             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 mb-3 text-rain-300">
@@ -451,6 +452,7 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                                             );
                                         })
                                     )}
+                                    </div>
                                 </div>
 
                                 {/* Comment Creation Bar */}

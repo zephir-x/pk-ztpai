@@ -11,6 +11,7 @@ using ProjectHub.Api.Services.Projects;
 using ProjectHub.Api.Services.Tasks;
 using ProjectHub.Api.Services.Comments;
 using ProjectHub.Api.Services.Notifications;
+using ProjectHub.Api.Services.StressTest;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using FluentValidation;
@@ -47,7 +48,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter your valid JWT token in the text input below.\r\n\r\nExample: 'eyJhbGciOiJIUzI1NiIs...'"
+        Description = "Enter your valid JWT token in the text input below."
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -83,6 +84,7 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskItemService, TaskItemService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IStressTestService, StressTestService>();
 
 // === Async Mechanism (MediatR & Event Channel) ===
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());

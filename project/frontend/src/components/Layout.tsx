@@ -127,13 +127,13 @@ export const Layout = () => {
                 </div>
             </aside>
 
-            {/* Workspace Viewport with smooth 550ms page transition on navigation */}
+            {/* Workspace Viewport */}
             <main
-                className={`flex-1 flex flex-col relative p-6 sm:p-8 z-10 ${
+                className={`flex-1 min-h-0 flex flex-col relative p-6 sm:p-8 z-10 ${
                     isKanbanPage ? 'overflow-hidden' : 'overflow-y-auto'
                 }`}
             >
-                {/* Ambient top horizontal atmospheric darkening vignette: spreads evenly across entire top of screen and fades out parallelly right under page descriptions */}
+                {/* Ambient top horizontal atmospheric darkening vignette */}
                 <div
                     className="absolute top-0 inset-x-0 h-[210px] pointer-events-none z-0"
                     style={{
@@ -141,7 +141,7 @@ export const Layout = () => {
                     }}
                 />
 
-                <div key={location.pathname} className="animate-page-slide-in flex-1 flex flex-col relative z-10">
+                <div key={location.pathname} className="animate-page-slide-in flex-1 min-h-0 flex flex-col relative z-10">
                     <Outlet />
                 </div>
             </main>

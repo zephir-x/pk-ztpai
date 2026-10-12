@@ -38,7 +38,8 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 ### [x] Stage 7: Polish & Architectural Clean-Up
 - [x] Standardize code styling, remove redundant comments, and enforce professional single-line English documentation.
 - [x] Patch SignalR WebSockets integration (JWT URL parsing, React strict mode mounting safeguards).
-- [x] Refine Role-Based Access Control (RBAC) to allow global read access while strictly locking modifications to admins.\n- [x] Implement robust user assignment via dedicated PATCH endpoint.
+- [x] Refine Role-Based Access Control (RBAC) to allow global read access while strictly locking modifications to admins.
+- [x] Implement robust user assignment via dedicated PATCH endpoint.
 - [x] Implement Edit and Delete functionality for Workspaces and Projects.
 - [x] Introduce `ThemeColor` enums internally stored as string, seamlessly mapped to UI ribbons and tags.
 
@@ -66,7 +67,7 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
   - Deep-link task modal integration in My Tasks view directly navigating to the details tab.
   - Instant assignee modal closure and Kanban board assignee name and avatar update without page reload.
 
-### [~] Stage 9: Stress Testing, Data Scaling & Glassmorphism Redesign
+### [x] Stage 9: Stress Testing, Data Scaling & Glassmorphism Redesign
 - [x] **Glassmorphism Redesign**:
   - Complete overhaul of the entire user interface to an atmospheric futuristic grayscale glassmorphism aesthetic (`#4f5f6e` body, `#556677` silvery rain glass gradients, translucent panels with backdrop blur, fine laser rim highlights, and dynamic fiery accent themes).
   - Global CSS border beam animations with linear sweeps across Kanban columns and input fields with zero background bleeding.
@@ -74,15 +75,23 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
   - Unified card styling across Workspaces, Projects, Kanban boards, My Tasks, Notifications, Admin Panel, and Settings.
   - Fluid CSS grid accordion reply animations for notifications direct messaging.
   - Enhanced avatar presets (expanded with Firestarter/Flame) and theme color palette (expanded with Cyan).
-- [ ] **High-Volume Data Stress Testing & Layout Optimization**:
-  - Temporarily inject large-scale mock datasets via seeder (high volume of comments, projects, tasks, users, and notifications).
-  - Verify and stress-test layout responsiveness, text wrapping, horizontal/vertical scrollbars, virtual lists, and pagination behaviors.
-  - Implement structural corrections and performance optimizations across high-density views (Kanban columns, comment threads, task tables, user lists).
+  - Brand identity styling in Auth with classic colorful logo on luminous elevated white glass badge with interactive glow and zoom.
+- [x] **High-Volume Data Stress Testing & Layout Optimization**:
+  - [x] **Dedicated Stress Test Subsystem**: Implemented `IStressTestService` and `StressTestController` (`/api/admin/stress-test/status`, `/seed`, `/cleanup`) allowing admins to inject large-scale test datasets (24 workspaces, 40+ projects, 86 tasks, 24 users, 80+ comments, notifications targeting admins) on demand.
+  - [x] **Admin Stress Test Control Card**: Added interactive diagnostic glass card in `AdminPanel.tsx` beneath the users table with real-time entity counter badges, one-click seeding, mutually exclusive button states, and atomic SQL hard-delete cleanup.
+  - [x] **Universal Pagination & Directional Animations**: Standardized pagination with directional blur/slide animations (`animate-slide-right`, `animate-slide-left`) across Admin Panel users, Notifications feed, Workspaces grid, Projects grid, and My Tasks cards.
+  - [x] **Targeted Kanban Density & Column Scrolling**: Enabled independent vertical scrolling for Kanban Droppable columns, preventing whole-board vertical stretch and maintaining natural header alignment.
+  - [x] **Color-Matched Circular Kanban Badges**: Styled column task counters as exact circular pill badges with background and border glow reflecting each column's border beam color (slate for To Do, sky for In Progress, amber for Review, emerald for Done).
+  - [x] **Universal View Baseline & Stationary Gradient Fade**: Unified content start coordinates across all seven application views (`AdminPanel`, `Dashboard`, `MyTasks`, `Notifications`, `Settings`, `WorkspaceDetails`, `ProjectKanban`) with `mb-7` header margins and `pt-8` content padding. Calibrated top/bottom fade masks (`0px` to `32px`) so content is 100% opaque at rest and only fades during active scroll.
+  - [x] **Hard Drop Shadow Elimination**: Replaced heavy drop shadows with clean `shadow-none` glass styling across stacked cards in Notifications and Admin Panel, eradicating dark shadow bands between elements.
+  - [x] **Natural Empty States**: Restored natural vertical placement of empty state cards in My Tasks, Workspaces, and Projects, preventing them from snapping to the bottom edge.
+  - [x] **Baseline Restoration**: Validated atomic cleanup via `CleanupAsync` ensuring test datasets can be populated and purged cleanly without leaving orphan or soft-deleted residues.
 
 ### [ ] Stage 10: Quality Assurance & Deployment
 - [ ] Minimum 5 unit tests isolating Domain/Service logic (Rules 1, 2, 3).
-- [ ] Minimum 3 integration tests using `WebApplicationFactory` .
-- [ ] Multi-stage Dockerfile and Docker Compose orchestration.
+- [ ] Minimum 3 integration tests using `WebApplicationFactory`.
+- [ ] **GitHub Actions CI Workflow** (`.github/workflows/ci.yml`): Automated build, lint, and test validation on Push and Pull Request.
+- [ ] Multi-stage Dockerfile and Docker Compose orchestration (ready for Mikr.us / VPS deployment with reverse proxy & custom domain).
 - [ ] Technical README.md documentation and video demonstration recording.
 
 ## 7. AI Guidelines
@@ -92,26 +101,30 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 * **Formatting:** Strictly NO emojis in code, documentation, or chat.
 
 ## 8. Recent Modifications & Reflections
-* **Full Glassmorphism & Visual Redesign (Stage 9 Milestone):**
-  - Atmospheric Deep Glass System: Engineered cohesive dark-slate glassmorphism across all application views anchored in silvery-rain tones (`bg-glass-rain`), translucent backdrop-blur panels, and sharp 1px laser rims.
-  - Luminous Border Beams: Designed single-pass border ray animations (`singleBeamSweep` and `inputBeamSweep`) using conic gradients and CSS property interpolation (`@property --beam-angle`), ensuring the ray shines only on the outline without bleeding into inputs or cards.
-  - Seamless Vignette Alignment: Integrated a 210px top horizontal atmospheric darkening gradient aligned flush with the left sidebar's vertical fiery accent line.
-  - Drag-and-Drop Optimization: Resolved `@hello-pangea/dnd` transform containing block issues by avoiding outer CSS transforms on the page container, ensuring cards snap smoothly directly beneath the cursor.
-  - Responsive Modal Refinements: Restructured modal headers with fixed non-overlapping close buttons (`X`) and separated scrollable form bodies, eliminating click freeze states.
-  - Settings & Admin Panel Modernization: Modernized Settings into clean 3x2 equal-size accent grid, centered avatar selectors, lightened `.input-glass` field backgrounds, eliminated straight-line shadow artifacts, and added an expanded user identity column in Admin Panel.
-  - Extended Design Tokens: Added `Cyan` (`#06b6d4`) to backend and frontend `ThemeColor` enums and added `Firestarter` (`avatar-7` with flame icon) to avatar presets.
+* **Stage 9 Completion - High-Density Load Testing & Layout Perfection:**
+  - High-Volume Load Auditing: Validated complete platform responsiveness, layout integrity, and zero text/overflow degradation under a heavy synthetic dataset (24 workspaces, 40+ projects, 86 tasks, 24 users, 80+ comments, 25 notifications per admin).
+  - Universal View Baseline Alignment: Standardized the header-to-content distance across all 7 views (`AdminPanel`, `Dashboard`, `MyTasks`, `Notifications`, `Settings`, `WorkspaceDetails`, `ProjectKanban`) using an identical `mb-7` header margin and `pt-8` (32px) content start coordinate.
+  - Stationary Gradient Mask Engineering: Rebuilt scrollable container masks (`linear-gradient(to bottom, transparent 0px, black 32px, black calc(100% - 32px), transparent 100%)`) in Admin Panel, Notifications, and Settings. Because content begins at `pt-8` (32px), cards are 100% opaque and crisp at rest, fading smoothly only during scrolling without premature clipping.
+  - Elimination of Hard Drop Shadow Artifacts: Removed `shadow-glass-sm` and `.glass-panel` from vertically stacked items in `Notifications.tsx` and `AdminPanel.tsx`, replacing them with `shadow-none` glass panels. Eliminated harsh dark shadow bands between consecutive cards while retaining top highlight rims.
+  - Circular Kanban Column Counters: Formatted column item counters as circular badges (`w-6 h-6 rounded-full`) with glowing background and border tones precisely synchronized with each column's border beam (slate gray for To Do, sky blue for In Progress, amber yellow for Review, emerald green for Done).
+  - Natural Empty State Centering: Removed `justify-between` from the root flexbox in `MyTasks.tsx`, ensuring the empty state tile sits naturally beneath the header rather than being pinned to the bottom screen edge.
+  - Full-Spectrum Pagination Architecture: Deployed modular pagination with bidirectional slide animations (`animate-slide-right`, `animate-slide-left`) across Admin Panel, Notifications, Workspaces, Projects, and My Tasks, maintaining consistent item limits (6 to 8 items per page).
+* **System Stress Testing & Diagnostics Subsystem:**
+  - Architecture: Built dedicated `IStressTestService` and `StressTestController` supporting on-demand injection of large-scale test data.
+  - Admin Panel Diagnostics Card: Added interactive diagnostic glass card in `AdminPanel.tsx` beneath the users table with real-time entity counter badges, one-click seeding, mutually exclusive button states, and atomic SQL hard-delete cleanup.
+  - Distributed Comment Seeding: Seeded comments across every top visible task in `ProjectHub React App`.
+  - Admin Targeted Notifications: Fixed JWT `sub` claim extraction in `StressTestController.cs`, generated 25 notifications (15 unread) for each admin user, and tied automatic unread count refresh in `AdminPanel.tsx` directly to `NotificationContext`.
+  - Rule Compliance: Generator strictly abides by Business Rule 2 (maximum 1 active Critical task per user across the entire system), dynamically allocating critical priorities to distinct assignees.
+  - Atomic Purge: Implemented direct SQL hard-delete cleanup in `CleanupAsync` ensuring test mock data (`[STRESS]`, `stress.*`) is permanently eradicated without leaving soft-deleted ghost records in the database.
+* **Full Glassmorphism & Visual Redesign:**
+  - Atmospheric Deep Glass System: Cohesive dark-slate glassmorphism across all application views anchored in silvery-rain tones (`bg-glass-rain`), translucent backdrop-blur panels, and sharp 1px laser rims.
+  - Luminous Border Beams: Single-pass border ray animations (`singleBeamSweep` and `inputBeamSweep`) using conic gradients and CSS property interpolation (`@property --beam-angle`).
+  - Seamless Vignette Alignment: 210px top horizontal atmospheric darkening gradient aligned flush with the left sidebar's vertical fiery accent line.
+  - Drag-and-Drop Optimization: Resolved `@hello-pangea/dnd` transform containing block issues by avoiding outer CSS transforms on the page container.
 * **Notifications & Messaging System Integration:**
   - Designed and deployed full-stack notification infrastructure: PostgreSQL entity, EF Core migration, and SignalR personal group dispatching.
-  - Asynchronous mention processing via `CommentCreatedEventHandler` supporting `@admin` and `@username` (matching email prefixes, including dots, e.g. `@kacper.gumulak`).
+  - Asynchronous mention processing via `CommentCreatedEventHandler` supporting `@admin` and `@username`.
   - Direct messaging between regular users and system administrators with inline response capabilities.
   - Deep linking from notifications to the project Kanban board, automatically loading project state and opening the task modal in details or comments mode.
-  - Deep linking from My Tasks directly opening the task modal on the details tab.
-  - Instant assignee update in task modal closing the modal and updating assignee name and avatar on Kanban board immediately without reload.
-  - Dynamic i18n localization templates ensuring real-time notification translation synchronization without hardcoded strings in database records.
-  - Real-time unread badge counter integrated seamlessly into the navigation sidebar between My Tasks and Settings.
 * **Comprehensive Bilingual Localization (i18n):**
-  - Backend: Added `app.UseRequestLocalization` supporting `en` and `pl`. Created `LocalizationMessages` for bilingual FluentValidation rules and service exception details based on `CultureInfo.CurrentUICulture`.
-  - Frontend: Configured `axiosClient` to automatically attach `Accept-Language: localStorage.getItem('app_language') || 'en'` on every HTTP request.
-  - Expanded `src/i18n` with full translations for all modals, pages, toasts, and dynamic browser page titles.
-* **Database Seeder Scale-up:** Dynamic GUIDs simulate a realistic organizational structure with multiple workspaces, projects, users, tasks, comments, and initial notifications.
-* **Soft Delete Architecture:** Integrated an EF Core `ISoftDeletable` system with query filters.
+  - Backend request localization and frontend translation dictionaries covering all views, modals, toasts, and dynamic titles.

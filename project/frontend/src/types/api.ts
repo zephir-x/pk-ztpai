@@ -213,3 +213,24 @@ export interface ReplyMessageRequest {
     recipientId: string;
     message: string;
 }
+
+// === Stress Testing Diagnostic DTOs ===
+export interface StressTestStatusResponse {
+    isStressDataActive: boolean;
+    workspacesCount: number;
+    projectsCount: number;
+    tasksCount: number;
+    usersCount: number;
+    commentsCount: number;
+    notificationsCount: number;
+}
+
+export interface StressTestResultResponse {
+    message: string;
+    workspacesCreated: number;
+    projectsCreated: number;
+    tasksCreated: number;
+    usersCreated: number;
+    commentsCreated: number;
+    notificationsCreated: number;
+}

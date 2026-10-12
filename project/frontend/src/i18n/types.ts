@@ -15,6 +15,11 @@ export interface Translations {
         admin: string;
         user: string;
         unassigned: string;
+        pagination: {
+            showing: (from: number, to: number, total: number) => string;
+            previous: string;
+            next: string;
+        };
     };
     navigation: {
         dashboard: string;
@@ -171,6 +176,26 @@ export interface Translations {
         deleteError: string;
         loading: string;
         youBadge: string;
+        pagination: {
+            showing: (from: number, to: number, total: number) => string;
+            previous: string;
+            next: string;
+        };
+        stressTest: {
+            title: string;
+            subtitle: string;
+            statusTitle: string;
+            statusActive: string;
+            statusClean: string;
+            statsSummary: (ws: number, p: number, t: number, u: number, c: number, n: number) => string;
+            seedBtn: string;
+            seeding: string;
+            cleanupBtn: string;
+            cleaning: string;
+            seedSuccess: string;
+            cleanupSuccess: string;
+            confirmCleanup: string;
+        };
     };
     settings: {
         title: string;
