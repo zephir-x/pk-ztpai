@@ -85,22 +85,45 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
   - [x] **Universal View Baseline & Stationary Gradient Fade**: Unified content start coordinates across all seven application views (`AdminPanel`, `Dashboard`, `MyTasks`, `Notifications`, `Settings`, `WorkspaceDetails`, `ProjectKanban`) with `mb-7` header margins and `pt-8` content padding. Calibrated top/bottom fade masks (`0px` to `32px`) so content is 100% opaque at rest and only fades during active scroll.
   - [x] **Hard Drop Shadow Elimination**: Replaced heavy drop shadows with clean `shadow-none` glass styling across stacked cards in Notifications and Admin Panel, eradicating dark shadow bands between elements.
   - [x] **Natural Empty States**: Restored natural vertical placement of empty state cards in My Tasks, Workspaces, and Projects, preventing them from snapping to the bottom edge.
-  - [x] **Baseline Restoration**: Validated atomic cleanup via `CleanupAsync` ensuring test datasets can be populated and purged cleanly without leaving orphan or soft-deleted residues.
+  - [x] **Baseline Restoration**: Validated atomic cleanup via `CleanupAsync` ensuring test mock data (`[STRESS]`, `stress.*`) is permanently eradicated without leaving orphan or soft-deleted residues.
 
-### [ ] Stage 10: Quality Assurance & Deployment
-- [ ] Minimum 5 unit tests isolating Domain/Service logic (Rules 1, 2, 3).
-- [ ] Minimum 3 integration tests using `WebApplicationFactory`.
-- [ ] **GitHub Actions CI Workflow** (`.github/workflows/ci.yml`): Automated build, lint, and test validation on Push and Pull Request.
-- [ ] Multi-stage Dockerfile and Docker Compose orchestration (ready for Mikr.us / VPS deployment with reverse proxy & custom domain).
+### [x] Stage 10: Quality Assurance & Testing Suite (Grade 5.0 Standards)
+- [x] **Canonical Multi-Project Architecture**:
+  - Restructured `backend/` into standard sibling folders: `backend/ProjectHub.Api/` (Web API application) and `backend/ProjectHub.Tests/` (test suite).
+  - Maintained `ProjectHub.sln` at `backend/` root linking both projects with zero compiler warnings or circular exclusions.
+  - Configured `ProjectHub.Tests` (.NET 9.0) with xUnit, FluentAssertions, Moq, `Microsoft.AspNetCore.Mvc.Testing`, and `Microsoft.EntityFrameworkCore.InMemory`.
+  - Built `TestDbContextFactory` producing isolated in-memory test databases for unit tests.
+  - Engineered `CustomWebApplicationFactory` with environment override (`Testing`), automated in-memory JWT configuration, and test claim token generation.
+  - Created full technical documentation in English: `ProjectHub.Tests/TEST_DOCUMENTATION.md`.
+- [x] **Unit Testing Suite (21 Tests - Exceeding 5-Test Criterion)**:
+  - `TaskItemService_BusinessRulesTests` (6 tests): Validated Rule 1 (cannot close task without active assignee, positive path with assignee), Rule 2 (Admin-only task assignment on creation, Admin-only reassignment, SignalR broadcast on reassignment).
+  - `ProjectService_BusinessRulesTests` (5 tests): Validated Rule 3 (conflict on deleting project with unresolved critical tasks, positive path when critical task is Done, non-critical task bypass, workspace ownership access check, unauthorized project creation prevention).
+  - `CommentService_AuthorizationTests` (5 tests): Validated Rule 4 (comment modification/deletion restricted to author or Admin), positive author edit, positive Admin override, and asynchronous MediatR event dispatching (`CommentCreatedEvent`).
+  - `UserService_BusinessRulesTests` (5 tests): Validated Rule 5 (cannot delete own account), soft-delete query filter isolation, Admin-only user deletion authorization, email uniqueness conflicts, and password security verification.
+- [x] **Integration Testing Suite (16 Tests - Exceeding 3-Test Criterion)**:
+  - `AuthControllerIntegrationTests` (4 tests): Verified `/api/auth/register` (201 Created, 409 Conflict duplicate), `/api/auth/login` (200 OK with valid JWT, 401 Unauthorized for invalid password).
+  - `TasksControllerIntegrationTests` (5 tests): Verified HTTP pipeline enforcement of Rule 1 (409 Conflict vs 201 Created) and Rule 2 (403 Forbidden vs 204 NoContent with real JWT claims).
+  - `ProjectsControllerIntegrationTests` (4 tests): Verified HTTP pipeline enforcement of Rule 3 (409 Conflict vs 204 NoContent), 403 Forbidden for unowned workspaces, and 401 Unauthorized for unauthenticated access).
+  - `CommentsControllerIntegrationTests` (3 tests): Verified `/api/comments` (201 Created with async MediatR event trigger, 403 Forbidden for non-author edits, 204 NoContent for Admin deletion).
+- [x] **Suite Execution Results**: 37 total tests executed across both suites, 0 failures, 0 skipped, 100% passing in ~1-2 seconds.
+- [x] **GitHub Actions CI Workflow** (`.github/workflows/ci.yml`): Automated build, lint, and test validation on Push and Pull Request.
+- [x] **Multi-stage Dockerfile and Docker Compose Orchestration**: Automated multi-container environment (PostgreSQL 17 Alpine with healthcheck, ASP.NET Core 9 Web API multi-stage container with automatic migrations and data seeding, and React SPA served by Nginx with reverse proxy and WebSocket support). Tested single-command startup via `docker compose up -d` at `http://localhost:5173`. Ready for Mikr.us / VPS deployment with reverse proxy & custom domain.
 - [ ] Technical README.md documentation and video demonstration recording.
 
 ## 7. AI Guidelines
 * **Code Style:** Clean architecture, DTOs for external boundaries, Fluent API for EF Core.
 * **Comments:** Concise, module-specific comments in English ONLY.
-* **Tone:** Objective, technical, candidate for Grade 5.0 evaluation.
-* **Formatting:** Strictly NO emojis in code, documentation, or chat.
+* **Tone:** Objective, technical, candidate for Grade 5.0 evaluation.\n* **Formatting:** Strictly NO emojis in code, documentation, or chat.
 
 ## 8. Recent Modifications & Reflections
+* **Stage 10 Testing, CI Automation, Containerization & Visual Polish:**
+  - Cancel Button Glow Clipping Fix: Resolved button focus and hover glow clipping in `UserModal.tsx` by isolating modal action buttons outside the `overflow-y-auto` form body container into a dedicated sticky footer with top border delimiter.
+  - GitHub Actions CI Workflow: Created `.github/workflows/ci.yml` providing automated parallel validation pipelines for backend (.NET 9 SDK restore, Release build, and 37 unit/integration tests with code coverage) and frontend (Node.js 20, npm ci, ESLint verification, and production Vite compilation) on push and pull requests to `main`, `master`, and `develop`.
+  - Multi-Stage Docker Orchestration: Engineered complete containerization pipeline:
+    * `backend/Dockerfile`: 4-stage build (`base`, `build`, `publish`, `final`) based on `aspnet:9.0` and `sdk:9.0` with layer-cached NuGet restore.
+    * `frontend/Dockerfile`: 2-stage build (`build`, `final`) with Node.js 20 Alpine compilation and Nginx Alpine server.
+    * `frontend/nginx.conf`: Nginx reverse proxy routing `/api/*` to backend Kestrel, `/kanbanHub` with HTTP/1.1 WebSocket Upgrade headers, `/swagger/*`, long-term asset caching, and SPA fallback (`try_files $uri /index.html`).
+    * `docker-compose.yml`: Automated orchestration tying `postgres_db` (with `pg_isready` healthcheck), `backend` (`service_healthy` dependency, automated EF Core migrations & database seeding), and `frontend` gateway accessible at `http://localhost:5173`. Verified live in Docker Desktop with 100% healthy services and authenticated API calls.
 * **Stage 9 Completion - High-Density Load Testing & Layout Perfection:**
   - High-Volume Load Auditing: Validated complete platform responsiveness, layout integrity, and zero text/overflow degradation under a heavy synthetic dataset (24 workspaces, 40+ projects, 86 tasks, 24 users, 80+ comments, 25 notifications per admin).
   - Universal View Baseline Alignment: Standardized the header-to-content distance across all 7 views (`AdminPanel`, `Dashboard`, `MyTasks`, `Notifications`, `Settings`, `WorkspaceDetails`, `ProjectKanban`) using an identical `mb-7` header margin and `pt-8` (32px) content start coordinate.
@@ -112,8 +135,7 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 * **System Stress Testing & Diagnostics Subsystem:**
   - Architecture: Built dedicated `IStressTestService` and `StressTestController` supporting on-demand injection of large-scale test data.
   - Admin Panel Diagnostics Card: Added interactive diagnostic glass card in `AdminPanel.tsx` beneath the users table with real-time entity counter badges, one-click seeding, mutually exclusive button states, and atomic SQL hard-delete cleanup.
-  - Distributed Comment Seeding: Seeded comments across every top visible task in `ProjectHub React App`.
-  - Admin Targeted Notifications: Fixed JWT `sub` claim extraction in `StressTestController.cs`, generated 25 notifications (15 unread) for each admin user, and tied automatic unread count refresh in `AdminPanel.tsx` directly to `NotificationContext`.
+  - Distributed Comment Seeding: Seeded comments across every top visible task in `ProjectHub React App`.\n  - Admin Targeted Notifications: Fixed JWT `sub` claim extraction in `StressTestController.cs`, generated 25 notifications (15 unread) for each admin user, and tied automatic unread count refresh in `AdminPanel.tsx` directly to `NotificationContext`.
   - Rule Compliance: Generator strictly abides by Business Rule 2 (maximum 1 active Critical task per user across the entire system), dynamically allocating critical priorities to distinct assignees.
   - Atomic Purge: Implemented direct SQL hard-delete cleanup in `CleanupAsync` ensuring test mock data (`[STRESS]`, `stress.*`) is permanently eradicated without leaving soft-deleted ghost records in the database.
 * **Full Glassmorphism & Visual Redesign:**
@@ -127,4 +149,4 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
   - Direct messaging between regular users and system administrators with inline response capabilities.
   - Deep linking from notifications to the project Kanban board, automatically loading project state and opening the task modal in details or comments mode.
 * **Comprehensive Bilingual Localization (i18n):**
-  - Backend request localization and frontend translation dictionaries covering all views, modals, toasts, and dynamic titles.
+  - Backend request localization via `Accept-Language` header, localized DTO validation errors, and bilingual service exception messages.

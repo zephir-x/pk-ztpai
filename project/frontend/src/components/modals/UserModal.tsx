@@ -1,11 +1,11 @@
-﻿import { useState, useEffect } from 'react';
-import { X, Check } from 'lucide-react';
-import { userService } from '../../api/userService';
+﻿import React, { useState, useEffect } from 'react';
 import { type UserResponse, UserRole } from '../../types/api';
-import { Avatar } from '../Avatar';
+import { userService } from '../../api/userService';
 import { AVATAR_PRESETS } from '../../constants/theme';
-import { useTranslation } from '../../context/LanguageContext';
+import { Avatar } from '../Avatar';
+import { X, Check } from 'lucide-react';
 import { AxiosError } from 'axios';
+import { useTranslation } from '../../context/LanguageContext';
 import { toast } from 'react-hot-toast';
 
 interface UserModalProps {
@@ -15,37 +15,50 @@ interface UserModalProps {
     initialData?: UserResponse | null;
 }
 
-export const UserModal = ({ isOpen, onClose, onSaved, initialData }: UserModalProps) => {
+const parseRole = (role?: string | UserRole): UserRole => {
+    if (role === 'Admin' || (role as unknown) === 1) return UserRole.Admin;
+    return UserRole.User;
+};
+
+export const UserModal: React.FC<UserModalProps> = ({
+    isOpen,
+    onClose,
+    onSaved,
+    initialData
+}) => {
     const { t } = useTranslation();
-    const [email, setEmail] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [selectedAvatar, setSelectedAvatar] = useState('anonymous');
+    const [email, setEmail] = useState(initialData?.email || '');
+    const [firstName, setFirstName] = useState(initialData?.firstName || '');
+    const [lastName, setLastName] = useState(initialData?.lastName || '');
+    const [role, setRole] = useState<UserRole>(parseRole(initialData?.role));
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [role, setRole] = useState<UserRole>(UserRole.User);
-    const [error, setError] = useState<string | null>(null);
+    const [selectedAvatar, setSelectedAvatar] = useState(initialData?.avatarUrl || AVATAR_PRESETS[0].id);
+
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
+    // Synchronize state when initialData changes or modal re-opens
     useEffect(() => {
-        if (isOpen) {
-            setEmail(initialData?.email || '');
-            setFirstName(initialData?.firstName || '');
-            setLastName(initialData?.lastName || '');
-            setSelectedAvatar(initialData?.avatarUrl || 'anonymous');
-            setPassword(''); // Never pre-fill password for security
+        if (initialData) {
+            setEmail(initialData.email);
+            setFirstName(initialData.firstName || '');
+            setLastName(initialData.lastName || '');
+            setRole(parseRole(initialData.role));
+            setSelectedAvatar(initialData.avatarUrl || AVATAR_PRESETS[0].id);
+            setPassword('');
             setConfirmPassword('');
-
-            // Map string 'Admin' or 'User' from backend to Enum if needed
-            let parsedRole: UserRole = UserRole.User;
-            if (initialData?.role === 'Admin' || initialData?.role === UserRole.Admin) {
-                parsedRole = UserRole.Admin;
-            }
-            setRole(parsedRole);
-
-            setError(null);
+        } else {
+            setEmail('');
+            setFirstName('');
+            setLastName('');
+            setRole(UserRole.User);
+            setSelectedAvatar(AVATAR_PRESETS[0].id);
+            setPassword('');
+            setConfirmPassword('');
         }
-    }, [isOpen, initialData]);
+        setError(null);
+    }, [initialData, isOpen]);
 
     if (!isOpen) return null;
 
@@ -53,6 +66,7 @@ export const UserModal = ({ isOpen, onClose, onSaved, initialData }: UserModalPr
         e.preventDefault();
         setError(null);
 
+        // Password matching validation
         if (password && password !== confirmPassword) {
             setError(t.modals.user.passwordsMismatch);
             return;
@@ -62,19 +76,18 @@ export const UserModal = ({ isOpen, onClose, onSaved, initialData }: UserModalPr
 
         try {
             if (initialData) {
-                // Update User (email is immutable)
-                const updateData = {
+                // Update User
+                await userService.update(initialData.id, {
                     email: initialData.email,
                     role,
                     firstName: firstName.trim(),
                     lastName: lastName.trim(),
-                    avatarUrl: selectedAvatar,
-                    password: password || undefined
-                };
-                await userService.update(initialData.id, updateData as any);
+                    password: password || undefined,
+                    avatarUrl: selectedAvatar
+                });
                 onSaved({
                     ...initialData,
-                    role: role === UserRole.Admin ? 'Admin' : 'User',
+                    role,
                     firstName: firstName.trim(),
                     lastName: lastName.trim(),
                     avatarUrl: selectedAvatar
@@ -144,10 +157,10 @@ export const UserModal = ({ isOpen, onClose, onSaved, initialData }: UserModalPr
                     </div>
                 )}
 
-                {/* Scrollable Form Body */}
-                <div className="flex-1 overflow-y-auto pr-1">
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Avatar Preset Selector - Centered to match workspace / task color ribbons */}
+                {/* Form wrapper with scrollable fields and non-clipped sticky footer */}
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+                    <div className="flex-1 overflow-y-auto pr-1.5 space-y-4 py-1">
+                        {/* Avatar Preset Selector */}
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-wider text-rain-200 mb-2 text-center sm:text-left">
                                 {t.modals.user.avatarLabel}
@@ -155,7 +168,7 @@ export const UserModal = ({ isOpen, onClose, onSaved, initialData }: UserModalPr
                             <div className="flex flex-wrap justify-center gap-2.5 py-1">
                                 {AVATAR_PRESETS.map((preset) => {
                                     const isSelected = selectedAvatar === preset.id;
-                                    const avatarLabel = t.settings.avatarSection.avatars[preset.id] || preset.label;
+                                    const avatarLabel = t.settings.avatarSection.avatars[preset.id as keyof typeof t.settings.avatarSection.avatars] || preset.label;
                                     return (
                                         <button
                                             key={preset.id}
@@ -279,28 +292,28 @@ export const UserModal = ({ isOpen, onClose, onSaved, initialData }: UserModalPr
                                 />
                             </div>
                         )}
+                    </div>
 
-                        {/* Modal Action Buttons */}
-                        <div className="flex justify-end gap-3 mt-6 pt-3 border-t border-white/10">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="glass-btn-ghost text-sm px-5 py-2.5 cursor-pointer"
-                            >
-                                <span>{t.common.cancel}</span>
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={isLoading || (!initialData && !email.trim())}
-                                className="btn-fiery text-sm px-6 py-2.5 cursor-pointer disabled:opacity-50"
-                            >
-                                <span>
-                                    {isLoading ? t.common.saving : (initialData ? t.common.save : t.common.create)}
-                                </span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    {/* Modal Action Buttons - Placed outside the scroll container to prevent glow clipping */}
+                    <div className="flex justify-end items-center gap-3 mt-5 pt-4 border-t border-white/10 shrink-0">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="glass-btn-ghost text-sm px-5 py-2.5 cursor-pointer"
+                        >
+                            <span>{t.common.cancel}</span>
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isLoading || (!initialData && !email.trim())}
+                            className="btn-fiery text-sm px-6 py-2.5 cursor-pointer disabled:opacity-50"
+                        >
+                            <span>
+                                {isLoading ? t.common.saving : (initialData ? t.common.save : t.common.create)}
+                            </span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );

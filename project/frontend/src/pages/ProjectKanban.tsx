@@ -75,7 +75,7 @@ export default function ProjectKanban() {
         if (!projectId || !workspaceId) return;
 
         // Initialize real-time synchronization via SignalR
-        const hubUrl = import.meta.env.VITE_HUB_URL;
+        const hubUrl = import.meta.env.VITE_HUB_URL || '/kanbanHub';
         const hubConnection = new signalR.HubConnectionBuilder()
             .withUrl(hubUrl, { accessTokenFactory: () => localStorage.getItem('token') || '' })
             .withAutomaticReconnect()

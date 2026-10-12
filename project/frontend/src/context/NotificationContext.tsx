@@ -143,7 +143,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         if (!isAuthenticated || !user?.id) return;
 
-        const hubUrl = import.meta.env.VITE_HUB_URL;
+        const hubUrl = import.meta.env.VITE_HUB_URL || '/kanbanHub';
         const connection = new signalR.HubConnectionBuilder()
             .withUrl(hubUrl, {
                 accessTokenFactory: () => localStorage.getItem('token') || ''

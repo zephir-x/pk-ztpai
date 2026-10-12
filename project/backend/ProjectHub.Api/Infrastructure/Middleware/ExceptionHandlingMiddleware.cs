@@ -25,7 +25,14 @@ public class ExceptionHandlingMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An exception occurred during request processing.");
+            if (ex is ValidationException or NotFoundException or ForbiddenException or ConflictException)
+            {
+                _logger.LogWarning("Handled domain exception ({ExceptionType}): {Message}", ex.GetType().Name, ex.Message);
+            }
+            else
+            {
+                _logger.LogError(ex, "An unhandled exception occurred during request processing.");
+            }
             await HandleExceptionAsync(context, ex);
         }
     }

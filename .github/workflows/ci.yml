@@ -1,0 +1,84 @@
+﻿# Name of the workflow displayed in GitHub Actions dashboard
+name: Continuous Integration
+
+# Triggers defining when the pipeline should automatically execute
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+# Concurrency settings: cancel any ongoing pipeline run for the same branch/PR when a new commit is pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # === Backend CI: Validates ASP.NET Core Web API (.NET 9) solution and tests ===
+  backend:
+    name: Backend CI (.NET 9)
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository source code to the runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Provision .NET 9 SDK environment
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      # Step 3: Restore all NuGet packages declared in the solution projects
+      - name: Restore NuGet Packages
+        run: dotnet restore project/backend/ProjectHub.sln
+
+      # Step 4: Compile the solution in Release mode without re-restoring packages
+      - name: Build Backend Solution
+        run: dotnet build project/backend/ProjectHub.sln --configuration Release --no-restore
+
+      # Step 5: Execute all Unit and Integration tests and gather code coverage data
+      - name: Run Unit & Integration Tests
+        run: dotnet test project/backend/ProjectHub.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+
+  # === Frontend CI: Validates React TypeScript SPA code quality and build ===
+  frontend:
+    name: Frontend CI (React & Vite)
+    runs-on: ubuntu-latest
+
+    # Set default execution path to the frontend folder
+    defaults:
+      run:
+        working-directory: project/frontend
+
+    steps:
+      # Step 1: Check out the repository source code to the runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Provision Node.js 20 environment with npm cache enabled
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: project/frontend/package-lock.json
+
+      # Step 3: Clean, deterministic install of npm dependencies from package-lock.json
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      # Step 4: Execute ESLint static analysis to verify code conventions and rules
+      - name: Run ESLint
+        run: npm run lint
+
+      # Step 5: Verify TypeScript type checks and compile production Vite bundle
+      - name: Build Frontend Application
+        run: npm run build

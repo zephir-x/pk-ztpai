@@ -68,8 +68,11 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // === Database Configuration ===
-builder.Services.AddDbContext<ProjectHubDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddDbContext<ProjectHubDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
 
 // === Infrastructure & Application Services ===
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() 
@@ -135,8 +138,11 @@ using (var scope = app.Services.CreateScope())
     {
         var dbContext = services.GetRequiredService<ProjectHubDbContext>();
         
-        await dbContext.Database.MigrateAsync();
-        await DatabaseSeeder.SeedAsync(dbContext);
+        if (dbContext.Database.IsRelational())
+        {
+            await dbContext.Database.MigrateAsync();
+            await DatabaseSeeder.SeedAsync(dbContext);
+        }
     }
     catch (Exception ex)
     {
@@ -145,7 +151,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// === Localization Setup ===
+// === HTTP Request Pipeline ===
 var supportedCultures = new[] { "en", "pl" };
 var localizationOptions = new RequestLocalizationOptions()
     .SetDefaultCulture("en")
@@ -153,17 +159,15 @@ var localizationOptions = new RequestLocalizationOptions()
     .AddSupportedUICultures(supportedCultures);
 
 app.UseRequestLocalization(localizationOptions);
-
-// === HTTP Request Pipeline ===
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-
-app.UseCors("FrontendOrigin");
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("FrontendOrigin");
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -172,3 +176,5 @@ app.MapControllers();
 app.MapHub<KanbanHub>("/kanbanHub");
 
 app.Run();
+
+public partial class Program { }
