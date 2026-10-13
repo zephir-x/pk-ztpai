@@ -47,6 +47,8 @@ jobs:
       # Step 5: Execute all Unit and Integration tests and gather code coverage data
       - name: Run Unit & Integration Tests
         run: dotnet test project/backend/ProjectHub.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+        env:
+          ASPNETCORE_ENVIRONMENT: Testing
 
   # === Frontend CI: Validates React TypeScript SPA code quality and build ===
   frontend:

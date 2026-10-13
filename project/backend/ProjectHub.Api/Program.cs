@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using ProjectHub.Api.Infrastructure.Data;
 using ProjectHub.Api.Infrastructure.Authentication;
 using ProjectHub.Api.Infrastructure.Middleware;
@@ -70,15 +71,28 @@ builder.Services.AddSwaggerGen(options =>
 // === Database Configuration ===
 if (!builder.Environment.IsEnvironment("Testing"))
 {
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrWhiteSpace(connectionString) && !builder.Environment.IsDevelopment())
+    {
+        throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing. In production, provide the database connection string via environment variables.");
+    }
+
     builder.Services.AddDbContext<ProjectHubDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+        options.UseNpgsql(connectionString));
 }
 
 // === Infrastructure & Application Services ===
-var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() 
-                 ?? throw new InvalidOperationException("JWT configuration is missing.");
+var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
+var jwtConfig = jwtSection.Get<JwtOptions>();
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    if (jwtConfig == null || string.IsNullOrWhiteSpace(jwtConfig.SecretKey))
+    {
+        throw new InvalidOperationException("JWT SecretKey is missing. Configure JwtOptions:SecretKey in environment configuration.");
+    }
+}
 
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<JwtOptions>(jwtSection);
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
@@ -99,17 +113,6 @@ builder.Services.AddHostedService<EventProcessingBackgroundService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtOptions.Issuer,
-            ValidAudience = jwtOptions.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
-        };
-        
         // SignalR requires extracting the JWT token from the query string instead of the HTTP header during the initial WebSocket handshake negotiation
         options.Events = new JwtBearerEvents
         {
@@ -123,6 +126,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 }
                 return Task.CompletedTask;
             }
+        };
+    });
+
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtOptions>>((options, jwtAccessor) =>
+    {
+        var jwt = jwtAccessor.Value;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = jwt.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SecretKey))
         };
     });
 

@@ -18,6 +18,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         CultureInfo.DefaultThreadCurrentCulture = CultureInfo.GetCultureInfo("en");
         CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.GetCultureInfo("en");
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -30,7 +31,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             {
                 ["JwtOptions:Issuer"] = "ProjectHubApi",
                 ["JwtOptions:Audience"] = "ProjectHubClients",
-                ["JwtOptions:SecretKey"] = "DevelopmentSecretKeyThatIsLongEnoughToProvide256BitEncryption123!"
+                ["JwtOptions:SecretKey"] = "TestingSecretKeyThatIsLongEnoughToProvide256BitEncryption123!"
             });
         });
 
