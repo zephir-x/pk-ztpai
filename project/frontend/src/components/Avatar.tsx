@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { User, Bot, Rocket, Code2, Zap, Sparkles, Crown } from 'lucide-react';
+import { User, Bot, Rocket, Code2, Zap, Sparkles, Crown, Flame } from 'lucide-react';
 import { AVATAR_PRESETS } from '../constants/theme';
 
 interface AvatarProps {
@@ -41,6 +41,8 @@ export const Avatar: React.FC<AvatarProps> = ({
                 return <Sparkles size={iconSize} className="text-white drop-shadow-sm" />;
             case 'crown':
                 return <Crown size={iconSize} className="text-white drop-shadow-sm" />;
+            case 'flame':
+                return <Flame size={iconSize} className="text-white drop-shadow-sm" />;
             case 'user':
             default:
                 return <User size={iconSize} className="text-white drop-shadow-sm" />;

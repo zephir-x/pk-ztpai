@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosClient } from '../api/axiosClient';
 import { useAuth } from '../context/AuthContext';
@@ -6,6 +6,7 @@ import { useTranslation } from '../context/LanguageContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { applyAccentColor } from '../constants/theme';
 import { AxiosError } from 'axios';
+import { ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
 
 export default function Auth() {
     const { t } = useTranslation();
@@ -17,7 +18,7 @@ export default function Auth() {
         applyAccentColor('fiery');
     }, []);
 
-    // Form
+    // Form states
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -53,7 +54,7 @@ export default function Auth() {
                 navigate('/dashboard');
             } else {
                 await axiosClient.post('/auth/register', { email, password });
-                // After successful registration, proceed seamlessly back to the login screen
+                // Return smoothly to login screen upon successful registration
                 setIsLogin(true);
                 setEmail('');
                 setPassword('');
@@ -78,39 +79,70 @@ export default function Auth() {
         }
     };
 
+    const isPasswordMatching = !isLogin && password && confirmPassword && password === confirmPassword;
+    const isPasswordMismatching = !isLogin && password && confirmPassword && password !== confirmPassword;
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-spotlight p-4 overflow-hidden relative">
-            {/* Main Animation Container */}
-            <div className="relative w-full max-w-5xl h-[650px] bg-matte border border-gray-700 rounded-3xl overflow-hidden shadow-2xl flex">
-                
-                {/* Glass Form Panel (Moves left-right, permanently rounded on all corners) */}
+        <div className="min-h-screen flex items-center justify-center bg-glass-rain p-4 sm:p-6 overflow-hidden relative">
+            {/* Ambient Background Light Elements */}
+            <div className="absolute top-1/6 left-1/4 w-[36rem] h-[36rem] bg-white/20 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-1/6 right-1/4 w-[36rem] h-[36rem] bg-fiery/15 rounded-full blur-[130px] pointer-events-none animate-pulse-slow" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[52rem] h-[32rem] bg-rain-300/15 rounded-full blur-[140px] pointer-events-none" />
+
+            {/* Main Elevated Glass Container */}
+            <div className="relative w-full max-w-5xl h-[670px] bg-rain-900/80 backdrop-blur-3xl border border-white/30 rounded-3xl overflow-hidden shadow-[0_30px_75px_rgba(0,0,0,0.45),inset_0_1px_2px_rgba(255,255,255,0.45)] flex z-10">
+                {/* Laser-cut top rim highlight */}
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none z-30" />
+
+                {/* Sliding Frosted Glass Form Panel */}
                 <div
-                    className={`absolute top-0 left-0 w-1/2 h-full glass-auth-panel z-20 transition-transform duration-700 ease-in-out rounded-3xl ${
+                    className={`absolute top-0 left-0 w-1/2 h-full bg-gradient-to-b from-rain-800/85 via-rain-850/90 to-rain-900/95 backdrop-blur-3xl border border-white/30 shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.45)] z-20 transition-transform duration-700 ease-in-out rounded-3xl ${
                         isLogin ? 'translate-x-full' : 'translate-x-0'
                     }`}
                 >
-                    <div className="relative w-full h-full">
-                        {/* Login Content (Fades in when isLogin is true) */}
-                        <div className={`absolute inset-0 flex flex-col justify-center px-12 transition-opacity duration-700 ease-in-out ${isLogin ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-                            <div className="text-center mb-8">
-                                <img src="/logo.png" alt="ProjectHub Logo" className="w-20 h-auto mx-auto mb-6 drop-shadow-sm" />
-                                <h2 className="text-3xl font-bold text-matte-dark">
+                    {/* Inner highlight rim */}
+                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent pointer-events-none" />
+
+                    <div className="relative w-full h-full flex flex-col justify-center">
+                        {/* Login Form Content */}
+                        <div
+                            className={`absolute inset-0 flex flex-col justify-center px-8 sm:px-12 transition-all duration-500 ease-in-out ${
+                                isLogin
+                                    ? 'opacity-100 blur-0 scale-100 z-10 pointer-events-auto'
+                                    : 'opacity-0 blur-sm scale-[0.98] z-0 pointer-events-none'
+                            }`}
+                        >
+                            <div className="text-center mb-4">
+                                <div className="group/logo inline-flex p-3 rounded-2xl bg-white/75 hover:bg-white/90 backdrop-blur-md border border-white/70 hover:border-white shadow-[0_10px_25px_rgba(0,0,0,0.25),inset_0_1px_2px_rgba(255,255,255,0.8)] hover:shadow-glow-accent transition-all duration-300 mb-3 cursor-pointer">
+                                    <img
+                                        src="/logo.png"
+                                        alt="ProjectHub Logo"
+                                        className="w-11 h-11 object-contain drop-shadow-sm group-hover/logo:scale-110 transition-transform duration-300"
+                                    />
+                                </div>
+                                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-sm">
                                     {t.auth.welcomeBack}
                                 </h2>
-                                <p className="text-gray-500 mt-2">
+                                <p className="text-rain-200 text-sm mt-1">
                                     {t.auth.welcomeBackSubtitle}
                                 </p>
                             </div>
 
-                            {error && isLogin && (
-                                <div className="bg-red-50/50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm text-center">
-                                    {error}
-                                </div>
-                            )}
+                            {/* Fixed-height error placeholder to prevent shifting inputs */}
+                            <div className="h-10 mb-2 flex items-center">
+                                {error && isLogin ? (
+                                    <div className="w-full flex items-center gap-2.5 bg-red-500/20 border border-red-400/50 text-red-100 px-3.5 py-2 rounded-xl text-xs shadow-glow-crimson/30 backdrop-blur-md animate-blur-in">
+                                        <AlertCircle size={15} className="text-red-400 shrink-0" />
+                                        <span className="truncate">{error}</span>
+                                    </div>
+                                ) : null}
+                            </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-4">
+                            <form onSubmit={handleSubmit} className="space-y-3.5">
                                 <div>
-                                    <label className="block text-sm font-semibold text-matte-dark mb-1">{t.auth.email}</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-rain-200 mb-1">
+                                        {t.auth.email}
+                                    </label>
                                     <input
                                         type="email"
                                         required
@@ -120,10 +152,11 @@ export default function Auth() {
                                         placeholder={t.auth.emailPlaceholder}
                                     />
                                 </div>
+
                                 <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-sm font-semibold text-matte-dark">{t.auth.password}</label>
-                                    </div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-rain-200 mb-1">
+                                        {t.auth.password}
+                                    </label>
                                     <input
                                         type="password"
                                         required
@@ -134,33 +167,70 @@ export default function Auth() {
                                     />
                                 </div>
 
-                                <button type="submit" disabled={isLoading} className="btn-fiery w-full mt-4 py-3 text-base">
-                                    {isLoading ? t.auth.processing : t.auth.signInBtn}
+                                {/* Invisible placeholder identically matching Confirm Password in height & structure */}
+                                <div className="invisible pointer-events-none select-none" aria-hidden="true">
+                                    <div className="flex justify-between items-center mb-1 h-4">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-rain-200">
+                                            {t.auth.confirmPassword}
+                                        </label>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        tabIndex={-1}
+                                        disabled
+                                        className="input-glass"
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="btn-fiery w-full py-3.5 text-sm"
+                                >
+                                    <span>{isLoading ? t.auth.processing : t.auth.signInBtn}</span>
                                 </button>
                             </form>
                         </div>
 
-                        {/* Register Content (Fades in when isLogin is false) */}
-                        <div className={`absolute inset-0 flex flex-col justify-center px-12 transition-opacity duration-700 ease-in-out ${!isLogin ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-                            <div className="text-center mb-8">
-                                <img src="/logo.png" alt="ProjectHub Logo" className="w-20 h-auto mx-auto mb-6 drop-shadow-sm" />
-                                <h2 className="text-3xl font-bold text-matte-dark">
+                        {/* Registration Form Content */}
+                        <div
+                            className={`absolute inset-0 flex flex-col justify-center px-8 sm:px-12 transition-all duration-500 ease-in-out ${
+                                !isLogin
+                                    ? 'opacity-100 blur-0 scale-100 z-10 pointer-events-auto'
+                                    : 'opacity-0 blur-sm scale-[0.98] z-0 pointer-events-none'
+                            }`}
+                        >
+                            <div className="text-center mb-4">
+                                <div className="group/logo inline-flex p-3 rounded-2xl bg-white/75 hover:bg-white/90 backdrop-blur-md border border-white/70 hover:border-white shadow-[0_10px_25px_rgba(0,0,0,0.25),inset_0_1px_2px_rgba(255,255,255,0.8)] hover:shadow-glow-accent transition-all duration-300 mb-3 cursor-pointer">
+                                    <img
+                                        src="/logo.png"
+                                        alt="ProjectHub Logo"
+                                        className="w-11 h-11 object-contain drop-shadow-sm group-hover/logo:scale-110 transition-transform duration-300"
+                                    />
+                                </div>
+                                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-sm">
                                     {t.auth.createAccount}
                                 </h2>
-                                <p className="text-gray-500 mt-2">
+                                <p className="text-rain-200 text-sm mt-1">
                                     {t.auth.createAccountSubtitle}
                                 </p>
                             </div>
 
-                            {error && !isLogin && (
-                                <div className="bg-red-50/50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm text-center">
-                                    {error}
-                                </div>
-                            )}
+                            {/* Fixed-height error placeholder to prevent shifting inputs */}
+                            <div className="h-10 mb-2 flex items-center">
+                                {error && !isLogin ? (
+                                    <div className="w-full flex items-center gap-2.5 bg-red-500/20 border border-red-400/50 text-red-100 px-3.5 py-2 rounded-xl text-xs shadow-glow-crimson/30 backdrop-blur-md animate-blur-in">
+                                        <AlertCircle size={15} className="text-red-400 shrink-0" />
+                                        <span className="truncate">{error}</span>
+                                    </div>
+                                ) : null}
+                            </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-4">
+                            <form onSubmit={handleSubmit} className="space-y-3.5">
                                 <div>
-                                    <label className="block text-sm font-semibold text-matte-dark mb-1">{t.auth.email}</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-rain-200 mb-1">
+                                        {t.auth.email}
+                                    </label>
                                     <input
                                         type="email"
                                         required
@@ -170,10 +240,11 @@ export default function Auth() {
                                         placeholder={t.auth.emailPlaceholder}
                                     />
                                 </div>
+
                                 <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-sm font-semibold text-matte-dark">{t.auth.password}</label>
-                                    </div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-rain-200 mb-1">
+                                        {t.auth.password}
+                                    </label>
                                     <input
                                         type="password"
                                         required
@@ -183,61 +254,108 @@ export default function Auth() {
                                         placeholder={t.auth.passwordPlaceholder}
                                     />
                                 </div>
-                                
+
                                 <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-sm font-semibold text-matte-dark">{t.auth.confirmPassword}</label>
+                                    <div className="flex justify-between items-center mb-1 h-4">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-rain-200">
+                                            {t.auth.confirmPassword}
+                                        </label>
+                                        <div className="h-4 flex items-center">
+                                            {isPasswordMatching ? (
+                                                <span className="text-[11px] font-bold text-emerald-300 drop-shadow-[0_0_8px_rgba(52,211,153,0.7)] animate-blur-in">
+                                                    {t.settings.security.passwordsMatch}
+                                                </span>
+                                            ) : isPasswordMismatching ? (
+                                                <span className="text-[11px] font-bold text-rose-300 drop-shadow-[0_0_8px_rgba(244,63,94,0.7)] animate-blur-in">
+                                                    {t.auth.passwordsMismatch}
+                                                </span>
+                                            ) : null}
+                                        </div>
                                     </div>
                                     <input
                                         type="password"
                                         required
-                                        className={"input-glass transition-colors duration-300 " + (
-                                            password && confirmPassword && password === confirmPassword 
-                                                ? 'border-green-500 ring-1 ring-green-500' 
-                                                : (password && password !== confirmPassword ? 'border-red-500 ring-1 ring-red-500' : '')
-                                        )}
+                                        className={`input-glass ${
+                                            isPasswordMatching
+                                                ? 'border-emerald-400 ring-2 ring-emerald-400/50 shadow-[0_0_24px_rgba(52,211,153,0.55),inset_0_1px_1px_rgba(255,255,255,0.3)]'
+                                                : isPasswordMismatching
+                                                ? 'border-rose-500 ring-2 ring-rose-500/50 shadow-[0_0_24px_rgba(244,63,94,0.55),inset_0_1px_1px_rgba(255,255,255,0.3)]'
+                                                : ''
+                                        }`}
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         placeholder={t.auth.confirmPasswordPlaceholder}
                                     />
                                 </div>
 
-                                <button type="submit" disabled={isLoading} className="btn-fiery w-full mt-4 py-3 text-base">
-                                    {isLoading ? t.auth.processing : t.auth.signUpBtn}
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="btn-fiery w-full py-3.5 text-sm"
+                                >
+                                    <span>{isLoading ? t.auth.processing : t.auth.signUpBtn}</span>
                                 </button>
                             </form>
                         </div>
                     </div>
                 </div>
-                
-                {/* Background Text for Login (Left Side) */}
-                <div className={`w-1/2 h-full flex flex-col items-center justify-center p-12 text-center z-10 transition-opacity duration-700 ${isLogin ? 'opacity-100' : 'opacity-0'}`}>
-                    <h2 className="text-4xl font-extrabold text-white tracking-wide mb-4">{t.auth.heroLoginTitle}</h2>
-                    <p className="text-gray-400 text-lg mb-8">
+
+                {/* Hero Showcase (Left Side - visible when Login is active) */}
+                <div
+                    className={`w-1/2 h-full flex flex-col items-center justify-center p-10 sm:p-12 text-center z-10 transition-all duration-500 ease-in-out ${
+                        isLogin
+                            ? 'opacity-100 blur-0 scale-100 pointer-events-auto'
+                            : 'opacity-0 blur-sm scale-[0.98] pointer-events-none'
+                    }`}
+                >
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-md mb-4 max-w-sm">
+                        {t.auth.heroLoginTitle}
+                    </h2>
+                    <p className="text-rain-200 text-sm sm:text-base leading-relaxed mb-8 max-w-sm">
                         {t.auth.heroLoginSubtitle}
                     </p>
-                    <p className="text-gray-500 text-sm">{t.auth.noAccountYet}</p>
-                    <button
-                        onClick={toggleMode}
-                        className="mt-4 px-8 py-2 rounded-full border border-gray-500 text-white hover:border-fiery hover:text-fiery transition-colors duration-300"
-                    >
-                        {t.auth.switchToSignUp}
-                    </button>
+
+                    <div className="space-y-3">
+                        <p className="text-rain-300 text-xs font-semibold uppercase tracking-wider">
+                            {t.auth.noAccountYet}
+                        </p>
+                        <button
+                            onClick={toggleMode}
+                            className="glass-btn-ghost group flex items-center gap-2 hover:border-fiery hover:text-fiery hover:shadow-glow-accent px-6 py-3"
+                        >
+                            <span>{t.auth.switchToSignUp}</span>
+                            <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    </div>
                 </div>
-                
-                {/* Background Text for Registration (Right Side) */}
-                <div className={`w-1/2 h-full flex flex-col items-center justify-center p-12 text-center z-10 transition-opacity duration-700 ${!isLogin ? 'opacity-100' : 'opacity-0'}`}>
-                    <h2 className="text-4xl font-extrabold text-white tracking-wide mb-4">{t.auth.heroRegisterTitle}</h2>
-                    <p className="text-gray-400 text-lg mb-8">
+
+                {/* Hero Showcase (Right Side - visible when Register is active) */}
+                <div
+                    className={`w-1/2 h-full flex flex-col items-center justify-center p-10 sm:p-12 text-center z-10 transition-all duration-500 ease-in-out ${
+                        !isLogin
+                            ? 'opacity-100 blur-0 scale-100 pointer-events-auto'
+                            : 'opacity-0 blur-sm scale-[0.98] pointer-events-none'
+                    }`}
+                >
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-md mb-4 max-w-sm">
+                        {t.auth.heroRegisterTitle}
+                    </h2>
+                    <p className="text-rain-200 text-sm sm:text-base leading-relaxed mb-8 max-w-sm">
                         {t.auth.heroRegisterSubtitle}
                     </p>
-                    <p className="text-gray-500 text-sm">{t.auth.alreadyHaveAccount}</p>
-                    <button
-                        onClick={toggleMode}
-                        className="mt-4 px-8 py-2 rounded-full border border-gray-500 text-white hover:border-fiery hover:text-fiery transition-colors duration-300"
-                    >
-                        {t.auth.switchToSignIn}
-                    </button>
+
+                    <div className="space-y-3">
+                        <p className="text-rain-300 text-xs font-semibold uppercase tracking-wider">
+                            {t.auth.alreadyHaveAccount}
+                        </p>
+                        <button
+                            onClick={toggleMode}
+                            className="glass-btn-ghost group flex items-center gap-2 hover:border-fiery hover:text-fiery hover:shadow-glow-accent px-6 py-3"
+                        >
+                            <ArrowLeft size={15} className="group-hover:-translate-x-1 transition-transform" />
+                            <span>{t.auth.switchToSignIn}</span>
+                        </button>
+                    </div>
                 </div>
 
             </div>

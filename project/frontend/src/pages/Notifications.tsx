@@ -5,19 +5,20 @@ import { useTranslation } from '../context/LanguageContext';
 import { useNotifications } from '../context/NotificationContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { Avatar } from '../components/Avatar';
+import { Pagination } from '../components/Pagination';
 import { NotificationType, type NotificationResponse } from '../types/api';
-import { 
-    Bell, 
-    BellOff, 
-    CheckCheck, 
-    Check, 
-    Trash2, 
-    ArrowRight, 
-    Send, 
-    CornerDownLeft, 
-    MessageSquare, 
-    UserCheck, 
-    Mail 
+import {
+    Bell,
+    BellOff,
+    CheckCheck,
+    Check,
+    Trash2,
+    ArrowRight,
+    Send,
+    CornerDownLeft,
+    MessageSquare,
+    UserCheck,
+    Mail
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -26,18 +27,23 @@ export default function Notifications() {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
-    usePageTitle(`${t.notificationsView.pageTitle} - ProjectHub`);
+    usePageTitle(t.notificationsView.pageTitle);
 
-    const { 
-        notifications, 
-        unreadCount, 
-        isLoading, 
-        markAsRead, 
-        markAllAsRead, 
-        deleteNotification, 
-        sendMessageToAdmin, 
-        replyToUser 
+    const {
+        notifications,
+        unreadCount,
+        isLoading,
+        markAsRead,
+        markAllAsRead,
+        deleteNotification,
+        sendMessageToAdmin,
+        replyToUser
     } = useNotifications();
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [animationDirection, setAnimationDirection] = useState<'right' | 'left'>('right');
+    const NOTIFICATIONS_PER_PAGE = 8;
 
     // User contact admin form state
     const [userMessage, setUserMessage] = useState('');
@@ -100,25 +106,30 @@ export default function Notifications() {
         });
     };
 
+    const handlePageChange = (newPage: number, direction: 'left' | 'right') => {
+        setAnimationDirection(direction);
+        setCurrentPage(newPage);
+    };
+
     const getTypeBadge = (type: NotificationType) => {
         switch (type) {
             case NotificationType.Mention:
                 return (
-                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-sky-500/15 text-sky-300 border border-sky-400/30 shadow-[0_0_12px_rgba(56,189,248,0.2)] backdrop-blur-md">
                         <MessageSquare size={12} />
                         {t.notificationsView.types.mention}
                     </span>
                 );
             case NotificationType.TaskAssigned:
                 return (
-                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 shadow-[0_0_12px_rgba(52,211,153,0.2)] backdrop-blur-md">
                         <UserCheck size={12} />
                         {t.notificationsView.types.taskAssigned}
                     </span>
                 );
             case NotificationType.DirectMessage:
                 return (
-                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 shadow-[0_0_12px_rgba(245,158,11,0.2)] backdrop-blur-md">
                         <Mail size={12} />
                         {t.notificationsView.types.directMessage}
                     </span>
@@ -160,212 +171,282 @@ export default function Notifications() {
         }
     };
 
+    // Pagination calculations
+    const totalPages = Math.max(1, Math.ceil(notifications.length / NOTIFICATIONS_PER_PAGE));
+    const validCurrentPage = Math.min(currentPage, totalPages);
+    const startIndex = (validCurrentPage - 1) * NOTIFICATIONS_PER_PAGE;
+    const endIndex = Math.min(startIndex + NOTIFICATIONS_PER_PAGE, notifications.length);
+    const paginatedNotifications = notifications.slice(startIndex, endIndex);
+
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex items-center justify-center p-12">
+                <div className="glass-panel px-6 py-4 flex items-center gap-3 text-white border border-white/20 shadow-glass-md">
+                    <div className="w-3.5 h-3.5 rounded-full bg-fiery animate-ping" />
+                    <span className="text-sm font-semibold tracking-wide">{t.notificationsView.loading}</span>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="h-full flex flex-col overflow-y-auto pr-2 pb-8 max-w-5xl mx-auto w-full">
-            {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="h-full flex flex-col max-w-4xl mx-auto w-full">
+            {/* Header Section: lowered by pt-[26px] for universal page alignment */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-7 relative z-10 pt-[26px] shrink-0">
                 <div>
-                    <h2 className="text-2xl font-bold text-matte-dark flex items-center gap-2">
-                        <Bell className="text-fiery" /> {t.notificationsView.title}
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3 drop-shadow-md">
+                        <div className="p-2.5 rounded-2xl bg-white/10 border border-white/20 shadow-glass-sm ring-1 ring-fiery/40">
+                            <Bell className="text-fiery drop-shadow-[0_0_10px_rgba(var(--accent-rgb),0.7)]" size={26} />
+                        </div>
+                        <span>{t.notificationsView.title}</span>
                     </h2>
-                    <p className="text-gray-500 text-sm mt-1">{t.notificationsView.subtitle}</p>
+                    <p className="text-rain-200 text-sm mt-2 font-medium drop-shadow-sm">
+                        {t.notificationsView.subtitle}
+                    </p>
                 </div>
 
                 {unreadCount > 0 && (
                     <button
                         onClick={markAllAsRead}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-fiery/50 text-gray-700 hover:text-fiery text-sm font-semibold rounded-lg shadow-sm transition-all"
+                        className="glass-btn-ghost flex items-center gap-2 text-sm px-4 py-2.5 self-start cursor-pointer hover:border-fiery/50 hover:text-fiery-light transition-all"
                     >
                         <CheckCheck size={16} />
-                        {t.notificationsView.markAllAsRead}
+                        <span>{t.notificationsView.markAllAsRead}</span>
                     </button>
                 )}
             </div>
 
-            {/* Direct Message Form for Regular Users */}
-            {!isAdmin && (
-                <div className="glass-panel p-6 mb-8 border border-gray-200 bg-white shadow-sm rounded-xl">
-                    <div className="flex items-center gap-2.5 mb-2">
-                        <Mail size={18} className="text-fiery" />
-                        <h3 className="font-bold text-matte-dark text-base">
-                            {t.notificationsView.directMessageCard.userTitle}
-                        </h3>
-                    </div>
-                    <p className="text-gray-500 text-xs mb-4">
-                        {t.notificationsView.directMessageCard.userSubtitle}
-                    </p>
+            {/* Scrollable Feed Container with Smooth Top and Bottom Fade Transition */}
+            <div className="relative flex-1 min-h-0 [mask-image:linear-gradient(to_bottom,transparent_0px,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0px,black_32px,black_calc(100%-32px),transparent_100%)]">
+                <div className="h-full overflow-y-auto pt-8 pr-1 pb-6">
+                    {/* Direct Message Form for Regular Users */}
+                    {!isAdmin && (
+                        <div className="mb-6 relative rounded-2xl p-5 border border-white/15 bg-rain-950/60 backdrop-blur-2xl shadow-none overflow-hidden">
+                            {/* Top highlight rim */}
+                            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
 
-                    <form onSubmit={handleSendUserMessage} className="space-y-3">
-                        <textarea
-                            value={userMessage}
-                            onChange={(e) => setUserMessage(e.target.value)}
-                            placeholder={t.notificationsView.directMessageCard.placeholder}
-                            rows={3}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-matte-dark focus:outline-none focus:ring-2 focus:ring-fiery/50 focus:border-fiery transition-all resize-none"
-                            required
-                        />
-                        <div className="flex justify-end">
-                            <button
-                                type="submit"
-                                disabled={isSendingUserMessage || !userMessage.trim()}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-fiery hover:bg-fiery-dark text-white rounded-lg text-sm font-semibold shadow-md transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-                            >
-                                <Send size={15} />
-                                {isSendingUserMessage
-                                    ? t.notificationsView.directMessageCard.sending
-                                    : t.notificationsView.directMessageCard.sendButton}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
-
-            {/* Notifications Feed */}
-            {isLoading ? (
-                <div className="text-gray-500 animate-pulse p-8 text-center">
-                    {t.notificationsView.loading}
-                </div>
-            ) : notifications.length === 0 ? (
-                <div className="glass-panel p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-gray-300 mt-4 rounded-xl">
-                    <BellOff size={48} className="text-gray-300 mb-4" />
-                    <h3 className="text-lg font-semibold text-matte-dark mb-2">
-                        {t.notificationsView.noNotifications}
-                    </h3>
-                    <p className="text-gray-500 max-w-md">
-                        {t.notificationsView.noNotificationsDesc}
-                    </p>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {notifications.map((item) => (
-                        <div
-                            key={item.id}
-                            className={`p-5 rounded-xl border transition-all duration-200 shadow-sm ${
-                                !item.isRead
-                                    ? 'bg-white border-l-4 border-l-fiery border-t-gray-200 border-r-gray-200 border-b-gray-200 shadow-md ring-1 ring-fiery/10'
-                                    : 'bg-white/80 border-l-4 border-l-transparent border-gray-200 hover:border-gray-300 opacity-95'
-                            }`}
-                        >
-                            {/* Card Header */}
-                            <div className="flex items-start justify-between gap-4 mb-3">
-                                <div className="flex items-center gap-3">
-                                    <Avatar
-                                        avatarUrl={item.senderAvatarUrl || 'anonymous'}
-                                        name={item.senderName || t.common.user}
-                                        size="sm"
-                                    />
-                                    <div>
-                                        <p className="text-sm font-bold text-matte-dark leading-none">
-                                            {item.senderName || t.common.user}
-                                        </p>
-                                        <p className="text-[11px] text-gray-400 mt-1">
-                                            {new Date(item.createdAt).toLocaleString()}
-                                        </p>
-                                    </div>
+                            <div className="flex items-center gap-2.5 mb-1.5">
+                                <div className="p-2 rounded-xl bg-white/10 border border-white/15 text-fiery shadow-glass-sm">
+                                    <Mail size={18} />
                                 </div>
+                                <h3 className="font-bold text-white text-base tracking-wide">
+                                    {t.notificationsView.directMessageCard.userTitle}
+                                </h3>
+                            </div>
+                            <p className="text-rain-200 text-xs mb-3">
+                                {t.notificationsView.directMessageCard.userSubtitle}
+                            </p>
 
-                                <div className="flex items-center gap-2">
-                                    {getTypeBadge(item.type)}
-
-                                    {!item.isRead && (
-                                        <button
-                                            onClick={() => markAsRead(item.id)}
-                                            className="p-1.5 text-gray-400 hover:text-emerald-600 rounded-md hover:bg-gray-100 transition-colors"
-                                            title={t.common.save}
-                                        >
-                                            <Check size={16} />
-                                        </button>
-                                    )}
-
+                            <form onSubmit={handleSendUserMessage} className="space-y-3">
+                                <textarea
+                                    value={userMessage}
+                                    onChange={(e) => setUserMessage(e.target.value)}
+                                    placeholder={t.notificationsView.directMessageCard.placeholder}
+                                    rows={3}
+                                    className="input-glass text-sm resize-none min-h-[80px]"
+                                    required
+                                />
+                                <div className="flex justify-end">
                                     <button
-                                        onClick={() => deleteNotification(item.id)}
-                                        className="p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-gray-100 transition-colors"
-                                        title={t.notificationsView.actions.delete}
+                                        type="submit"
+                                        disabled={isSendingUserMessage || !userMessage.trim()}
+                                        className="btn-fiery flex items-center gap-2 px-5 py-2.5 text-sm cursor-pointer disabled:opacity-50"
                                     >
-                                        <Trash2 size={16} />
+                                        <Send size={15} />
+                                        <span>
+                                            {isSendingUserMessage
+                                                ? t.notificationsView.directMessageCard.sending
+                                                : t.notificationsView.directMessageCard.sendButton}
+                                        </span>
                                     </button>
                                 </div>
+                            </form>
+                        </div>
+                    )}
+                    {notifications.length === 0 ? (
+                        <div className="p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-white/25 bg-rain-900/50 backdrop-blur-2xl rounded-2xl shadow-none">
+                            <div className="p-4 rounded-2xl bg-white/10 border border-white/20 shadow-glass-sm mb-4">
+                                <BellOff size={48} className="text-white/80 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />
                             </div>
+                            <h3 className="text-xl font-bold text-white mb-2">
+                                {t.notificationsView.noNotifications}
+                            </h3>
+                            <p className="text-white/80 max-w-md text-sm leading-relaxed font-medium">
+                                {t.notificationsView.noNotificationsDesc}
+                            </p>
+                        </div>
+                    ) : (
+                        <div
+                            key={validCurrentPage}
+                            className={`space-y-4 ${
+                                animationDirection === 'right' ? 'animate-slide-right' : 'animate-slide-left'
+                            }`}
+                        >
+                            {paginatedNotifications.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className={`group relative rounded-2xl border transition-all duration-300 p-5 backdrop-blur-2xl shadow-none overflow-hidden ${
+                                        !item.isRead
+                                            ? 'bg-rain-950/70 border-white/25 shadow-[0_0_25px_-5px_rgba(var(--accent-rgb),0.25)]'
+                                            : 'bg-rain-950/40 border-white/15 hover:border-white/30 opacity-90 hover:opacity-100'
+                                    }`}
+                                >
+                                    {/* Left vertical status ribbon */}
+                                    <div
+                                        className={`absolute top-0 bottom-0 left-0 w-1.5 transition-all duration-300 z-10 ${
+                                            !item.isRead
+                                                ? 'bg-fiery shadow-[0_0_16px_rgba(var(--accent-rgb),0.8)]'
+                                                : 'bg-transparent'
+                                        }`}
+                                    />
 
-                            {/* Title & Body */}
-                            <div className="pl-11">
-                                <h4 className="text-sm font-bold text-matte-dark">
-                                    {getNotificationTitle(item)}
-                                </h4>
-                                <p className="text-sm text-gray-600 mt-1 leading-relaxed whitespace-pre-line">
-                                    {getNotificationMessage(item)}
-                                </p>
+                                    {/* Card Header */}
+                                    <div className="flex items-start justify-between gap-4 mb-3 pl-2">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar
+                                                avatarUrl={item.senderAvatarUrl || 'anonymous'}
+                                                name={item.senderName || t.common.user}
+                                                size="sm"
+                                            />
+                                            <div>
+                                                <p className="text-sm font-bold text-white leading-none">
+                                                    {item.senderName || t.common.user}
+                                                </p>
+                                                <p className="text-[11px] text-rain-300 mt-1">
+                                                    {new Date(item.createdAt).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
 
-                                {/* Action Buttons */}
-                                <div className="mt-4 flex flex-wrap items-center gap-3">
-                                    {item.projectId && item.taskItemId && (
-                                        <button
-                                            onClick={() => handleOpenTask(item)}
-                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-matte-dark hover:bg-fiery rounded-lg transition-colors cursor-pointer shadow-sm"
-                                        >
-                                            <span>{t.notificationsView.actions.openTask}</span>
-                                            <ArrowRight size={13} />
-                                        </button>
-                                    )}
+                                        <div className="flex items-center gap-2">
+                                            {getTypeBadge(item.type)}
 
-                                    {isAdmin && item.type === NotificationType.DirectMessage && item.senderId && (
-                                        <button
-                                            onClick={() => {
-                                                setReplyingNotificationId(
-                                                    replyingNotificationId === item.id ? null : item.id
-                                                );
-                                                setReplyText('');
-                                            }}
-                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
-                                        >
-                                            <CornerDownLeft size={13} />
-                                            <span>{t.notificationsView.actions.reply}</span>
-                                        </button>
-                                    )}
-                                </div>
+                                            {!item.isRead && (
+                                                <button
+                                                    onClick={() => markAsRead(item.id)}
+                                                    className="p-1.5 text-rain-300 hover:text-emerald-400 hover:bg-white/10 rounded-xl border border-white/10 hover:border-white/20 transition-all cursor-pointer"
+                                                    title={t.notificationsView.actions.markAsRead}
+                                                >
+                                                    <Check size={16} />
+                                                </button>
+                                            )}
 
-                                {/* Inline Admin Reply Form */}
-                                {isAdmin && replyingNotificationId === item.id && (
-                                    <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
-                                        <p className="text-xs font-bold text-gray-700">
-                                            {t.notificationsView.directMessageCard.replyTitle}
-                                        </p>
-                                        <textarea
-                                            value={replyText}
-                                            onChange={(e) => setReplyText(e.target.value)}
-                                            placeholder={t.notificationsView.directMessageCard.replyPlaceholder}
-                                            rows={3}
-                                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-matte-dark focus:outline-none focus:ring-2 focus:ring-fiery/50 focus:border-fiery resize-none"
-                                            autoFocus
-                                        />
-                                        <div className="flex justify-end gap-2">
                                             <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setReplyingNotificationId(null);
-                                                    setReplyText('');
-                                                }}
-                                                className="px-3.5 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                                                onClick={() => deleteNotification(item.id)}
+                                                className="p-1.5 text-rain-300 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl border border-white/10 hover:border-rose-400/25 transition-all cursor-pointer"
+                                                title={t.notificationsView.actions.delete}
                                             >
-                                                {t.common.cancel}
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleSendReply(item)}
-                                                disabled={isSubmittingReply || !replyText.trim()}
-                                                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-fiery hover:bg-fiery-dark rounded-lg transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed shadow-sm"
-                                            >
-                                                <Send size={12} />
-                                                {isSubmittingReply
-                                                    ? t.notificationsView.directMessageCard.replying
-                                                    : t.notificationsView.directMessageCard.replyButton}
+                                                <Trash2 size={16} />
                                             </button>
                                         </div>
                                     </div>
-                                )}
-                            </div>
+
+                                    {/* Title & Message Body */}
+                                    <div className="pl-2 sm:pl-12">
+                                        <h4 className="text-sm font-bold text-white tracking-tight drop-shadow-sm">
+                                            {getNotificationTitle(item)}
+                                        </h4>
+                                        <p className="text-sm text-white/85 mt-1 leading-relaxed whitespace-pre-line font-normal">
+                                            {getNotificationMessage(item)}
+                                        </p>
+
+                                        {/* Action Buttons */}
+                                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                                            {item.projectId && item.taskItemId && (
+                                                <button
+                                                    onClick={() => handleOpenTask(item)}
+                                                    className="btn-fiery inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold cursor-pointer"
+                                                >
+                                                    <span>{t.notificationsView.actions.openTask}</span>
+                                                    <ArrowRight size={13} />
+                                                </button>
+                                            )}
+
+                                            {isAdmin && item.type === NotificationType.DirectMessage && item.senderId && (
+                                                <button
+                                                    onClick={() => {
+                                                        setReplyingNotificationId(
+                                                            replyingNotificationId === item.id ? null : item.id
+                                                        );
+                                                        setReplyText('');
+                                                    }}
+                                                    className="glass-btn-ghost inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold cursor-pointer hover:border-fiery/40 hover:text-fiery-light transition-all"
+                                                >
+                                                    <CornerDownLeft size={13} />
+                                                    <span>{t.notificationsView.actions.reply}</span>
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Inline Admin Reply Form with Smooth Slide Expansion */}
+                                        {isAdmin && item.type === NotificationType.DirectMessage && item.senderId && (
+                                            <div
+                                                className={`grid transition-all duration-300 ease-out overflow-hidden ${
+                                                    replyingNotificationId === item.id
+                                                        ? 'grid-rows-[1fr] opacity-100 mt-4'
+                                                        : 'grid-rows-[0fr] opacity-0 mt-0 pointer-events-none'
+                                                }`}
+                                            >
+                                                <div className="min-h-0 overflow-hidden">
+                                                    <div className="p-4 glass-card-unified border border-white/20 rounded-2xl backdrop-blur-md space-y-3">
+                                                        <p className="text-xs font-bold uppercase tracking-wider text-rain-200">
+                                                            {t.notificationsView.directMessageCard.replyTitle}
+                                                        </p>
+                                                        <textarea
+                                                            value={replyingNotificationId === item.id ? replyText : ''}
+                                                            onChange={(e) => setReplyText(e.target.value)}
+                                                            placeholder={t.notificationsView.directMessageCard.replyPlaceholder}
+                                                            rows={3}
+                                                            className="input-glass text-sm resize-none"
+                                                        />
+                                                        <div className="flex justify-end gap-2.5">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setReplyingNotificationId(null);
+                                                                    setReplyText('');
+                                                                }}
+                                                                className="glass-btn-ghost text-xs px-4 py-2 cursor-pointer"
+                                                            >
+                                                                <span>{t.common.cancel}</span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleSendReply(item)}
+                                                                disabled={isSubmittingReply || !replyText.trim()}
+                                                                className="btn-fiery inline-flex items-center gap-1.5 text-xs px-4 py-2 cursor-pointer disabled:opacity-50"
+                                                            >
+                                                                <Send size={12} />
+                                                                <span>
+                                                                    {isSubmittingReply
+                                                                        ? t.notificationsView.directMessageCard.replying
+                                                                        : t.notificationsView.directMessageCard.replyButton}
+                                                                </span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
+                    )}
+                </div>
+            </div>
+
+            {/* Pagination Bar pinned at the bottom */}
+            {notifications.length > 0 && (
+                <div className="pt-4 shrink-0 pb-0">
+                    <Pagination
+                        currentPage={validCurrentPage}
+                        totalPages={totalPages}
+                        totalItems={notifications.length}
+                        itemsPerPage={NOTIFICATIONS_PER_PAGE}
+                        onPageChange={handlePageChange}
+                        className="border border-white/15 bg-rain-950/60 backdrop-blur-2xl rounded-2xl shadow-none"
+                    />
                 </div>
             )}
         </div>

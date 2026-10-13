@@ -8,5 +8,6 @@ public enum ThemeColor
     Yellow,
     Purple,
     Pink,
-    Gray
+    Gray,
+    Cyan
 }

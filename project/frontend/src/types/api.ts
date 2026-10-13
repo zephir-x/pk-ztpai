@@ -31,7 +31,8 @@ export const ThemeColor = {
     Yellow: 3,
     Purple: 4,
     Pink: 5,
-    Gray: 6
+    Gray: 6,
+    Cyan: 7
 } as const;
 
 export type ThemeColor = typeof ThemeColor[keyof typeof ThemeColor];
@@ -211,4 +212,25 @@ export interface SendUserMessageRequest {
 export interface ReplyMessageRequest {
     recipientId: string;
     message: string;
+}
+
+// === Stress Testing Diagnostic DTOs ===
+export interface StressTestStatusResponse {
+    isStressDataActive: boolean;
+    workspacesCount: number;
+    projectsCount: number;
+    tasksCount: number;
+    usersCount: number;
+    commentsCount: number;
+    notificationsCount: number;
+}
+
+export interface StressTestResultResponse {
+    message: string;
+    workspacesCreated: number;
+    projectsCreated: number;
+    tasksCreated: number;
+    usersCreated: number;
+    commentsCreated: number;
+    notificationsCreated: number;
 }

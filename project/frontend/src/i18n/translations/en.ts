@@ -14,7 +14,12 @@ export const en: Translations = {
         confirm: 'Confirm',
         admin: 'Admin',
         user: 'User',
-        unassigned: 'Unassigned'
+        unassigned: 'Unassigned',
+        pagination: {
+            showing: (from: number, to: number, total: number) => `Showing ${from}–${to} of ${total}`,
+            previous: 'Previous',
+            next: 'Next'
+        }
     },
     navigation: {
         dashboard: 'Dashboard',
@@ -62,7 +67,8 @@ export const en: Translations = {
         actions: {
             openTask: 'View Task',
             reply: 'Reply',
-            delete: 'Delete'
+            delete: 'Delete',
+            markAsRead: 'Mark as read'
         }
     },
     auth: {
@@ -94,7 +100,7 @@ export const en: Translations = {
     },
     dashboard: {
         title: 'Workspaces',
-        subtitle: 'Manage your team environments',
+        subtitle: 'Manage your team environment',
         newWorkspace: 'New Workspace',
         noWorkspaces: 'No workspaces found',
         noWorkspacesDesc: "You don't have access to any workspaces yet.",
@@ -160,6 +166,8 @@ export const en: Translations = {
         subtitle: 'Manage platform users and global settings',
         addUser: 'Add User',
         emailAccount: 'Email Account',
+        fullName: 'Full Name',
+        notSpecified: 'Not specified',
         role: 'Role',
         actions: 'Actions',
         noUsers: 'No users found in the system.',
@@ -167,7 +175,27 @@ export const en: Translations = {
         deleteSuccess: 'User has been successfully deleted.',
         deleteError: 'Failed to delete user.',
         loading: 'Loading administration panel...',
-        youBadge: '(You)'
+        youBadge: '(You)',
+        pagination: {
+            showing: (from: number, to: number, total: number) => `Showing ${from}–${to} of ${total} users`,
+            previous: 'Previous',
+            next: 'Next'
+        },
+        stressTest: {
+            title: 'System Stress Testing & Diagnostics',
+            subtitle: 'High-volume data diagnostic module to evaluate layout responsiveness, text wrapping, and performance.',
+            statusTitle: 'Current Database State',
+            statusActive: 'High-Density Stress Dataset Active',
+            statusClean: 'Baseline Dataset Active (Clean Initial Profile)',
+            statsSummary: (ws, p, t, u, c, n) => `${ws} workspaces, ${p} projects, ${t} tasks, ${u} users, ${c} comments, ${n} notifications`,
+            seedBtn: 'Populate High-Volume Dataset',
+            seeding: 'Generating dataset...',
+            cleanupBtn: 'Purge Test Data & Restore Baseline',
+            cleaning: 'Purging test data...',
+            seedSuccess: 'High-volume stress testing dataset successfully injected into database.',
+            cleanupSuccess: 'All stress test mock data purged. Baseline state restored.',
+            confirmCleanup: 'Are you sure you want to purge all stress testing mock data and restore baseline state?'
+        }
     },
     settings: {
         title: 'Settings & Profile',
@@ -187,7 +215,8 @@ export const en: Translations = {
                 'avatar-3': 'Innovator',
                 'avatar-4': 'Wizard',
                 'avatar-5': 'Android',
-                'avatar-6': 'Leader'
+                'avatar-6': 'Leader',
+                'avatar-7': 'Firestarter'
             }
         },
         personalInfo: {
@@ -255,7 +284,7 @@ export const en: Translations = {
             nameLabel: 'Project Name',
             namePlaceholder: 'e.g. Website Redesign',
             descriptionLabel: 'Description (Optional)',
-            descriptionPlaceholder: 'Briefly describe the project...',
+            descriptionPlaceholder: 'Briefly describe the project... ',
             themeColorLabel: 'Theme Color',
             createSuccess: 'The project has been successfully created.',
             updateSuccess: 'The project has been updated.'

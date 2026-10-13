@@ -1,7 +1,7 @@
 ﻿import axios from 'axios';
 
-// Dynamically inject the API URL from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// Dynamically inject the API URL from environment variables, falling back to reverse proxy route
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const axiosClient = axios.create({
     baseURL: API_BASE_URL,

@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check } from 'lucide-react';
 import { workspaceService } from '../../api/workspaceService';
 import { type WorkspaceResponse, ThemeColor } from '../../types/api';
@@ -13,7 +14,8 @@ export const THEME_COLOR_MAP: Record<ThemeColor, string> = {
     [ThemeColor.Yellow]: '#f59e0b',
     [ThemeColor.Purple]: '#8b5cf6',
     [ThemeColor.Pink]: '#ec4899',
-    [ThemeColor.Gray]: '#64748b'
+    [ThemeColor.Gray]: '#64748b',
+    [ThemeColor.Cyan]: '#06b6d4'
 };
 
 const THEME_COLORS = Object.values(ThemeColor).filter(val => typeof val === 'number') as ThemeColor[];
@@ -74,29 +76,34 @@ export const WorkspaceModal = ({ isOpen, onClose, onSaved, initialData }: Worksp
         }
     };
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-matte-dark/60 backdrop-blur-sm animate-fade-in">
-            <div className="glass-panel w-full max-w-md p-6 relative">
+    return createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-md animate-fade-in p-4">
+            <div className="glass-panel-elevated animate-modal-enter w-full max-w-md p-6 relative bg-rain-900/90 backdrop-blur-3xl border border-white/25 shadow-2xl overflow-hidden">
+                {/* Laser top highlight */}
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-matte-dark transition-colors"
+                    className="absolute top-4 right-4 p-1.5 rounded-lg text-rain-300 hover:text-white hover:bg-white/10 transition-colors"
                 >
-                    <X size={20} />
+                    <X size={18} />
                 </button>
 
-                <h3 className="text-xl font-bold text-matte-dark mb-4">
+                <h3 className="text-xl font-extrabold text-white mb-4 tracking-tight">
                     {initialData ? t.modals.workspace.editTitle : t.modals.workspace.createTitle}
                 </h3>
 
                 {error && (
-                    <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg mb-4 text-sm border border-red-200">
+                    <div className="bg-red-500/20 text-red-100 border border-red-400/40 px-4 py-2.5 rounded-xl mb-4 text-xs shadow-glow-crimson/20 backdrop-blur-md">
                         {error}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-semibold text-matte-dark mb-1">{t.modals.workspace.nameLabel}</label>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-rain-200 mb-1.5">
+                            {t.modals.workspace.nameLabel}
+                        </label>
                         <input
                             type="text"
                             required
@@ -109,40 +116,54 @@ export const WorkspaceModal = ({ isOpen, onClose, onSaved, initialData }: Worksp
                     </div>
                     
                     <div>
-                        <label className="block text-sm font-semibold text-matte-dark mb-2">{t.modals.workspace.themeColorLabel}</label>
-                        <div className="flex gap-3">
-                            {THEME_COLORS.map(colorEnum => (
-                                <button
-                                    key={colorEnum}
-                                    type="button"
-                                    onClick={() => setThemeColor(colorEnum)}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${themeColor === colorEnum ? 'ring-2 ring-offset-2 ring-matte-dark' : ''}`}
-                                    style={{ backgroundColor: THEME_COLOR_MAP[colorEnum] }}
-                                >
-                                    {themeColor === colorEnum && <Check size={16} className="text-white drop-shadow-md" />}
-                                </button>
-                            ))}
+                        <label className="block text-xs font-bold uppercase tracking-wider text-rain-200 mb-2">
+                            {t.modals.workspace.themeColorLabel}
+                        </label>
+                        <div className="flex gap-2.5 flex-wrap justify-center py-1">
+                            {THEME_COLORS.map(colorEnum => {
+                                const hexColor = THEME_COLOR_MAP[colorEnum];
+                                const isSelected = themeColor === colorEnum;
+                                return (
+                                    <button
+                                        key={colorEnum}
+                                        type="button"
+                                        onClick={() => setThemeColor(colorEnum)}
+                                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 relative ${
+                                            isSelected
+                                                ? 'ring-2 ring-white ring-offset-2 ring-offset-rain-950 scale-105'
+                                                : 'hover:opacity-90'
+                                        }`}
+                                        style={{
+                                            backgroundColor: hexColor,
+                                            boxShadow: isSelected ? `0 0 16px ${hexColor}` : 'none'
+                                        }}
+                                    >
+                                        {isSelected && <Check size={16} className="text-white drop-shadow-md" />}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 mt-6">
+                    <div className="flex justify-end gap-3 mt-6 pt-2">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                            className="glass-btn-ghost px-4 py-2 text-sm"
                         >
                             {t.common.cancel}
                         </button>
                         <button
                             type="submit"
                             disabled={isLoading || !name.trim()}
-                            className="btn-fiery"
+                            className="btn-fiery px-5 py-2 text-sm"
                         >
-                            {isLoading ? t.common.saving : (initialData ? t.common.save : t.common.create)}
+                            <span>{isLoading ? t.common.saving : (initialData ? t.common.save : t.common.create)}</span>
                         </button>
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

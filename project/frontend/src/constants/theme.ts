@@ -90,7 +90,7 @@ export interface AvatarPreset {
     id: string;
     label: string;
     bgGradient: string;
-    iconType: 'user' | 'bot' | 'rocket' | 'code' | 'zap' | 'sparkles' | 'crown';
+    iconType: 'user' | 'bot' | 'rocket' | 'code' | 'zap' | 'sparkles' | 'crown' | 'flame';
 }
 
 export const AVATAR_PRESETS: AvatarPreset[] = [
@@ -135,6 +135,12 @@ export const AVATAR_PRESETS: AvatarPreset[] = [
         label: 'Leader',
         bgGradient: 'from-rose-500 to-pink-600',
         iconType: 'crown'
+    },
+    {
+        id: 'avatar-7',
+        label: 'Firestarter',
+        bgGradient: 'from-amber-500 to-rose-600',
+        iconType: 'flame'
     }
 ];
 

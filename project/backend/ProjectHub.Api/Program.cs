@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using ProjectHub.Api.Infrastructure.Data;
 using ProjectHub.Api.Infrastructure.Authentication;
 using ProjectHub.Api.Infrastructure.Middleware;
@@ -11,6 +12,7 @@ using ProjectHub.Api.Services.Projects;
 using ProjectHub.Api.Services.Tasks;
 using ProjectHub.Api.Services.Comments;
 using ProjectHub.Api.Services.Notifications;
+using ProjectHub.Api.Services.StressTest;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using FluentValidation;
@@ -47,7 +49,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter your valid JWT token in the text input below.\r\n\r\nExample: 'eyJhbGciOiJIUzI1NiIs...'"
+        Description = "Enter your valid JWT token in the text input below."
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -67,14 +69,30 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // === Database Configuration ===
-builder.Services.AddDbContext<ProjectHubDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrWhiteSpace(connectionString) && !builder.Environment.IsDevelopment())
+    {
+        throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing. In production, provide the database connection string via environment variables.");
+    }
+
+    builder.Services.AddDbContext<ProjectHubDbContext>(options =>
+        options.UseNpgsql(connectionString));
+}
 
 // === Infrastructure & Application Services ===
-var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() 
-                 ?? throw new InvalidOperationException("JWT configuration is missing.");
+var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
+var jwtConfig = jwtSection.Get<JwtOptions>();
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    if (jwtConfig == null || string.IsNullOrWhiteSpace(jwtConfig.SecretKey))
+    {
+        throw new InvalidOperationException("JWT SecretKey is missing. Configure JwtOptions:SecretKey in environment configuration.");
+    }
+}
 
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<JwtOptions>(jwtSection);
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
@@ -83,6 +101,7 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskItemService, TaskItemService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IStressTestService, StressTestService>();
 
 // === Async Mechanism (MediatR & Event Channel) ===
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
@@ -94,17 +113,6 @@ builder.Services.AddHostedService<EventProcessingBackgroundService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtOptions.Issuer,
-            ValidAudience = jwtOptions.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
-        };
-        
         // SignalR requires extracting the JWT token from the query string instead of the HTTP header during the initial WebSocket handshake negotiation
         options.Events = new JwtBearerEvents
         {
@@ -121,6 +129,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtOptions>>((options, jwtAccessor) =>
+    {
+        var jwt = jwtAccessor.Value;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = jwt.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SecretKey))
+        };
+    });
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
@@ -133,8 +157,11 @@ using (var scope = app.Services.CreateScope())
     {
         var dbContext = services.GetRequiredService<ProjectHubDbContext>();
         
-        await dbContext.Database.MigrateAsync();
-        await DatabaseSeeder.SeedAsync(dbContext);
+        if (dbContext.Database.IsRelational())
+        {
+            await dbContext.Database.MigrateAsync();
+            await DatabaseSeeder.SeedAsync(dbContext);
+        }
     }
     catch (Exception ex)
     {
@@ -143,7 +170,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// === Localization Setup ===
+// === HTTP Request Pipeline ===
 var supportedCultures = new[] { "en", "pl" };
 var localizationOptions = new RequestLocalizationOptions()
     .SetDefaultCulture("en")
@@ -151,17 +178,15 @@ var localizationOptions = new RequestLocalizationOptions()
     .AddSupportedUICultures(supportedCultures);
 
 app.UseRequestLocalization(localizationOptions);
-
-// === HTTP Request Pipeline ===
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-
-app.UseCors("FrontendOrigin");
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("FrontendOrigin");
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -170,3 +195,5 @@ app.MapControllers();
 app.MapHub<KanbanHub>("/kanbanHub");
 
 app.Run();
+
+public partial class Program { }

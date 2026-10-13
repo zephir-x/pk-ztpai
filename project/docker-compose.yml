@@ -1,15 +1,92 @@
-services:
-  postgres_db:
-    image: postgres:latest
-    container_name: projecthub_db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5433:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql
+# =============================================================================
+# ProjectHub - Multi-Container Docker Compose Orchestration
+# =============================================================================
+# Services:
+# 1. postgres_db: PostgreSQL database with automated persistent volume & healthcheck
+# 2. backend:     ASP.NET Core 9 Web API (multi-stage build with EF migrations & seed)
+# 3. frontend:    React Vite SPA served by Nginx with reverse proxy & WebSocket support
+# =============================================================================
 
+services:
+  # === 1. PostgreSQL Relational Database Service ===
+  postgres_db:
+    image: postgres:17-alpine
+    container_name: projecthub_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-DevelopmentPassword123!}
+      POSTGRES_DB: ${POSTGRES_DB:-ProjectHub}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      # Exposes database port on host for direct tool access (pgAdmin, IDE, migrations)
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      # Named persistent volume to prevent data loss across container lifecycle
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Healthcheck verifies PostgreSQL is fully ready to accept SQL queries
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-ProjectHub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - projecthub_network
+
+  # === 2. ASP.NET Core 9 Web API Backend Service ===
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: projecthub_api
+    restart: unless-stopped
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      # Connection string referencing internal Docker service name 'postgres_db'
+      ConnectionStrings__DefaultConnection: "Host=postgres_db;Port=5432;Database=${POSTGRES_DB:-ProjectHub};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-DevelopmentPassword123!}"
+      JwtOptions__Issuer: "ProjectHubApi"
+      JwtOptions__Audience: "ProjectHubClients"
+      JwtOptions__SecretKey: "${JWT_SECRET:-DevelopmentSecretKeyThatIsLongEnoughToProvide256BitEncryption123!}"
+      # Allow CORS headers from local frontend and reverse proxy endpoints
+      Cors__AllowedOrigins__0: "http://localhost:5173"
+      Cors__AllowedOrigins__1: "http://localhost:80"
+      Cors__AllowedOrigins__2: "http://localhost"
+      Cors__AllowedOrigins__3: "http://127.0.0.1:5173"
+    ports:
+      # Direct access to Swagger UI & REST endpoints (http://localhost:5074/swagger)
+      - "${BACKEND_PORT:-5074}:8080"
+    networks:
+      - projecthub_network
+
+  # === 3. Frontend SPA & Nginx Reverse Proxy Gateway ===
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Relative endpoints dynamically resolved by Nginx reverse proxy
+        VITE_API_URL: /api
+        VITE_HUB_URL: /kanbanHub
+    container_name: projecthub_web
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      # Access full application at http://localhost:5173 (or configurable port)
+      - "${FRONTEND_PORT:-5173}:80"
+    networks:
+      - projecthub_network
+
+# === Named Volumes & Networks ===
 volumes:
   pgdata:
+    driver: local
+
+networks:
+  projecthub_network:
+    driver: bridge
