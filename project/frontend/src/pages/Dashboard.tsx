@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { workspaceService } from '../api/workspaceService';
 import { type WorkspaceResponse } from '../types/api';
@@ -217,7 +217,7 @@ export default function Dashboard() {
                                         </h3>
 
                                         <div className="flex items-center gap-2 text-xs text-rain-200 mt-4">
-                                            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rain-950/60 backdrop-blur-md border border-white/15 text-white/90">
+                                            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full glass-card-unified border border-white/20 text-white/90 shadow-glass-sm">
                                                 <Calendar size={13} className="text-fiery" />
                                                 <span>
                                                     {new Date(workspace.createdAt).toLocaleDateString()}

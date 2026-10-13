@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+﻿import { useEffect, useState, useMemo } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, type DropResult, type DraggableProvided, type DraggableStateSnapshot } from '@hello-pangea/dnd';
 import { taskService } from '../api/taskService';
@@ -318,7 +318,7 @@ export default function ProjectKanban() {
                     {isAdmin && (
                         <button
                             onClick={(e) => openTaskModal(task, 'admin', e)}
-                            className="p-1 rounded-lg text-white/50 hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                            className="w-6 h-6 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer shrink-0"
                             title={t.common.actions}
                         >
                             <MoreHorizontal size={16} />
@@ -360,7 +360,7 @@ export default function ProjectKanban() {
 
                     <button
                         onClick={(e) => openTaskModal(task, 'comments', e)}
-                        className="flex items-center text-white/60 hover:text-fiery transition-colors gap-1 text-xs cursor-pointer ml-auto"
+                        className="w-6 h-6 rounded-lg flex items-center justify-center text-white/60 hover:text-fiery hover:bg-white/10 transition-all cursor-pointer ml-auto shrink-0"
                         title={t.modals.taskDetails.tabs.comments}
                     >
                         <MessageSquare size={14} />

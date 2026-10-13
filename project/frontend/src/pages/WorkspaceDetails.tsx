@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { projectService } from '../api/projectService';
 import { type ProjectResponse } from '../types/api';
@@ -218,7 +218,7 @@ export default function WorkspaceDetails() {
                                     </div>
 
                                     <div className="flex items-center gap-2 text-xs text-rain-200 pt-4 border-t border-white/10 relative z-10">
-                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rain-950/60 backdrop-blur-md border border-white/15 text-white/90">
+                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full glass-card-unified border border-white/20 text-white/90 shadow-glass-sm">
                                             <Calendar size={13} className="text-fiery" />
                                             <span>
                                                 {new Date(project.createdAt).toLocaleDateString()}

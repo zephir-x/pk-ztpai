@@ -131,7 +131,7 @@ export const pl: Translations = {
     projectKanban: {
         pageTitle: 'Kanban Board',
         subtitle: 'Kanban Board',
-        backButton: 'Back to Projects',
+        backButton: 'Wróć do projektów',
         loading: 'Ładowanie zadań...',
         liveConnectError: 'Nie udało się połączyć z serwerem aktualizacji na żywo.',
         fetchError: 'Nie udało się pobrać listy zadań z serwera.',

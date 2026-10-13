@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -351,8 +351,8 @@
         --beam-angle: 0deg;
         opacity: 1;
     }
-    70% {
-        --beam-angle: 252deg;
+    85% {
+        --beam-angle: 306deg;
         opacity: 1;
     }
     100% {

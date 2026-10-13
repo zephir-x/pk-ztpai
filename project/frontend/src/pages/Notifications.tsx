@@ -388,7 +388,7 @@ export default function Notifications() {
                                                 }`}
                                             >
                                                 <div className="min-h-0 overflow-hidden">
-                                                    <div className="p-4 bg-rain-950/80 border border-white/15 rounded-2xl backdrop-blur-md space-y-3">
+                                                    <div className="p-4 glass-card-unified border border-white/20 rounded-2xl backdrop-blur-md space-y-3">
                                                         <p className="text-xs font-bold uppercase tracking-wider text-rain-200">
                                                             {t.notificationsView.directMessageCard.replyTitle}
                                                         </p>

@@ -41,8 +41,7 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 - [x] Refine Role-Based Access Control (RBAC) to allow global read access while strictly locking modifications to admins.
 - [x] Implement robust user assignment via dedicated PATCH endpoint.
 - [x] Implement Edit and Delete functionality for Workspaces and Projects.
-- [x] Introduce `ThemeColor` enums internally stored as string, seamlessly mapped to UI ribbons and tags.
-
+- [x] Introduce `ThemeColor` enums internally stored as string, seamlessly mapped to UI ribbons and tags.\n
 ### [x] Stage 8: Feature Expansion & Soft Delete Architecture
 - [x] **Soft Delete Architecture**: Implement `IsDeleted` / `DeletedAt` fields across major entities. Do not permanently delete database records; update global query filters to exclude deleted items on backend and frontend.
 - [x] **My Tasks View**: Implement a dedicated view displaying all tasks assigned to the current user, featuring quick links traversing `Workspace -> Project -> Task` or a unified accessible interface.
@@ -93,8 +92,7 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
   - Maintained `ProjectHub.sln` at `backend/` root linking both projects with zero compiler warnings or circular exclusions.
   - Configured `ProjectHub.Tests` (.NET 9.0) with xUnit, FluentAssertions, Moq, `Microsoft.AspNetCore.Mvc.Testing`, and `Microsoft.EntityFrameworkCore.InMemory`.
   - Built `TestDbContextFactory` producing isolated in-memory test databases for unit tests.
-  - Engineered `CustomWebApplicationFactory` with environment override (`Testing`), automated in-memory JWT configuration, and test claim token generation.
-  - Created full technical documentation in English: `ProjectHub.Tests/TEST_DOCUMENTATION.md`.
+  - Engineered `CustomWebApplicationFactory` with environment override (`Testing`), automated in-memory JWT configuration, and test claim token generation.\n  - Created full technical documentation in English: `ProjectHub.Tests/TEST_DOCUMENTATION.md`.
 - [x] **Unit Testing Suite (21 Tests - Exceeding 5-Test Criterion)**:
   - `TaskItemService_BusinessRulesTests` (6 tests): Validated Rule 1 (cannot close task without active assignee, positive path with assignee), Rule 2 (Admin-only task assignment on creation, Admin-only reassignment, SignalR broadcast on reassignment).
   - `ProjectService_BusinessRulesTests` (5 tests): Validated Rule 3 (conflict on deleting project with unresolved critical tasks, positive path when critical task is Done, non-critical task bypass, workspace ownership access check, unauthorized project creation prevention).
@@ -113,7 +111,8 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 ## 7. AI Guidelines
 * **Code Style:** Clean architecture, DTOs for external boundaries, Fluent API for EF Core.
 * **Comments:** Concise, module-specific comments in English ONLY.
-* **Tone:** Objective, technical, candidate for Grade 5.0 evaluation.\n* **Formatting:** Strictly NO emojis in code, documentation, or chat.
+* **Tone:** Objective, technical, candidate for Grade 5.0 evaluation.
+* **Formatting:** Strictly NO emojis in code, documentation, or chat.
 
 ## 8. Recent Modifications & Reflections
 * **Stage 10 Testing, CI Automation, Containerization & Visual Polish:**
@@ -124,6 +123,11 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
     * `frontend/Dockerfile`: 2-stage build (`build`, `final`) with Node.js 20 Alpine compilation and Nginx Alpine server.
     * `frontend/nginx.conf`: Nginx reverse proxy routing `/api/*` to backend Kestrel, `/kanbanHub` with HTTP/1.1 WebSocket Upgrade headers, `/swagger/*`, long-term asset caching, and SPA fallback (`try_files $uri /index.html`).
     * `docker-compose.yml`: Automated orchestration tying `postgres_db` (with `pg_isready` healthcheck), `backend` (`service_healthy` dependency, automated EF Core migrations & database seeding), and `frontend` gateway accessible at `http://localhost:5173`. Verified live in Docker Desktop with 100% healthy services and authenticated API calls.
+  - Notification Reply Tile Background Harmonization: Replaced opaque dark background `bg-rain-950/80 border-white/15` with `glass-card-unified border border-white/20` (`rgba(28, 36, 48, 0.88)`), creating full visual continuity with the surrounding slate glass cards without harsh black contrast.
+  - Creation Date Badges Glass Styling: Replaced dark badges in `Dashboard.tsx` and `WorkspaceDetails.tsx` with `glass-card-unified border border-white/20 text-white/90 shadow-glass-sm`, aligning workspace and project creation timestamps with the unified glass aesthetic.
+  - Kanban Card Action Buttons Vertical Alignment: Unified `MoreHorizontal` and `MessageSquare` action button containers in `ProjectKanban.tsx` to `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ml-auto`, ensuring identical horizontal width and absolute vertical alignment across top and bottom rows.
+  - Border Beam Rotation Speed Uniformity: Calibrated `@keyframes singleBeamSweep` in `index.css` by adjusting the rotation stop from 70% (252deg) to 85% (306deg), eliminating visible deceleration/hesitation halfway through the cycle and maintaining constant sweeping velocity.
+  - Missing Polish Translation for Project Navigation: Added Polish translation for `projectKanban.backButton` (`Wróć do projektów`) in `pl.ts`, eliminating untranslated English text in the Kanban board top bar.
 * **Stage 9 Completion - High-Density Load Testing & Layout Perfection:**
   - High-Volume Load Auditing: Validated complete platform responsiveness, layout integrity, and zero text/overflow degradation under a heavy synthetic dataset (24 workspaces, 40+ projects, 86 tasks, 24 users, 80+ comments, 25 notifications per admin).
   - Universal View Baseline Alignment: Standardized the header-to-content distance across all 7 views (`AdminPanel`, `Dashboard`, `MyTasks`, `Notifications`, `Settings`, `WorkspaceDetails`, `ProjectKanban`) using an identical `mb-7` header margin and `pt-8` (32px) content start coordinate.
@@ -135,12 +139,12 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 * **System Stress Testing & Diagnostics Subsystem:**
   - Architecture: Built dedicated `IStressTestService` and `StressTestController` supporting on-demand injection of large-scale test data.
   - Admin Panel Diagnostics Card: Added interactive diagnostic glass card in `AdminPanel.tsx` beneath the users table with real-time entity counter badges, one-click seeding, mutually exclusive button states, and atomic SQL hard-delete cleanup.
-  - Distributed Comment Seeding: Seeded comments across every top visible task in `ProjectHub React App`.\n  - Admin Targeted Notifications: Fixed JWT `sub` claim extraction in `StressTestController.cs`, generated 25 notifications (15 unread) for each admin user, and tied automatic unread count refresh in `AdminPanel.tsx` directly to `NotificationContext`.
+  - Distributed Comment Seeding: Seeded comments across every top visible task in `ProjectHub React App`.
+  - Admin Targeted Notifications: Fixed JWT `sub` claim extraction in `StressTestController.cs`, generated 25 notifications (15 unread) for each admin user, and tied automatic unread count refresh in `AdminPanel.tsx` directly to `NotificationContext`.
   - Rule Compliance: Generator strictly abides by Business Rule 2 (maximum 1 active Critical task per user across the entire system), dynamically allocating critical priorities to distinct assignees.
   - Atomic Purge: Implemented direct SQL hard-delete cleanup in `CleanupAsync` ensuring test mock data (`[STRESS]`, `stress.*`) is permanently eradicated without leaving soft-deleted ghost records in the database.
 * **Full Glassmorphism & Visual Redesign:**
-  - Atmospheric Deep Glass System: Cohesive dark-slate glassmorphism across all application views anchored in silvery-rain tones (`bg-glass-rain`), translucent backdrop-blur panels, and sharp 1px laser rims.
-  - Luminous Border Beams: Single-pass border ray animations (`singleBeamSweep` and `inputBeamSweep`) using conic gradients and CSS property interpolation (`@property --beam-angle`).
+  - Atmospheric Deep Glass System: Cohesive dark-slate glassmorphism across all application views anchored in silvery-rain tones (`bg-glass-rain`), translucent backdrop-blur panels, and sharp 1px laser rims.\n  - Luminous Border Beams: Single-pass border ray animations (`singleBeamSweep` and `inputBeamSweep`) using conic gradients and CSS property interpolation (`@property --beam-angle`).
   - Seamless Vignette Alignment: 210px top horizontal atmospheric darkening gradient aligned flush with the left sidebar's vertical fiery accent line.
   - Drag-and-Drop Optimization: Resolved `@hello-pangea/dnd` transform containing block issues by avoiding outer CSS transforms on the page container.
 * **Notifications & Messaging System Integration:**
