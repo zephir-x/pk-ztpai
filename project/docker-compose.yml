@@ -13,6 +13,7 @@ services:
     image: postgres:17-alpine
     container_name: projecthub_postgres
     restart: unless-stopped
+    command: postgres -c shared_buffers=64MB -c work_mem=4MB -c max_connections=30
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-DevelopmentPassword123!}
@@ -39,6 +40,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    image: ghcr.io/zephir-x/projecthub-api:${TAG:-latest}
     container_name: projecthub_api
     restart: unless-stopped
     depends_on:
@@ -46,6 +48,8 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      # Workstation GC reduces baseline memory consumption from ~150MB down to ~60MB
+      DOTNET_gcServer: "0"
       # Connection string referencing internal Docker service name 'postgres_db'
       ConnectionStrings__DefaultConnection: "Host=postgres_db;Port=5432;Database=${POSTGRES_DB:-ProjectHub};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-DevelopmentPassword123!}"
       JwtOptions__Issuer: "ProjectHubApi"
@@ -71,6 +75,7 @@ services:
         # Relative endpoints dynamically resolved by Nginx reverse proxy
         VITE_API_URL: /api
         VITE_HUB_URL: /kanbanHub
+    image: ghcr.io/zephir-x/projecthub-web:${TAG:-latest}
     container_name: projecthub_web
     restart: unless-stopped
     depends_on:

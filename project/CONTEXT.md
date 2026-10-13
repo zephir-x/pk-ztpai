@@ -28,8 +28,7 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 - [x] Automatic database seeder for Admin, User, Workspace, Project, Task, and Comment.
 
 ### [x] Stage 6: Frontend Core & Integration
-- [x] Authentication flows (Sliding auth view, Axios interceptors).
-- [x] Workspace & Project explorer views.
+- [x] Authentication flows (Sliding auth view, Axios interceptors).\n- [x] Workspace & Project explorer views.
 - [x] Kanban board with Drag & Drop (`@hello-pangea/dnd`).
 - [x] SignalR client lifecycle integration.
 - [x] Global toast notifications (`react-hot-toast`) replacing flashing error states.
@@ -41,7 +40,8 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 - [x] Refine Role-Based Access Control (RBAC) to allow global read access while strictly locking modifications to admins.
 - [x] Implement robust user assignment via dedicated PATCH endpoint.
 - [x] Implement Edit and Delete functionality for Workspaces and Projects.
-- [x] Introduce `ThemeColor` enums internally stored as string, seamlessly mapped to UI ribbons and tags.\n
+- [x] Introduce `ThemeColor` enums internally stored as string, seamlessly mapped to UI ribbons and tags.
+
 ### [x] Stage 8: Feature Expansion & Soft Delete Architecture
 - [x] **Soft Delete Architecture**: Implement `IsDeleted` / `DeletedAt` fields across major entities. Do not permanently delete database records; update global query filters to exclude deleted items on backend and frontend.
 - [x] **My Tasks View**: Implement a dedicated view displaying all tasks assigned to the current user, featuring quick links traversing `Workspace -> Project -> Task` or a unified accessible interface.
@@ -92,7 +92,8 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
   - Maintained `ProjectHub.sln` at `backend/` root linking both projects with zero compiler warnings or circular exclusions.
   - Configured `ProjectHub.Tests` (.NET 9.0) with xUnit, FluentAssertions, Moq, `Microsoft.AspNetCore.Mvc.Testing`, and `Microsoft.EntityFrameworkCore.InMemory`.
   - Built `TestDbContextFactory` producing isolated in-memory test databases for unit tests.
-  - Engineered `CustomWebApplicationFactory` with environment override (`Testing`), automated in-memory JWT configuration, and test claim token generation.\n  - Created full technical documentation in English: `ProjectHub.Tests/TEST_DOCUMENTATION.md`.
+  - Engineered `CustomWebApplicationFactory` with environment override (`Testing`), automated in-memory JWT configuration, and test claim token generation.
+  - Created full technical documentation in English: `ProjectHub.Tests/TEST_DOCUMENTATION.md`.
 - [x] **Unit Testing Suite (21 Tests - Exceeding 5-Test Criterion)**:
   - `TaskItemService_BusinessRulesTests` (6 tests): Validated Rule 1 (cannot close task without active assignee, positive path with assignee), Rule 2 (Admin-only task assignment on creation, Admin-only reassignment, SignalR broadcast on reassignment).
   - `ProjectService_BusinessRulesTests` (5 tests): Validated Rule 3 (conflict on deleting project with unresolved critical tasks, positive path when critical task is Done, non-critical task bypass, workspace ownership access check, unauthorized project creation prevention).
@@ -106,6 +107,13 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 - [x] **Suite Execution Results**: 37 total tests executed across both suites, 0 failures, 0 skipped, 100% passing in ~1-2 seconds.
 - [x] **GitHub Actions CI Workflow** (`.github/workflows/ci.yml`): Automated build, lint, and test validation on Push and Pull Request.
 - [x] **Multi-stage Dockerfile and Docker Compose Orchestration**: Automated multi-container environment (PostgreSQL 17 Alpine with healthcheck, ASP.NET Core 9 Web API multi-stage container with automatic migrations and data seeding, and React SPA served by Nginx with reverse proxy and WebSocket support). Tested single-command startup via `docker compose up -d` at `http://localhost:5173`. Ready for Mikr.us / VPS deployment with reverse proxy & custom domain.
+
+### [x] Stage 11: Production Deployment Architecture (Mikr.us VPS, GHCR, Cloudflare & Reverse Proxy)
+- [x] **GitHub Actions CI/CD with GHCR Registry**: Extended `.github/workflows/ci.yml` with automated container image compilation and publishing to GitHub Container Registry (`ghcr.io/zephir-x/projecthub-api` and `ghcr.io/zephir-x/projecthub-web`) on push to `project` and `main` branches and manual `workflow_dispatch`.
+- [x] **Zero VPS Build Overhead**: Eliminated multi-stage compiler builds on Mikrus VPS, preventing out-of-memory crashes and CPU starvation.
+- [x] **Mikrus Multi-Tenant Web-Proxy Integration**: Orchestrated `project/docker-compose.prod.yml` attaching the frontend Nginx reverse proxy gateway container directly to the host's existing `web-proxy` external Docker network alongside `gymcore` and `game-store`.
+- [x] **RAM Optimization & Isolation**: Configured .NET 9 Workstation Garbage Collector (`DOTNET_gcServer=0`) and tuned PostgreSQL buffers (`shared_buffers=64MB`, `work_mem=4MB`, `max_connections=30`), capping total stack RAM usage below ~150MB with strict limits (`mem_limit`).
+- [x] **Domain, Cloudflare & WebSocket Routing**: Designed host `nginx-proxy` configuration for `myprojecthub.com.pl` routing standard HTTP requests to `projecthub_web:80` and establishing persistent HTTP/1.1 WebSocket Upgrade tunnels for `/kanbanHub` live SignalR synchronization.
 - [ ] Technical README.md documentation and video demonstration recording.
 
 ## 7. AI Guidelines
@@ -115,6 +123,12 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
 * **Formatting:** Strictly NO emojis in code, documentation, or chat.
 
 ## 8. Recent Modifications & Reflections
+* **Stage 11 Production Deployment Architecture on Mikr.us VPS:**
+  - Deployment Architecture: Domain `myprojecthub.com.pl` proxied through Cloudflare (SSL termination & DNS) to Mikrus VPS port 80/443 handled by host-level `nginx-proxy` container on external Docker network `web-proxy`.
+  - Multi-Project Coexistence: Configured `projecthub_web` to join `web-proxy` alongside `gymcore_frontend` and `game-store-nginx-1`. Private PostgreSQL 17 database and ASP.NET Core 9 backend reside in an isolated `projecthub_internal` network with zero host port collisions.
+  - Zero-Build Deployment via GHCR: Automated build and push in GitHub Actions eliminates Roslyn .NET and Vite Node.js compilation on the VPS, preventing OOM Killer kernel panics.
+  - Workstation GC & PostgreSQL Tuning: Enforced `DOTNET_gcServer=0` reducing backend memory by ~50% and bounded PostgreSQL buffers (`shared_buffers=64MB`, `work_mem=4MB`, `max_connections=30`) so the entire 3-container stack consumes ~120-150 MB RAM in steady state.
+  - SignalR WebSocket Upgrades: Configured Nginx proxy routing to provide HTTP/1.1 Upgrade and Connection headers for `/kanbanHub`, ensuring real-time Kanban board updates and direct messaging broadcasts operate seamlessly through Cloudflare and both Nginx proxy layers.
 * **Stage 10 Testing, CI Automation, Containerization & Visual Polish:**
   - Cancel Button Glow Clipping Fix: Resolved button focus and hover glow clipping in `UserModal.tsx` by isolating modal action buttons outside the `overflow-y-auto` form body container into a dedicated sticky footer with top border delimiter.
   - GitHub Actions CI Workflow: Created `.github/workflows/ci.yml` providing automated parallel validation pipelines for backend (.NET 9 SDK restore, Release build, and 37 unit/integration tests with code coverage) and frontend (Node.js 20, npm ci, ESLint verification, and production Vite compilation) on push and pull requests to `main`, `master`, and `develop`.
@@ -128,29 +142,3 @@ ProjectHub is a modern project management platform inspired by Asana, Jira, and 
   - Kanban Card Action Buttons Vertical Alignment: Unified `MoreHorizontal` and `MessageSquare` action button containers in `ProjectKanban.tsx` to `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ml-auto`, ensuring identical horizontal width and absolute vertical alignment across top and bottom rows.
   - Border Beam Rotation Speed Uniformity: Calibrated `@keyframes singleBeamSweep` in `index.css` by adjusting the rotation stop from 70% (252deg) to 85% (306deg), eliminating visible deceleration/hesitation halfway through the cycle and maintaining constant sweeping velocity.
   - Missing Polish Translation for Project Navigation: Added Polish translation for `projectKanban.backButton` (`Wróć do projektów`) in `pl.ts`, eliminating untranslated English text in the Kanban board top bar.
-* **Stage 9 Completion - High-Density Load Testing & Layout Perfection:**
-  - High-Volume Load Auditing: Validated complete platform responsiveness, layout integrity, and zero text/overflow degradation under a heavy synthetic dataset (24 workspaces, 40+ projects, 86 tasks, 24 users, 80+ comments, 25 notifications per admin).
-  - Universal View Baseline Alignment: Standardized the header-to-content distance across all 7 views (`AdminPanel`, `Dashboard`, `MyTasks`, `Notifications`, `Settings`, `WorkspaceDetails`, `ProjectKanban`) using an identical `mb-7` header margin and `pt-8` (32px) content start coordinate.
-  - Stationary Gradient Mask Engineering: Rebuilt scrollable container masks (`linear-gradient(to bottom, transparent 0px, black 32px, black calc(100% - 32px), transparent 100%)`) in Admin Panel, Notifications, and Settings. Because content begins at `pt-8` (32px), cards are 100% opaque and crisp at rest, fading smoothly only during scrolling without premature clipping.
-  - Elimination of Hard Drop Shadow Artifacts: Removed `shadow-glass-sm` and `.glass-panel` from vertically stacked items in `Notifications.tsx` and `AdminPanel.tsx`, replacing them with `shadow-none` glass panels. Eliminated harsh dark shadow bands between consecutive cards while retaining top highlight rims.
-  - Circular Kanban Column Counters: Formatted column item counters as circular badges (`w-6 h-6 rounded-full`) with glowing background and border tones precisely synchronized with each column's border beam (slate gray for To Do, sky blue for In Progress, amber yellow for Review, emerald green for Done).
-  - Natural Empty State Centering: Removed `justify-between` from the root flexbox in `MyTasks.tsx`, ensuring the empty state tile sits naturally beneath the header rather than being pinned to the bottom screen edge.
-  - Full-Spectrum Pagination Architecture: Deployed modular pagination with bidirectional slide animations (`animate-slide-right`, `animate-slide-left`) across Admin Panel, Notifications, Workspaces, Projects, and My Tasks, maintaining consistent item limits (6 to 8 items per page).
-* **System Stress Testing & Diagnostics Subsystem:**
-  - Architecture: Built dedicated `IStressTestService` and `StressTestController` supporting on-demand injection of large-scale test data.
-  - Admin Panel Diagnostics Card: Added interactive diagnostic glass card in `AdminPanel.tsx` beneath the users table with real-time entity counter badges, one-click seeding, mutually exclusive button states, and atomic SQL hard-delete cleanup.
-  - Distributed Comment Seeding: Seeded comments across every top visible task in `ProjectHub React App`.
-  - Admin Targeted Notifications: Fixed JWT `sub` claim extraction in `StressTestController.cs`, generated 25 notifications (15 unread) for each admin user, and tied automatic unread count refresh in `AdminPanel.tsx` directly to `NotificationContext`.
-  - Rule Compliance: Generator strictly abides by Business Rule 2 (maximum 1 active Critical task per user across the entire system), dynamically allocating critical priorities to distinct assignees.
-  - Atomic Purge: Implemented direct SQL hard-delete cleanup in `CleanupAsync` ensuring test mock data (`[STRESS]`, `stress.*`) is permanently eradicated without leaving soft-deleted ghost records in the database.
-* **Full Glassmorphism & Visual Redesign:**
-  - Atmospheric Deep Glass System: Cohesive dark-slate glassmorphism across all application views anchored in silvery-rain tones (`bg-glass-rain`), translucent backdrop-blur panels, and sharp 1px laser rims.\n  - Luminous Border Beams: Single-pass border ray animations (`singleBeamSweep` and `inputBeamSweep`) using conic gradients and CSS property interpolation (`@property --beam-angle`).
-  - Seamless Vignette Alignment: 210px top horizontal atmospheric darkening gradient aligned flush with the left sidebar's vertical fiery accent line.
-  - Drag-and-Drop Optimization: Resolved `@hello-pangea/dnd` transform containing block issues by avoiding outer CSS transforms on the page container.
-* **Notifications & Messaging System Integration:**
-  - Designed and deployed full-stack notification infrastructure: PostgreSQL entity, EF Core migration, and SignalR personal group dispatching.
-  - Asynchronous mention processing via `CommentCreatedEventHandler` supporting `@admin` and `@username`.
-  - Direct messaging between regular users and system administrators with inline response capabilities.
-  - Deep linking from notifications to the project Kanban board, automatically loading project state and opening the task modal in details or comments mode.
-* **Comprehensive Bilingual Localization (i18n):**
-  - Backend request localization via `Accept-Language` header, localized DTO validation errors, and bilingual service exception messages.
