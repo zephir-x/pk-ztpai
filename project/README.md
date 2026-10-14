@@ -16,36 +16,71 @@ Developed as part of the **Advanced Web Application Programming Techniques (ZTPA
 
 ## Table of Contents
 
-- [1. Compliance Requirements](#1-compliance-requirements)
-- [2. System Architecture & Data Flow](#2-system-architecture--data-flow)
-  - [2.1. Layered Architecture (N-Tier Clean Architecture)](#21-layered-architecture-n-tier-clean-architecture)
-  - [2.2. Detailed HTTP Request Lifecycle](#22-detailed-http-request-lifecycle)
-- [3. Implemented Business Rules (Business Rules Engine)](#3-implemented-business-rules-business-rules-engine)
+- [1. Technology Stack](#1-technology-stack)
+- [2. Compliance Requirements](#2-compliance-requirements)
+- [3. System Architecture & Data Flow](#3-system-architecture--data-flow)
+  - [3.1. Layered Architecture (N-Tier Clean Architecture)](#31-layered-architecture-n-tier-clean-architecture)
+  - [3.2. Detailed HTTP Request Lifecycle](#32-detailed-http-request-lifecycle)
+- [4. Implemented Business Rules (Business Rules Engine)](#4-implemented-business-rules-business-rules-engine)
   - [Rule 1: Task Completion Lock Without an Assigned Assignee](#rule-1-task-completion-lock-without-an-assigned-assignee)
   - [Rule 2: Administrator Exclusive Privilege for Assigning and Changing Task Assignees](#rule-2-administrator-exclusive-privilege-for-assigning-and-changing-task-assignees)
   - [Rule 3: Project Deletion Safeguard (Critical Tasks Shield)](#rule-3-project-deletion-safeguard-critical-tasks-shield)
   - [Rule 4: Author and Moderator Protection for Comments with Asynchronous Mentions](#rule-4-author-and-moderator-protection-for-comments-with-asynchronous-mentions)
   - [Rule 5: Last Administrator Safeguard (Self-Deletion Safeguard) and Soft Delete](#rule-5-last-administrator-safeguard-self-deletion-safeguard-and-soft-delete)
-- [4. Data Model (ERD Diagram & Database Relationships)](#4-data-model-erd-diagram--database-relationships)
-- [5. Implementation of Advanced Requirements & Extended Features](#5-implementation-of-advanced-requirements--extended-features)
-  - [5.1. WebSockets & SignalR (Real-Time Reactive Kanban Board)](#51-websockets--signalr-real-time-reactive-kanban-board)
-  - [5.2. Asynchronous Event System (MediatR In-Process Event Bus)](#52-asynchronous-event-system-mediatr-in-process-event-bus)
-  - [5.3. Soft Delete Architecture with EF Core Global Query Filters](#53-soft-delete-architecture-with-ef-core-global-query-filters)
-  - [5.4. CI/CD GitHub Actions & Docker Image Publishing (GHCR)](#54-cicd-github-actions--docker-image-publishing-ghcr)
-- [6. Production Deployment (Mikr.us VPS, Cloudflare & Multi-Tenant Architecture)](#6-production-deployment-mikrus-vps-cloudflare--multi-tenant-architecture)
+- [5. Data Model (ERD Diagram & Database Relationships)](#5-data-model-erd-diagram--database-relationships)
+- [6. Implementation of Advanced Requirements & Extended Features](#6-implementation-of-advanced-requirements--extended-features)
+  - [6.1. WebSockets & SignalR (Real-Time Reactive Kanban Board)](#61-websockets--signalr-real-time-reactive-kanban-board)
+  - [6.2. Asynchronous Event System (MediatR In-Process Event Bus)](#62-asynchronous-event-system-mediatr-in-process-event-bus)
+  - [6.3. Soft Delete Architecture with EF Core Global Query Filters](#63-soft-delete-architecture-with-ef-core-global-query-filters)
+  - [6.4. CI/CD GitHub Actions & Docker Image Publishing (GHCR)](#64-cicd-github-actions--docker-image-publishing-ghcr)
+- [7. Production Deployment (Mikr.us VPS, Cloudflare & Multi-Tenant Architecture)](#7-production-deployment-mikrus-vps-cloudflare--multi-tenant-architecture)
   - [Production Architecture on VPS](#production-architecture-on-vps)
-- [7. Quality Assurance (Automated Test Report)](#7-quality-assurance-automated-test-report)
+- [8. Quality Assurance (Automated Test Report)](#8-quality-assurance-automated-test-report)
   - [Test Execution Metrics](#test-execution-metrics)
-- [8. REST API Documentation (Key Endpoints)](#8-rest-api-documentation-key-endpoints)
-- [9. Getting Started & Running the Project](#9-getting-started--running-the-project)
+- [9. REST API Documentation (Key Endpoints)](#9-rest-api-documentation-key-endpoints)
+- [10. Getting Started & Running the Project](#10-getting-started--running-the-project)
   - [Option 1: Running the Full Stack via Docker Compose (Recommended)](#option-1-running-the-full-stack-via-docker-compose-recommended)
   - [Option 2: Running in Development Environment (JetBrains Rider / CLI)](#option-2-running-in-development-environment-jetbrains-rider--cli)
-- [10. Default Test User Accounts (Seed Data)](#10-default-test-user-accounts-seed-data)
-- [11. Graphical User Interface Presentation (Screenshots)](#11-graphical-user-interface-presentation-screenshots)
+- [11. Default Test User Accounts (Seed Data)](#11-default-test-user-accounts-seed-data)
+- [12. Graphical User Interface Presentation (Screenshots)](#12-graphical-user-interface-presentation-screenshots)
 
 ---
 
-## 1. Compliance Requirements
+## 1. Technology Stack
+
+The platform is designed and implemented using modern enterprise technologies across all architectural layers. The table below outlines the core functional modules, their underlying technologies, specific versions, and their architectural responsibilities:
+
+| Architectural Module | Technology / Library | Version | Role & Architectural Responsibility |
+| :--- | :--- | :---: | :--- |
+| **Frontend Web Client** | **React** | 19.0.0 | Single-Page Application (SPA) core library providing reactive UI rendering and declarative component state management. |
+| **Frontend Type System** | **TypeScript** | 5.7 | Static typing, interface contracts, compile-time validation, and IntelliSense across all client models and API responses. |
+| **Build Tool & Dev Server** | **Vite** | 6.0+ | Modern ESM-based build bundler and ultra-fast dev server with Hot Module Replacement (HMR). |
+| **UI Styling & Design System** | **Tailwind CSS** | 4.0 | Utility-first styling framework powering glassmorphic card layouts, responsive Kanban boards, and theme styling. |
+| **Iconography & Visuals** | **Lucide React** | Latest | Lightweight, scalable vector icons utilized throughout the navigation sidebar, Kanban badges, and notification center. |
+| **HTTP Network Client** | **Axios** | 1.7+ | Promise-based HTTP client equipped with request/response interceptors for automatic JWT Bearer token injection and error handling. |
+| **Real-Time Client Driver** | **@microsoft/signalr** | 9.0 | Client-side WebSocket connection manager handling real-time Kanban board synchronization and live notification toasts. |
+| **Backend Framework & Runtime** | **ASP.NET Core / .NET** | 9.0 (C# 13) | Enterprise-grade runtime hosting RESTful API controllers, Kestrel server, dependency injection, and middleware pipeline. |
+| **Object-Relational Mapping (ORM)** | **Entity Framework Core** | 9.0 | High-performance ORM (Npgsql provider) providing Code-First database migrations, LINQ query compilation, and Soft Delete filters. |
+| **Relational Database (RDBMS)** | **PostgreSQL** | 17 (Alpine) | ACID-compliant relational database engine with foreign key cascades, unique constraints, and optimized indexes. |
+| **In-Process Event Bus** | **MediatR** | 12.4 | Mediator library decoupling HTTP request threads from asynchronous background processing (e.g., mention notifications). |
+| **Real-Time Communication Hub** | **ASP.NET Core SignalR** | 9.0 | WebSocket communication hub managing real-time broadcast and workspace-scoped multicast groups (< 30 ms latency). |
+| **Authentication & Tokens** | **System.IdentityModel.Tokens.Jwt** | 8.0+ | Stateless JWT generation and validation utilizing HMAC-SHA256 signatures with embedded user IDs, emails, and role claims. |
+| **Password Hashing & Cryptography** | **BCrypt.Net-Next** | 4.0.3 | Industry-standard salted, slow key-derivation password hashing protecting user credentials against dictionary attacks. |
+| **Input Validation Engine** | **FluentValidation** | 11.9 | Strongly typed, fluent validation rules for all incoming request DTOs, integrated directly into the API controller pipeline. |
+| **API Documentation & Exploration** | **Swagger / Swashbuckle** | 6.6+ | OpenAPI 3.0 specification generation with interactive Swagger UI and integrated JWT Bearer authorization testing. |
+| **Unit & Integration Testing** | **xUnit** | 2.9 | Modern testing framework executing 37 automated test scenarios (21 unit tests and 16 integration tests). |
+| **Integration Web Host Testing** | **Microsoft.AspNetCore.Mvc.Testing** | 9.0 | CustomWebApplicationFactory orchestrating full-stack in-memory HTTP pipelines, real routing, and isolated database contexts. |
+| **Assertions & Mocking** | **FluentAssertions & Moq** | 7.0 / 4.20 | Readable BDD-style test assertions and isolation mocks for repository and service layer testing. |
+| **Static Code Analysis** | **ESLint & Roslyn** | Latest | Code style enforcement, linting, and formatting for both TypeScript and C# source trees. |
+| **Containerization & Packaging** | **Docker** | Multi-stage | Multi-stage Alpine container builds minimizing image sizes for Kestrel API, PostgreSQL, and static Nginx web client. |
+| **Multi-Container Orchestration** | **Docker Compose** | v2.20+ | Multi-service orchestration configuring networking, environment variables, health checks, and persistent volumes. |
+| **Reverse Proxy & Static Web Server** | **Nginx** | 1.27 Alpine | High-performance edge web server serving Vite SPA production bundles and reverse-proxying API & WebSocket upgrade traffic. |
+| **CI/CD Automation Pipeline** | **GitHub Actions** | Latest | Automated pipeline running parallel test jobs, frontend linters, and publishing container images to GHCR. |
+| **Container Registry** | **GitHub Container Registry (GHCR)** | ghcr.io | Secure container registry hosting versioned production images (projecthub-api, projecthub-web). |
+
+---
+
+## 2. Compliance Requirements
 
 The system satisfies and exceeds all criteria defined in §4 of the Individual Project Regulations:
 
@@ -75,9 +110,9 @@ The system satisfies and exceeds all criteria defined in §4 of the Individual P
 
 ---
 
-## 2. System Architecture & Data Flow
+## 3. System Architecture & Data Flow
 
-### 2.1. Layered Architecture (N-Tier Clean Architecture)
+### 3.1. Layered Architecture (N-Tier Clean Architecture)
 
 The system was designed with strict separation of concerns:
 
@@ -131,7 +166,7 @@ graph TD
     QueryFilters --> Postgres
 ```
 
-### 2.2. Detailed HTTP Request Lifecycle
+### 3.2. Detailed HTTP Request Lifecycle
 
 The sequence diagram below illustrates the path traveled by a data mutation request (e.g., updating a task status on the Kanban board) from the user's browser, through middleware and domain services, to database persistence and real-time WebSocket broadcast:
 
@@ -183,7 +218,7 @@ sequenceDiagram
 
 ---
 
-## 3. Implemented Business Rules (Business Rules Engine)
+## 4. Implemented Business Rules (Business Rules Engine)
 
 The project implements **5 rigorous business rules** that extend well beyond standard CRUD operations. All rules are thoroughly covered by unit and integration tests.
 
@@ -219,7 +254,7 @@ The project implements **5 rigorous business rules** that extend well beyond sta
 
 ---
 
-## 4. Data Model (ERD Diagram & Database Relationships)
+## 5. Data Model (ERD Diagram & Database Relationships)
 
 The PostgreSQL database consists of **7 related tables** optimized for performance (indexes, foreign keys with cascades, and global Soft Delete filters):
 
@@ -229,18 +264,19 @@ The PostgreSQL database consists of **7 related tables** optimized for performan
 
 ---
 
-## 5. Implementation of Advanced Requirements & Extended Features
+## 6. Implementation of Advanced Requirements & Extended Features
 
-### 5.1. WebSockets & SignalR (Real-Time Reactive Kanban Board)
+### 6.1. WebSockets & SignalR (Real-Time Reactive Kanban Board)
 * **Implementation**: The backend implements `KanbanHub`, inheriting from `Microsoft.AspNetCore.SignalR.Hub`.
 * **Room Architecture (Groups)**: When a project is opened, the client automatically subscribes to the SignalR group corresponding to that workspace (`JoinWorkspaceGroup(workspaceId)`).
 * **React Handling**: Utilizes `@microsoft/signalr` with automatic reconnection (`withAutomaticReconnect()`) and passes the JWT token via query parameter (`access_token`) during the WebSocket handshake.
 * **UI Effect**: When an administrator or team member moves a card to another column, changes an assignee, or creates a task, the modification reflects on all other team members' screens without refreshing the page in under **30 ms**.
 
-### 5.2. Asynchronous Event System (MediatR In-Process Event Bus)
-* **Mechanism**: After a comment is created, `CommentService` triggers `_eventDispatcher.DispatchAsync(new CommentCreatedEvent(...))`.\n* **Non-blocking HTTP**: An HTTP 201 Created response is returned to the user immediately. In the background, `CommentCreatedEventHandler` executes asynchronously, parsing the content for `@admin` or specific user mentions, creating `Notification` records in the database, and dispatching a WebSocket signal.
+### 6.2. Asynchronous Event System (MediatR In-Process Event Bus)
+* **Mechanism**: After a comment is created, CommentService triggers _eventDispatcher.DispatchAsync(new CommentCreatedEvent(...)).
+* **Non-blocking HTTP**: An HTTP 201 Created response is returned to the user immediately. In the background, CommentCreatedEventHandler executes asynchronously, parsing the content for @admin or specific user mentions, creating Notification records in the database, and dispatching a WebSocket signal.
 
-### 5.3. Soft Delete Architecture with EF Core Global Query Filters
+### 6.3. Soft Delete Architecture with EF Core Global Query Filters
 * In the data model, critical business records are never permanently removed from the database (avoiding physical `DELETE CASCADE`), preserving operational audit history.
 * Global Fluent API filters are configured in `ProjectHubDbContext`:
   ```csharp
@@ -251,7 +287,7 @@ The PostgreSQL database consists of **7 related tables** optimized for performan
   ```
 * Standard LINQ queries automatically ignore records flagged with `IsDeleted = true`. For auditing purposes, administrators can access full history using `.IgnoreQueryFilters()`.
 
-### 5.4. CI/CD GitHub Actions & Docker Image Publishing (GHCR)
+### 6.4. CI/CD GitHub Actions & Docker Image Publishing (GHCR)
 * The `.github/workflows/ci.yml` pipeline automatically validates every pull request and push to `main` and `project` branches.
 * It consists of parallel jobs:
   1. **backend-tests**: Release mode compilation, executing 37 xUnit tests.
@@ -262,11 +298,11 @@ The PostgreSQL database consists of **7 related tables** optimized for performan
 
 ---
 
-## 6. Production Deployment (Mikr.us VPS, Cloudflare & Multi-Tenant Architecture)
+## 7. Production Deployment (Mikr.us VPS, Cloudflare & Multi-Tenant Architecture)
 
 The application is deployed and running live under the public domain: **[https://myprojecthub.com.pl](https://myprojecthub.com.pl)**.
 
-> *Note: For obvious reasons, the admin account has different login credentials (user accounts remain unchanged - you can log in using the details provided in point 10 of the documentation).*
+> *Note: For obvious reasons, the admin account has different login credentials (user accounts remain unchanged - you can log in using the details provided in point 11 of the documentation).*
 
 ### Production Architecture on VPS
 The project runs on a Linux VPS (Mikr.us) in a shared (Multi-Tenant) environment alongside two other active applications.
@@ -307,7 +343,7 @@ The project runs on a Linux VPS (Mikr.us) in a shared (Multi-Tenant) environment
 
 ---
 
-## 7. Quality Assurance (Automated Test Report)
+## 8. Quality Assurance (Automated Test Report)
 
 The project includes a dedicated test suite `ProjectHub.Tests` built with standard architectural patterns.
 
@@ -331,7 +367,7 @@ A detailed inventory of all 37 test scenarios, along with descriptions of mock c
 
 ---
 
-## 8. REST API Documentation (Key Endpoints)
+## 9. REST API Documentation (Key Endpoints)
 
 ### Key REST Route Summary:
 
@@ -357,13 +393,13 @@ A detailed inventory of all 37 test scenarios, along with descriptions of mock c
 
 ---
 
-## 9. Getting Started & Running the Project
+## 10. Getting Started & Running the Project
 
-The project can be run in two ways: via **Docker Compose** (recommended, boots the complete stack with a single command) or **locally in an IDE** (JetBrains Rider / VS Code).
+The project can be run in two ways: via **Docker Compose** (recommended, boots the complete stack with a single command) or **locally in an IDE / CLI** (JetBrains Rider / VS Code).
 
 ### Prerequisites:
 * **Docker Engine 24+** and **Docker Compose v2+** installed
-* Optional for non-Docker execution: **.NET 9 SDK**, **Node.js 20+**, local **PostgreSQL 16/17** instance
+* Optional for non-Docker execution: **.NET 9 SDK**, **Node.js 20+**, local or Dockerized **PostgreSQL 16/17**
 
 ---
 
@@ -375,14 +411,24 @@ The project can be run in two ways: via **Docker Compose** (recommended, boots t
    cd pk-ztpai/project
    ```
 
-2. **Prepare the environment file `.env`**:
-   In the `project` directory, create a `.env` file (or copy the example):
+2. **Prepare the global environment file (`project/.env`)**:
+   In the `project` root directory, create a `.env` file from the example template:
    ```bash
    cp .env.example .env
    ```
-   > *Fill in `.env` content for your local development as in example.*
+   *Sample `.env` content for Docker Compose (change it on your own):*
+   ```env
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=DevelopmentPassword123!
+   POSTGRES_DB=ProjectHub
+   POSTGRES_PORT=5433
+   BACKEND_PORT=5074
+   FRONTEND_PORT=5173
+   JWT_SECRET=DevelopmentSecretKeyThatIsLongEnoughToProvide256BitEncryption123!
+   ASPNETCORE_ENVIRONMENT=Development
+   ```
 
-3. **Start containers in background**:
+3. **Start all containers in background**:
    ```bash
    docker compose up -d --build
    ```
@@ -394,31 +440,61 @@ The project can be run in two ways: via **Docker Compose** (recommended, boots t
    > *Note: Upon startup, containers will automatically apply EF Core migrations and seed initial administrative and demo accounts.*
 
 5. **Access the application**:
-  * **Frontend Application (React SPA)**: [http://localhost:5173](http://localhost:5173)
-  * **Swagger UI (API Documentation)**: [http://localhost:5074/swagger](http://localhost:5074/swagger)
+   * **Frontend Application (React SPA)**: [http://localhost:5173](http://localhost:5173)
+   * **Swagger UI (API Documentation)**: [http://localhost:5074/swagger](http://localhost:5074/swagger)
 
 ---
 
 ### Option 2: Running in Development Environment (JetBrains Rider / CLI)
 
-1. **Run only the PostgreSQL database in Docker**:
-   ```bash
-   cd project
-   docker compose up -d postgres_db
-   ```
+In local development, the PostgreSQL database runs in Docker, while the backend and frontend execute directly on your host machine.
 
-2. **Run the Backend API (.NET 9)**:
+#### Step 1: Start PostgreSQL Database Container
+From the `project` directory:
+```bash
+cp .env.example .env    # if not done already
+docker compose up -d postgres_db
+```
+
+#### Step 2: Configure & Run Backend API (.NET 9)
+The backend requires `appsettings.Development.json` containing the database connection string and JWT secret (ignored by git):
+1. Navigate to the API folder and create `appsettings.Development.json` from the example:
    ```bash
    cd backend/ProjectHub.Api
+   cp appsettings.Example.json appsettings.Development.json
+   ```
+2. Ensure the content in `appsettings.Development.json` points to your Docker PostgreSQL port (`5433`):
+   ```json
+   {
+     "ConnectionStrings": {
+       "DefaultConnection": "Host=localhost;Port=5433;Database=ProjectHub;Username=postgres;Password=DevelopmentPassword123!"
+     },
+     "JwtOptions": {
+       "SecretKey": "DevelopmentSecretKeyThatIsLongEnoughToProvide256BitEncryption123!"
+     }
+   }
+   ```
+3. Restore dependencies and run the API:
+   ```bash
    dotnet restore
    dotnet run
    ```
    *API listens at: `http://localhost:5074`.*
 
-3. **Run the Frontend Application (React + Vite)**:
-   In a separate terminal:
+#### Step 3: Configure & Run Frontend SPA (React + Vite)
+In local development (without Nginx reverse proxy), Vite requires `frontend/.env` to locate backend API and WebSocket endpoints:
+1. In a separate terminal, navigate to `frontend` and create `.env` from template:
    ```bash
    cd frontend
+   cp .env.example .env
+   ```
+2. Verify that `frontend/.env` contains the local backend addresses:
+   ```env
+   VITE_API_URL=http://localhost:5074/api
+   VITE_HUB_URL=http://localhost:5074/kanbanHub
+   ```
+3. Install dependencies and start Vite dev server:
+   ```bash
    npm install
    npm run dev
    ```
@@ -426,7 +502,7 @@ The project can be run in two ways: via **Docker Compose** (recommended, boots t
 
 ---
 
-## 10. Default Test User Accounts (Seed Data)
+## 11. Default Test User Accounts (Seed Data)
 
 The database is pre-seeded with test accounts for both system roles:
 
@@ -439,7 +515,7 @@ The database is pre-seeded with test accounts for both system roles:
 
 ---
 
-## 11. Graphical User Interface Presentation (Screenshots)
+## 12. Graphical User Interface Presentation (Screenshots)
 
 All graphical assets and user interface screenshots are located in the `Assets/` directory:
 
