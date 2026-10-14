@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -438,14 +438,14 @@ export default function Notifications() {
 
             {/* Pagination Bar pinned at the bottom */}
             {notifications.length > 0 && (
-                <div className="pt-4 shrink-0 pb-0">
+                <div className="pt-4 shrink-0 pb-6">
                     <Pagination
                         currentPage={validCurrentPage}
                         totalPages={totalPages}
                         totalItems={notifications.length}
                         itemsPerPage={NOTIFICATIONS_PER_PAGE}
                         onPageChange={handlePageChange}
-                        className="border border-white/15 bg-rain-950/60 backdrop-blur-2xl rounded-2xl shadow-none"
+                        className="glass-panel border border-white/20 bg-rain-950/60 backdrop-blur-2xl rounded-2xl"
                     />
                 </div>
             )}

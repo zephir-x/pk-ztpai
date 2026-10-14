@@ -1,156 +1,171 @@
 # Project Execution Plan & Context Specification
 
 ## 1. Project Overview
-ProjectHub is a modern project management platform inspired by Asana, Jira, and Linear. It is built as a Single Page Application (SPA) with a React frontend and an ASP.NET Core Web API backend using PostgreSQL and Entity Framework Core. The architecture emphasizes robust business rules, full-stack real-time collaboration via SignalR, role-based security, and aesthetic UI styling.
+ProjectHub is a modern, enterprise-grade project management platform inspired by Asana, Jira, and Linear. It is built as a Single Page Application (SPA) with a React frontend and an ASP.NET Core Web API backend using PostgreSQL and Entity Framework Core. The architecture emphasizes strict business validation rules, full-stack real-time collaboration via SignalR WebSockets, role-based security (RBAC), and a polished futuristic glassmorphism aesthetic.
 
 ## 2. Core Architectural Principles
-* **Backend:** ASP.NET Core Web API (.NET 9) with Clean Architecture principles.
-* **Database & ORM:** PostgreSQL with Entity Framework Core, Code-First migrations, and Fluent API configurations.
-* **Authentication & Authorization:** JWT Bearer tokens with custom claims (`id`, `email`, `role`). Strict RBAC enforced on endpoints and frontend routing.
-* **Real-time Pipeline:** SignalR Hub for live board synchronization, task moves, assignments, and comment notifications.
+* **Backend:** ASP.NET Core Web API (.NET 9) designed with Clean Architecture principles and repository/service patterns.
+* **Database & ORM:** PostgreSQL 17 with Entity Framework Core, Code-First migrations, automated seeding, and Fluent API configurations.
+* **Authentication & Authorization:** Stateless JWT Bearer tokens with custom claims (`id`, `email`, `role`). Strict RBAC enforced on API controllers and frontend routing.
+* **Real-time Pipeline:** SignalR Hub (`/kanbanHub`) for bidirectional live Kanban board synchronization, drag-and-drop moves, assignments, and comment/mention notifications.
 * **Frontend:** React 18+ (TypeScript), Vite, Tailwind CSS, Lucide icons, `@hello-pangea/dnd` for Kanban drag-and-drop.
+* **CI/CD & Cloud Infrastructure:** GitHub Actions automated quality gates, GitHub Container Registry (GHCR), Cloudflare CDN/SSL termination, and multi-tenant Docker containerization on Mikr.us VPS.
 
 ## 3. Core Business Rules
-* **Rule 1 (Task Deletion Restriction):** A task can only be deleted if its status is `ToDo` or if the requesting user has the `Admin` role.
-* **Rule 2 (Single Critical Task Constraint):** A user cannot be assigned more than one active task with `Critical` priority at the same time across the entire system.
-* **Rule 3 (Restricted Project Creation):** Only users with the `Admin` role can create new projects and workspaces. Regular users may only create tasks and add comments.
+* **Rule 1 (Task Closure & Assignment Constraint):** A task cannot be marked as Done or closed unless it has an active assignee assigned to it.
+* **Rule 2 (Admin-Only Assignment & SignalR Broadcast):** Regular users cannot assign tasks upon creation or reassign tasks; only administrators may assign or reassign task assignees, broadcasting changes in real time via SignalR.
+* **Rule 3 (Critical Task Project Deletion Shield):** A project cannot be deleted if it contains unresolved tasks with `Critical` priority. All critical tasks must be resolved (`Done`) before project deletion is permitted.
+* **Rule 4 (Comment Modification & Asynchronous Mention Pipeline):** A comment can only be edited or deleted by its original author or an Administrator. Comment creation asynchronously dispatches MediatR events (`CommentCreatedEvent`) parsing `@admin` and `@username` mentions into persistent notifications.
+* **Rule 5 (Self-Account Deletion Safeguard & Soft Delete Isolation):** Users cannot delete their own account. Account deletion is restricted to administrators and uses soft-delete filters (`IsDeleted`, `DeletedAt`), preventing orphaned database relationships.
 
-## 4. Completed Stages
+## 4. Completed Stages & Milestone Roadmap
 ### [x] Stage 1-4: Analysis, Setup, Database Design, Logic Definition
-* Domain model specifications, database schema diagrams, REST API endpoints, business validation rules.
+* Domain model specifications, database schema diagrams, REST API endpoints, and business validation rules.
 
 ### [x] Stage 5: Backend Core Implementation
-- [x] EF Core setup, Fluent API, Migrations, BCrypt, JWT.
-- [x] CRUD for Workspaces, Projects, Tasks, Comments.
-- [x] Domain validation for Business Rules 1, 2, and 3.
-- [x] MediatR pipeline for async background notifications on @mentions.
-- [x] SignalR hub infrastructure for live board synchronization.
-- [x] Automatic database seeder for Admin, User, Workspace, Project, Task, and Comment.
+- [x] EF Core setup, Fluent API, Migrations, BCrypt password hashing, JWT service.
+- [x] CRUD services for Workspaces, Projects, Tasks, and Comments.
+- [x] Domain validation for Business Rules 1 through 5.
+- [x] MediatR pipeline for async background notifications on `@mentions`.
+- [x] SignalR hub infrastructure (`KanbanHub`) for live board synchronization.
+- [x] Automatic database seeder for Admin, Users, Workspaces, Projects, Tasks, and Comments.
 
 ### [x] Stage 6: Frontend Core & Integration
-- [x] Authentication flows (Sliding auth view, Axios interceptors).
+- [x] Authentication flows (sliding Auth panel, Axios JWT interceptors).
 - [x] Workspace & Project explorer views.
 - [x] Kanban board with Drag & Drop (`@hello-pangea/dnd`).
-- [x] SignalR client lifecycle integration.
-- [x] Global toast notifications (`react-hot-toast`) replacing flashing error states.
+- [x] SignalR client lifecycle integration with reconnection handling.
+- [x] Global toast notifications (`react-hot-toast`).
 - [x] Frontend RBAC decoding (Admin Panel, conditional action buttons, tabbed task details).
 
 ### [x] Stage 7: Polish & Architectural Clean-Up
-- [x] Standardize code styling, remove redundant comments, and enforce professional single-line English documentation.
-- [x] Patch SignalR WebSockets integration (JWT URL parsing, React strict mode mounting safeguards).
-- [x] Refine Role-Based Access Control (RBAC) to allow global read access while strictly locking modifications to admins.
-- [x] Implement robust user assignment via dedicated PATCH endpoint.
-- [x] Implement Edit and Delete functionality for Workspaces and Projects.
-- [x] Introduce `ThemeColor` enums internally stored as string, seamlessly mapped to UI ribbons and tags.\n
+- [x] Professional code styling and single-line English documentation.
+- [x] SignalR WebSocket token parsing in query string for WebSocket upgrades.
+- [x] Role-Based Access Control refinement: global read permissions with admin-exclusive mutations.
+- [x] Dedicated PATCH endpoint for task assignments.
+- [x] Edit and Delete functionality for Workspaces and Projects.
+- [x] Standardized `ThemeColor` enums mapped to UI ribbons and tags.
+
 ### [x] Stage 8: Feature Expansion & Soft Delete Architecture
-- [x] **Soft Delete Architecture**: Implement `IsDeleted` / `DeletedAt` fields across major entities. Do not permanently delete database records; update global query filters to exclude deleted items on backend and frontend.
-- [x] **My Tasks View**: Implement a dedicated view displaying all tasks assigned to the current user, featuring quick links traversing `Workspace -> Project -> Task` or a unified accessible interface.
-- [x] **User Management**: Implement the Administration panel for managing users (Add, Edit, Soft Delete), explicitly including a password reset/override capability for forgotten passwords.
-- [x] **Settings & Profile View**: Allow users to modify their profile details (First Name, Last Name, Avatar URL). Implement system-wide user preferences including App Theme Accent Color (overriding default fiery orange) and Language selection.
-- [x] **Kanban & Comments Profile Integration**:
-  - Replace static "AS" placeholder avatar with real assignee avatar preset and first name display on Kanban cards.
-  - Display author avatar and full name on comments instead of raw user identifiers.
-- [x] **End-to-End Localization (i18n)**:
-  - Backend request localization via `Accept-Language` header, localized DTO validation errors, and bilingual service exception messages.
-  - Comprehensive frontend translation dictionary across all modals, pages, tabs, toasts, and dynamic browser page titles.
-- [x] **Notifications & Messaging System (New Entity)**:
-  - `Notification` entity with PostgreSQL soft-delete, indexes, and EF Core migration `AddNotificationsSystem`.
-  - MediatR + SignalR pipeline: `@admin` and `@username` (matching email prefixes with dot handling) trigger persistent notifications and live WebSocket broadcasts.
-  - Task assignment and reassignment notifications (`TaskAssigned`).
-  - Direct Messaging (`DirectMessage`): Users send messages to Administrators; Administrators reply directly to users.
-  - `NotificationsController` with complete RESTful endpoints for feed, badge count, mark as read, mark all as read, delete, and direct messaging.
-  - Global `NotificationContext` with SignalR group management, real-time toast delivery, and sidebar unread badge.
-  - `Notifications` view with role differentiation (contact form for users, reply panel for admins) and deep linking to Kanban board with automatic task modal popup.
-  - Dynamic template-based i18n localization for notification titles and descriptions, preserving live user messages across language switches.
-  - Automated initial notifications seeding for seeded users (`@frontend.dev`, `@admin`, task assignment).
-  - Deep-link task modal integration in My Tasks view directly navigating to the details tab.
-  - Instant assignee modal closure and Kanban board assignee name and avatar update without page reload.
+- [x] **Soft Delete Architecture**: Global query filters excluding soft-deleted records across all entities.
+- [x] **My Tasks View**: Dedicated personal workspace view displaying assigned tasks with direct navigation.
+- [x] **User Management**: Admin panel for managing users (Add, Edit, Soft Delete, and Password Override).
+- [x] **Settings & Profile View**: Profile editing, Accent Color customizer, and Language selector.
+- [x] **Bilingual Localization (i18n)**: English and Polish dictionaries with dynamic runtime switching.
+- [x] **Notifications & Messaging Subsystem**: Persistent notification model, SignalR broadcasts, direct user-admin messaging, and deep linking from notifications to Kanban cards.
 
 ### [x] Stage 9: Stress Testing, Data Scaling & Glassmorphism Redesign
-- [x] **Glassmorphism Redesign**:
-  - Complete overhaul of the entire user interface to an atmospheric futuristic grayscale glassmorphism aesthetic (`#4f5f6e` body, `#556677` silvery rain glass gradients, translucent panels with backdrop blur, fine laser rim highlights, and dynamic fiery accent themes).
-  - Global CSS border beam animations with linear sweeps across Kanban columns and input fields with zero background bleeding.
-  - Seamless atmospheric top vignette fading right below page headers with aligned sidebar dividing beam (210px).
-  - Unified card styling across Workspaces, Projects, Kanban boards, My Tasks, Notifications, Admin Panel, and Settings.
-  - Fluid CSS grid accordion reply animations for notifications direct messaging.
-  - Enhanced avatar presets (expanded with Firestarter/Flame) and theme color palette (expanded with Cyan).
-  - Brand identity styling in Auth with classic colorful logo on luminous elevated white glass badge with interactive glow and zoom.
-- [x] **High-Volume Data Stress Testing & Layout Optimization**:
-  - [x] **Dedicated Stress Test Subsystem**: Implemented `IStressTestService` and `StressTestController` (`/api/admin/stress-test/status`, `/seed`, `/cleanup`) allowing admins to inject large-scale test datasets (24 workspaces, 40+ projects, 86 tasks, 24 users, 80+ comments, notifications targeting admins) on demand.
-  - [x] **Admin Stress Test Control Card**: Added interactive diagnostic glass card in `AdminPanel.tsx` beneath the users table with real-time entity counter badges, one-click seeding, mutually exclusive button states, and atomic SQL hard-delete cleanup.
-  - [x] **Universal Pagination & Directional Animations**: Standardized pagination with directional blur/slide animations (`animate-slide-right`, `animate-slide-left`) across Admin Panel users, Notifications feed, Workspaces grid, Projects grid, and My Tasks cards.
-  - [x] **Targeted Kanban Density & Column Scrolling**: Enabled independent vertical scrolling for Kanban Droppable columns, preventing whole-board vertical stretch and maintaining natural header alignment.
-  - [x] **Color-Matched Circular Kanban Badges**: Styled column task counters as exact circular pill badges with background and border glow reflecting each column's border beam color (slate for To Do, sky for In Progress, amber for Review, emerald for Done).
-  - [x] **Universal View Baseline & Stationary Gradient Fade**: Unified content start coordinates across all seven application views (`AdminPanel`, `Dashboard`, `MyTasks`, `Notifications`, `Settings`, `WorkspaceDetails`, `ProjectKanban`) with `mb-7` header margins and `pt-8` content padding. Calibrated top/bottom fade masks (`0px` to `32px`) so content is 100% opaque at rest and only fades during active scroll.
-  - [x] **Hard Drop Shadow Elimination**: Replaced heavy drop shadows with clean `shadow-none` glass styling across stacked cards in Notifications and Admin Panel, eradicating dark shadow bands between elements.
-  - [x] **Natural Empty States**: Restored natural vertical placement of empty state cards in My Tasks, Workspaces, and Projects, preventing them from snapping to the bottom edge.
-  - [x] **Baseline Restoration**: Validated atomic cleanup via `CleanupAsync` ensuring test mock data (`[STRESS]`, `stress.*`) is permanently eradicated without leaving orphan or soft-deleted residues.
+- [x] **Glassmorphism Redesign**: Grayscale slate aesthetic (`#4f5f6e`, `#556677`), translucent glass cards, linear border beam sweeps, and stationary gradient scroll masks.
+- [x] **High-Volume Stress Subsystem**: `IStressTestService` injecting high-density datasets (24 workspaces, 40+ projects, 86 tasks, 24 users, 80+ comments) with atomic SQL cleanup.
+- [x] **Universal Pagination & Density**: Standardized pagination with slide animations across all seven views.
 
-### [x] Stage 10: Quality Assurance & Testing Suite (Grade 5.0 Standards)
-- [x] **Canonical Multi-Project Architecture**:
-  - Restructured `backend/` into standard sibling folders: `backend/ProjectHub.Api/` (Web API application) and `backend/ProjectHub.Tests/` (test suite).
-  - Maintained `ProjectHub.sln` at `backend/` root linking both projects with zero compiler warnings or circular exclusions.
-  - Configured `ProjectHub.Tests` (.NET 9.0) with xUnit, FluentAssertions, Moq, `Microsoft.AspNetCore.Mvc.Testing`, and `Microsoft.EntityFrameworkCore.InMemory`.
-  - Built `TestDbContextFactory` producing isolated in-memory test databases for unit tests.
-  - Engineered `CustomWebApplicationFactory` with environment override (`Testing`), automated in-memory JWT configuration, and test claim token generation.\n  - Created full technical documentation in English: `ProjectHub.Tests/TEST_DOCUMENTATION.md`.
-- [x] **Unit Testing Suite (21 Tests - Exceeding 5-Test Criterion)**:
-  - `TaskItemService_BusinessRulesTests` (6 tests): Validated Rule 1 (cannot close task without active assignee, positive path with assignee), Rule 2 (Admin-only task assignment on creation, Admin-only reassignment, SignalR broadcast on reassignment).
-  - `ProjectService_BusinessRulesTests` (5 tests): Validated Rule 3 (conflict on deleting project with unresolved critical tasks, positive path when critical task is Done, non-critical task bypass, workspace ownership access check, unauthorized project creation prevention).
-  - `CommentService_AuthorizationTests` (5 tests): Validated Rule 4 (comment modification/deletion restricted to author or Admin), positive author edit, positive Admin override, and asynchronous MediatR event dispatching (`CommentCreatedEvent`).
-  - `UserService_BusinessRulesTests` (5 tests): Validated Rule 5 (cannot delete own account), soft-delete query filter isolation, Admin-only user deletion authorization, email uniqueness conflicts, and password security verification.
-- [x] **Integration Testing Suite (16 Tests - Exceeding 3-Test Criterion)**:
-  - `AuthControllerIntegrationTests` (4 tests): Verified `/api/auth/register` (201 Created, 409 Conflict duplicate), `/api/auth/login` (200 OK with valid JWT, 401 Unauthorized for invalid password).
-  - `TasksControllerIntegrationTests` (5 tests): Verified HTTP pipeline enforcement of Rule 1 (409 Conflict vs 201 Created) and Rule 2 (403 Forbidden vs 204 NoContent with real JWT claims).
-  - `ProjectsControllerIntegrationTests` (4 tests): Verified HTTP pipeline enforcement of Rule 3 (409 Conflict vs 204 NoContent), 403 Forbidden for unowned workspaces, and 401 Unauthorized for unauthenticated access).
-  - `CommentsControllerIntegrationTests` (3 tests): Verified `/api/comments` (201 Created with async MediatR event trigger, 403 Forbidden for non-author edits, 204 NoContent for Admin deletion).
-- [x] **Suite Execution Results**: 37 total tests executed across both suites, 0 failures, 0 skipped, 100% passing in ~1-2 seconds.
-- [x] **GitHub Actions CI Workflow** (`.github/workflows/ci.yml`): Automated build, lint, and test validation on Push and Pull Request.
-- [x] **Multi-stage Dockerfile and Docker Compose Orchestration**: Automated multi-container environment (PostgreSQL 17 Alpine with healthcheck, ASP.NET Core 9 Web API multi-stage container with automatic migrations and data seeding, and React SPA served by Nginx with reverse proxy and WebSocket support). Tested single-command startup via `docker compose up -d` at `http://localhost:5173`. Ready for Mikr.us / VPS deployment with reverse proxy & custom domain.
-- [ ] Technical README.md documentation and video demonstration recording.
+### [x] Stage 10: Quality Assurance & Testing Suite (Grade 5.0 Standard)
+- [x] **Canonical Sibling Architecture**: Clean separation into `ProjectHub.Api` and `ProjectHub.Tests` linked via `ProjectHub.sln`.
+- [x] **Unit Testing Suite (21 Tests)**: Comprehensive coverage of Business Rules 1-5, MediatR events, and soft-delete query filters using xUnit, FluentAssertions, and Moq.
+- [x] **Integration Testing Suite (16 Tests)**: `WebApplicationFactory` HTTP pipeline testing validating JWT claims, validation middleware, and status codes.
+- [x] **Suite Execution**: 37 total tests executed, 0 failures, 100% pass rate in ~1.5s.
+- [x] **Technical Documentation**: Comprehensive test report generated in `ProjectHub.Tests/TEST_DOCUMENTATION.md`.
 
-## 7. AI Guidelines
+### [x] Stage 11: Production Deployment Architecture (Mikr.us VPS, GHCR, Cloudflare & Reverse Proxy)
+- [x] **GitHub Actions CI/CD with GHCR Registry**: Extended `.github/workflows/ci.yml` with automated container image compilation and publishing to GitHub Container Registry (`ghcr.io/zephir-x/projecthub-api` and `ghcr.io/zephir-x/projecthub-web`) on push to `project` and `main` branches and manual `workflow_dispatch`.
+- [x] **Zero VPS Build Overhead**: Eliminated multi-stage compiler builds on Mikrus VPS, preventing out-of-memory crashes and CPU starvation.
+- [x] **Mikrus Multi-Tenant Web-Proxy Integration**: Orchestrated `project/docker-compose.prod.yml` attaching the frontend Nginx reverse proxy gateway container directly to the host's existing `web-proxy` external Docker network alongside `gymcore` and `game-store`.
+- [x] **RAM Optimization & Isolation**: Configured .NET 9 Workstation Garbage Collector (`DOTNET_gcServer=0`) and tuned PostgreSQL buffers (`shared_buffers=64MB`, `work_mem=4MB`, `max_connections=30`), capping total stack RAM usage below ~150MB with strict limits (`mem_limit`).
+- [x] **Domain, Cloudflare & WebSocket Routing**: Designed host `nginx-proxy` configuration for `myprojecthub.com.pl` routing standard HTTP requests to `projecthub_web:80` and establishing persistent HTTP/1.1 WebSocket Upgrade tunnels for `/kanbanHub` live SignalR synchronization.
+- [x] **Live Verification**: Successfully deployed and verified at `https://myprojecthub.com.pl` with operational SSL, database migrations, and authenticated administrative access.
+
+### [x] Stage 12: Final Documentation & Demonstration
+- [x] Technical `README.md` documentation and video demonstration recording for project evaluation.
+
+---
+
+## 5. Production Infrastructure & Deployment on Mikr.us VPS (Technical Breakdown)
+
+This section provides the complete technical explanation of how ProjectHub is built, orchestrated, and deployed in production on a resource-constrained Linux VPS (Mikr.us), operating side-by-side with other production applications (`gymcore`, `game-store`).
+
+### 5.1 End-to-End Data Flow & Network Architecture
+
+```
+User (Browser Client)
+         │
+         ▼  HTTPS (Port 443)
+┌─────────────────────────────────────────────────────────────┐
+│ Cloudflare Edge Network                                     │
+│  - DNS Management (A record for @ and CNAME for www)        │
+│  - Edge SSL/TLS Termination (Flexible Encryption)           │
+│  - DDoS Protection & WebSocket Proxy Tunneling              │
+└─────────────────────────────────────────────────────────────┘
+         │
+         ▼  HTTP (Port 80)
+┌─────────────────────────────────────────────────────────────┐
+│ Mikr.us Host: nginx-proxy Container (Port 80/443)           │
+│  - Member of external Docker bridge network: 'web-proxy'   │
+│  - Virtual Host Dispatcher (Server Name: myprojecthub.com.pl│
+│  - Reverse Proxy to http://projecthub_web:80                │
+│  - HTTP/1.1 Upgrade Tunnel for /kanbanHub (WebSockets)      │
+└─────────────────────────────────────────────────────────────┘
+         │
+         ▼  Docker Internal DNS (web-proxy network)
+┌─────────────────────────────────────────────────────────────┐
+│ projecthub_web Container (Nginx 1.27 Alpine)                │
+│  - Bridge between 'web-proxy' and 'projecthub_internal'     │
+│  - Serves compiled React Vite SPA static bundles (dist/)    │
+│  - Internal Proxy /api/*      ──► http://backend:8080/api/  │
+│  - Internal Proxy /kanbanHub  ──► http://backend:8080       │
+└─────────────────────────────────────────────────────────────┘
+         │
+         ▼  Docker Internal DNS (projecthub_internal network)
+┌─────────────────────────────────────────────────────────────┐
+│ projecthub_api Container (ASP.NET Core 9 Runtime)           │
+│  - Strict isolation: ZERO exposed host ports                │
+│  - Kestrel HTTP Engine listening on port 8080               │
+│  - Workstation GC enabled (DOTNET_gcServer=0)               │
+│  - Automated EF Core database migrations & initial seeding  │
+└─────────────────────────────────────────────────────────────┘
+         │
+         ▼  Port 5432 (Internal Docker Network Only)
+┌─────────────────────────────────────────────────────────────┐
+│ projecthub_postgres Container (PostgreSQL 17 Alpine)        │
+│  - Named persistent volume: 'projecthub_pgdata'             │
+│  - Tuned buffer pools: shared_buffers=64MB, work_mem=4MB    │
+│  - Automated healthcheck via pg_isready                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 5.2 The Solution: Zero-Build Architecture via GitHub Actions & GHCR
+To eliminate all compilation overhead on the VPS, ProjectHub implements a **Zero-Build Deployment Paradigm**:
+1. **Automated Quality Gate**: Whenever a developer pushes to `project` or `main` (or opens a Pull Request), `.github/workflows/ci.yml` spins up a free, high-performance GitHub Actions runner (16 GB RAM, 4 vCPUs).
+2. **Parallel Testing & Verification**:
+   - Backend Job: Installs .NET 9 SDK, restores packages, builds in Release mode, and runs all 37 unit/integration tests with code coverage verification.
+   - Frontend Job: Installs Node.js 20, executes `npm ci`, runs ESLint static code analysis, and validates TypeScript compilation via `npm run build`.
+3. **Container Image Publishing**:
+   - Only when all tests pass, the `docker-publish` job triggers.
+   - Using Docker Buildx and GitHub Actions layer caching (`type=gha`), it compiles production runtime containers and pushes them to GitHub Container Registry (GHCR):
+     * `ghcr.io/zephir-x/projecthub-api:latest` (~130 MB, pure .NET 9 ASP.NET runtime without SDK).
+     * `ghcr.io/zephir-x/projecthub-web:latest` (~30 MB, pure Nginx Alpine with pre-compiled HTML/JS/CSS assets).
+4. **Zero-Build Deployment on Mikr.us**:
+   - The VPS does not hold the source code, does not have Node.js or .NET SDK installed, and performs zero compilation.
+   - The server only pulls pre-built lightweight runtime images using `docker compose pull`. RAM and CPU consumption during deployment remains practically at 0%.
+
+### 5.3 Multi-Tenant Reverse Proxy & Routing Configuration
+
+#### 1. Host Nginx Gateway (`/root/nginx-proxy/nginx.conf`)
+The central Nginx proxy running on Mikr.us connects to the external `web-proxy` network. It routes traffic for `myprojecthub.com.pl` to the container `projecthub_web:80`. Crucially, it includes dedicated WebSocket upgrade directives for the SignalR hub:
+
+#### 2. Network Isolation Architecture
+* **`web-proxy` (External Network)**: Only `projecthub_web` joins this network. The central `nginx-proxy` can reach `http://projecthub_web:80`, but has no direct access to backend or database.
+* **`projecthub_internal` (Bridge Network)**: Connects `projecthub_web`, `projecthub_api`, and `projecthub_postgres`.
+* **Zero Host Port Collisions**: No ports (neither 5432 nor 8080) are published to the host machine. All inter-container communication occurs via Docker internal DNS.
+
+#### 3. Cloudflare Edge Integration
+* **DNS**: Root `@` and `www` records point to Mikr.us IP with Cloudflare Proxy enabled.
+* **SSL/TLS Encryption**: Flexible SSL terminates encrypted HTTPS traffic at Cloudflare's edge and forwards requests via HTTP port 80 to Mikr.us, providing valid TLS certificates without requiring local Let's Encrypt renewal bots on the VPS.
+* **WebSockets**: Cloudflare's native WebSocket proxy allows persistent full-duplex TCP connections for SignalR without timeout drops.
+
+---
+
+## 6. AI Guidelines & Technical Standards
 * **Code Style:** Clean architecture, DTOs for external boundaries, Fluent API for EF Core.
 * **Comments:** Concise, module-specific comments in English ONLY.
-* **Tone:** Objective, technical, candidate for Grade 5.0 evaluation.
+* **Tone:** Objective, technical, candidate for Grade 5.0 academic evaluation.
 * **Formatting:** Strictly NO emojis in code, documentation, or chat.
-
-## 8. Recent Modifications & Reflections
-* **Stage 10 Testing, CI Automation, Containerization & Visual Polish:**
-  - Cancel Button Glow Clipping Fix: Resolved button focus and hover glow clipping in `UserModal.tsx` by isolating modal action buttons outside the `overflow-y-auto` form body container into a dedicated sticky footer with top border delimiter.
-  - GitHub Actions CI Workflow: Created `.github/workflows/ci.yml` providing automated parallel validation pipelines for backend (.NET 9 SDK restore, Release build, and 37 unit/integration tests with code coverage) and frontend (Node.js 20, npm ci, ESLint verification, and production Vite compilation) on push and pull requests to `main`, `master`, and `develop`.
-  - Multi-Stage Docker Orchestration: Engineered complete containerization pipeline:
-    * `backend/Dockerfile`: 4-stage build (`base`, `build`, `publish`, `final`) based on `aspnet:9.0` and `sdk:9.0` with layer-cached NuGet restore.
-    * `frontend/Dockerfile`: 2-stage build (`build`, `final`) with Node.js 20 Alpine compilation and Nginx Alpine server.
-    * `frontend/nginx.conf`: Nginx reverse proxy routing `/api/*` to backend Kestrel, `/kanbanHub` with HTTP/1.1 WebSocket Upgrade headers, `/swagger/*`, long-term asset caching, and SPA fallback (`try_files $uri /index.html`).
-    * `docker-compose.yml`: Automated orchestration tying `postgres_db` (with `pg_isready` healthcheck), `backend` (`service_healthy` dependency, automated EF Core migrations & database seeding), and `frontend` gateway accessible at `http://localhost:5173`. Verified live in Docker Desktop with 100% healthy services and authenticated API calls.
-  - Notification Reply Tile Background Harmonization: Replaced opaque dark background `bg-rain-950/80 border-white/15` with `glass-card-unified border border-white/20` (`rgba(28, 36, 48, 0.88)`), creating full visual continuity with the surrounding slate glass cards without harsh black contrast.
-  - Creation Date Badges Glass Styling: Replaced dark badges in `Dashboard.tsx` and `WorkspaceDetails.tsx` with `glass-card-unified border border-white/20 text-white/90 shadow-glass-sm`, aligning workspace and project creation timestamps with the unified glass aesthetic.
-  - Kanban Card Action Buttons Vertical Alignment: Unified `MoreHorizontal` and `MessageSquare` action button containers in `ProjectKanban.tsx` to `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ml-auto`, ensuring identical horizontal width and absolute vertical alignment across top and bottom rows.
-  - Border Beam Rotation Speed Uniformity: Calibrated `@keyframes singleBeamSweep` in `index.css` by adjusting the rotation stop from 70% (252deg) to 85% (306deg), eliminating visible deceleration/hesitation halfway through the cycle and maintaining constant sweeping velocity.
-  - Missing Polish Translation for Project Navigation: Added Polish translation for `projectKanban.backButton` (`Wróć do projektów`) in `pl.ts`, eliminating untranslated English text in the Kanban board top bar.
-* **Stage 9 Completion - High-Density Load Testing & Layout Perfection:**
-  - High-Volume Load Auditing: Validated complete platform responsiveness, layout integrity, and zero text/overflow degradation under a heavy synthetic dataset (24 workspaces, 40+ projects, 86 tasks, 24 users, 80+ comments, 25 notifications per admin).
-  - Universal View Baseline Alignment: Standardized the header-to-content distance across all 7 views (`AdminPanel`, `Dashboard`, `MyTasks`, `Notifications`, `Settings`, `WorkspaceDetails`, `ProjectKanban`) using an identical `mb-7` header margin and `pt-8` (32px) content start coordinate.
-  - Stationary Gradient Mask Engineering: Rebuilt scrollable container masks (`linear-gradient(to bottom, transparent 0px, black 32px, black calc(100% - 32px), transparent 100%)`) in Admin Panel, Notifications, and Settings. Because content begins at `pt-8` (32px), cards are 100% opaque and crisp at rest, fading smoothly only during scrolling without premature clipping.
-  - Elimination of Hard Drop Shadow Artifacts: Removed `shadow-glass-sm` and `.glass-panel` from vertically stacked items in `Notifications.tsx` and `AdminPanel.tsx`, replacing them with `shadow-none` glass panels. Eliminated harsh dark shadow bands between consecutive cards while retaining top highlight rims.
-  - Circular Kanban Column Counters: Formatted column item counters as circular badges (`w-6 h-6 rounded-full`) with glowing background and border tones precisely synchronized with each column's border beam (slate gray for To Do, sky blue for In Progress, amber yellow for Review, emerald green for Done).
-  - Natural Empty State Centering: Removed `justify-between` from the root flexbox in `MyTasks.tsx`, ensuring the empty state tile sits naturally beneath the header rather than being pinned to the bottom screen edge.
-  - Full-Spectrum Pagination Architecture: Deployed modular pagination with bidirectional slide animations (`animate-slide-right`, `animate-slide-left`) across Admin Panel, Notifications, Workspaces, Projects, and My Tasks, maintaining consistent item limits (6 to 8 items per page).
-* **System Stress Testing & Diagnostics Subsystem:**
-  - Architecture: Built dedicated `IStressTestService` and `StressTestController` supporting on-demand injection of large-scale test data.
-  - Admin Panel Diagnostics Card: Added interactive diagnostic glass card in `AdminPanel.tsx` beneath the users table with real-time entity counter badges, one-click seeding, mutually exclusive button states, and atomic SQL hard-delete cleanup.
-  - Distributed Comment Seeding: Seeded comments across every top visible task in `ProjectHub React App`.
-  - Admin Targeted Notifications: Fixed JWT `sub` claim extraction in `StressTestController.cs`, generated 25 notifications (15 unread) for each admin user, and tied automatic unread count refresh in `AdminPanel.tsx` directly to `NotificationContext`.
-  - Rule Compliance: Generator strictly abides by Business Rule 2 (maximum 1 active Critical task per user across the entire system), dynamically allocating critical priorities to distinct assignees.
-  - Atomic Purge: Implemented direct SQL hard-delete cleanup in `CleanupAsync` ensuring test mock data (`[STRESS]`, `stress.*`) is permanently eradicated without leaving soft-deleted ghost records in the database.
-* **Full Glassmorphism & Visual Redesign:**
-  - Atmospheric Deep Glass System: Cohesive dark-slate glassmorphism across all application views anchored in silvery-rain tones (`bg-glass-rain`), translucent backdrop-blur panels, and sharp 1px laser rims.\n  - Luminous Border Beams: Single-pass border ray animations (`singleBeamSweep` and `inputBeamSweep`) using conic gradients and CSS property interpolation (`@property --beam-angle`).
-  - Seamless Vignette Alignment: 210px top horizontal atmospheric darkening gradient aligned flush with the left sidebar's vertical fiery accent line.
-  - Drag-and-Drop Optimization: Resolved `@hello-pangea/dnd` transform containing block issues by avoiding outer CSS transforms on the page container.
-* **Notifications & Messaging System Integration:**
-  - Designed and deployed full-stack notification infrastructure: PostgreSQL entity, EF Core migration, and SignalR personal group dispatching.
-  - Asynchronous mention processing via `CommentCreatedEventHandler` supporting `@admin` and `@username`.
-  - Direct messaging between regular users and system administrators with inline response capabilities.
-  - Deep linking from notifications to the project Kanban board, automatically loading project state and opening the task modal in details or comments mode.
-* **Comprehensive Bilingual Localization (i18n):**
-  - Backend request localization via `Accept-Language` header, localized DTO validation errors, and bilingual service exception messages.

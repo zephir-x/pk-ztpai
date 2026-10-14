@@ -90,7 +90,7 @@ export default function MyTasks() {
 
     return (
         <div className="h-full flex flex-col">
-            {/* Header Section: lowered by pt-[26px] to vertically align with other views */}
+            {/* Header Section: Stationary top position lowered by pt-[26px] to vertically align with other views */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-7 relative z-10 pt-[26px] shrink-0">
                 <div>
                     <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3 drop-shadow-md">
@@ -105,124 +105,126 @@ export default function MyTasks() {
                 </div>
             </div>
 
-            {/* Content Area */}
-            {tasks.length === 0 ? (
-                <div className="flex-1 min-h-0 pt-8 pb-8 pr-1">
-                    <div className="glass-panel p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-white/25 bg-rain-900/50 backdrop-blur-2xl rounded-2xl">
-                        <div className="p-4 rounded-2xl bg-white/10 border border-white/20 shadow-glass-sm mb-4">
-                            <CheckSquare size={48} className="text-white/90 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />
+            {/* Scrollable MyTasks Area with Smooth Top and Bottom Fade Mask */}
+            <div className="relative flex-1 min-h-0 [mask-image:linear-gradient(to_bottom,transparent_0px,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0px,black_32px,black_calc(100%-32px),transparent_100%)]">
+                <div className="h-full overflow-y-auto pt-8 pr-1 pb-6">
+                    {tasks.length === 0 ? (
+                        <div className="glass-panel p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-white/25 bg-rain-900/50 backdrop-blur-2xl rounded-2xl">
+                            <div className="p-4 rounded-2xl bg-white/10 border border-white/20 shadow-glass-sm mb-4">
+                                <CheckSquare size={48} className="text-white/90 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">{t.myTasks.noTasks}</h3>
+                            <p className="text-white/80 max-w-xl text-sm leading-relaxed font-medium">{t.myTasks.noTasksDesc}</p>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">{t.myTasks.noTasks}</h3>
-                        <p className="text-white/80 max-w-xl text-sm leading-relaxed font-medium">{t.myTasks.noTasksDesc}</p>
-                    </div>
-                </div>
-            ) : (
-                <div className="flex-1 min-h-0 flex flex-col justify-between pt-8 pb-0">
-                    <div
-                        key={validCurrentPage}
-                        className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${
-                            animationDirection === 'right' ? 'animate-slide-right' : 'animate-slide-left'
-                        }`}
-                    >
-                        {paginatedTasks.map(task => {
-                            const projectColor = THEME_COLOR_MAP[task.projectThemeColor] || '#f97316';
-                            const workspaceColor = THEME_COLOR_MAP[task.workspaceThemeColor] || '#38bdf8';
-                            const priorityHex = PRIORITY_COLOR_MAP[task.priority] || '#64748b';
+                    ) : (
+                        <div
+                            key={validCurrentPage}
+                            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${
+                                animationDirection === 'right' ? 'animate-slide-right' : 'animate-slide-left'
+                            }`}
+                        >
+                            {paginatedTasks.map(task => {
+                                const projectColor = THEME_COLOR_MAP[task.projectThemeColor] || '#f97316';
+                                const workspaceColor = THEME_COLOR_MAP[task.workspaceThemeColor] || '#38bdf8';
+                                const priorityHex = PRIORITY_COLOR_MAP[task.priority] || '#64748b';
 
-                            return (
-                                <div
-                                    key={task.id}
-                                    onClick={() => navigate(`/projects/${task.projectId}`, {
-                                        state: {
-                                            openTaskId: task.id,
-                                            openTaskMode: 'details',
-                                            projectName: task.projectName,
-                                            workspaceId: task.workspaceId
-                                        }
-                                    })}
-                                    className="group relative rounded-2xl border border-white/20 glass-card-unified backdrop-blur-2xl p-6 transition-all duration-300 hover:border-white/40 cursor-pointer shadow-glass-sm overflow-hidden flex flex-col justify-between"
-                                >
-                                    {/* Top horizontal colored ribbon beam with matching glow */}
+                                return (
                                     <div
-                                        className="absolute top-0 left-0 right-0 h-1.5 group-hover:h-2 transition-all duration-300 z-10"
-                                        style={{
-                                            backgroundColor: priorityHex,
-                                            boxShadow: `0 0 16px ${priorityHex}`
-                                        }}
-                                    />
+                                        key={task.id}
+                                        onClick={() => navigate(`/projects/${task.projectId}`, {
+                                            state: {
+                                                openTaskId: task.id,
+                                                openTaskMode: 'details',
+                                                projectName: task.projectName,
+                                                workspaceId: task.workspaceId
+                                            }
+                                        })}
+                                        className="group relative rounded-2xl border border-white/20 glass-card-unified backdrop-blur-2xl p-6 transition-all duration-300 hover:border-white/40 cursor-pointer shadow-glass-sm overflow-hidden flex flex-col justify-between"
+                                    >
+                                        {/* Top horizontal colored ribbon beam with matching glow */}
+                                        <div
+                                            className="absolute top-0 left-0 right-0 h-1.5 group-hover:h-2 transition-all duration-300 z-10"
+                                            style={{
+                                                backgroundColor: priorityHex,
+                                                boxShadow: `0 0 16px ${priorityHex}`
+                                            }}
+                                        />
 
-                                    {/* Laser-cut highlight line under top ribbon */}
-                                    <div className="absolute top-1.5 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none z-10" />
+                                        {/* Laser-cut highlight line under top ribbon */}
+                                        <div className="absolute top-1.5 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none z-10" />
 
-                                    {/* Ambient bloom layer on hover */}
-                                    <div
-                                        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                                        style={{
-                                            boxShadow: `inset 0 0 40px ${priorityHex}20, 0 12px 35px -8px ${priorityHex}30`
-                                        }}
-                                    />
+                                        {/* Ambient bloom layer on hover */}
+                                        <div
+                                            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                                            style={{
+                                                boxShadow: `inset 0 0 40px ${priorityHex}20, 0 12px 35px -8px ${priorityHex}30`
+                                            }}
+                                        />
 
-                                    <div className="relative z-10 pt-1">
-                                        {/* Workspace > Project Breadcrumb Path & Priority Pill */}
-                                        <div className="flex justify-between items-center mb-3.5 gap-2">
-                                            <div className="flex items-center gap-1.5 text-xs font-semibold min-w-0">
-                                                <LayoutGrid size={13} className="text-white/50 shrink-0" />
-                                                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: workspaceColor }} />
-                                                <span className="truncate max-w-[120px] text-rain-200 font-medium" title={task.workspaceName}>{task.workspaceName}</span>
-                                                <ArrowRight size={11} className="text-white/35 shrink-0" />
-                                                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: projectColor }} />
-                                                <span className="truncate max-w-[120px] text-white/95 font-bold group-hover:text-fiery-light transition-colors" title={task.projectName}>{task.projectName}</span>
+                                        <div className="relative z-10 pt-1">
+                                            {/* Workspace > Project Breadcrumb Path & Priority Pill */}
+                                            <div className="flex justify-between items-center mb-3.5 gap-2">
+                                                <div className="flex items-center gap-1.5 text-xs font-semibold min-w-0">
+                                                    <LayoutGrid size={13} className="text-white/50 shrink-0" />
+                                                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: workspaceColor }} />
+                                                    <span className="truncate max-w-[120px] text-rain-200 font-medium" title={task.workspaceName}>{task.workspaceName}</span>
+                                                    <ArrowRight size={11} className="text-white/35 shrink-0" />
+                                                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: projectColor }} />
+                                                    <span className="truncate max-w-[120px] text-white/95 font-bold group-hover:text-fiery-light transition-colors" title={task.projectName}>{task.projectName}</span>
+                                                </div>
+                                                <span
+                                                    className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rain-950/60 backdrop-blur-md border border-white/15 shrink-0"
+                                                    style={{
+                                                        color: priorityHex,
+                                                        boxShadow: `0 0 12px ${priorityHex}35`
+                                                    }}
+                                                >
+                                                    {getPriorityLabel(task.priority)}
+                                                </span>
                                             </div>
-                                            <span
-                                                className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rain-950/60 backdrop-blur-md border border-white/15 shrink-0"
-                                                style={{
-                                                    color: priorityHex,
-                                                    boxShadow: `0 0 12px ${priorityHex}35`
-                                                }}
-                                            >
-                                                {getPriorityLabel(task.priority)}
+
+                                            {/* Task Title */}
+                                            <h4 className="text-lg font-bold text-white mb-2 group-hover:text-fiery transition-colors line-clamp-2 leading-snug drop-shadow-sm">
+                                                {task.title}
+                                            </h4>
+
+                                            {/* Task Description */}
+                                            {task.description && (
+                                                <p className="text-xs text-white/75 mb-4 line-clamp-2 leading-relaxed font-normal">
+                                                    {task.description}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Card Footer: Creation date & Status pill */}
+                                        <div className="mt-auto pt-4 border-t border-white/10 flex items-center justify-between text-xs text-white/60 relative z-10">
+                                            <div className="flex items-center gap-1.5">
+                                                <Clock size={13} className="text-white/50" />
+                                                <span>{new Date(task.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                            <span className="font-semibold text-white/90 bg-white/10 border border-white/15 px-3 py-1 rounded-full text-[11px] shadow-sm backdrop-blur-md">
+                                                {getStatusLabel(task.status)}
                                             </span>
                                         </div>
-
-                                        {/* Task Title */}
-                                        <h4 className="text-lg font-bold text-white mb-2 group-hover:text-fiery transition-colors line-clamp-2 leading-snug drop-shadow-sm">
-                                            {task.title}
-                                        </h4>
-
-                                        {/* Task Description */}
-                                        {task.description && (
-                                            <p className="text-xs text-white/75 mb-4 line-clamp-2 leading-relaxed font-normal">
-                                                {task.description}
-                                            </p>
-                                        )}
                                     </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                                    {/* Card Footer: Creation date & Status pill */}
-                                    <div className="mt-auto pt-4 border-t border-white/10 flex items-center justify-between text-xs text-white/60 relative z-10">
-                                        <div className="flex items-center gap-1.5">
-                                            <Clock size={13} className="text-white/50" />
-                                            <span>{new Date(task.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                        <span className="font-semibold text-white/90 bg-white/10 border border-white/15 px-3 py-1 rounded-full text-[11px] shadow-sm backdrop-blur-md">
-                                            {getStatusLabel(task.status)}
-                                        </span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Pagination Bar */}
-                    <div className="pt-6 shrink-0 pb-0">
-                        <Pagination
-                            currentPage={validCurrentPage}
-                            totalPages={totalPages}
-                            totalItems={tasks.length}
-                            itemsPerPage={TASKS_PER_PAGE}
-                            onPageChange={handlePageChange}
-                            className="glass-panel border border-white/20 bg-rain-950/60 backdrop-blur-2xl rounded-2xl"
-                        />
-                    </div>
+            {/* Pinned Stationary Pagination Bar at bottom */}
+            {tasks.length > 0 && (
+                <div className="pt-4 shrink-0 pb-6">
+                    <Pagination
+                        currentPage={validCurrentPage}
+                        totalPages={totalPages}
+                        totalItems={tasks.length}
+                        itemsPerPage={TASKS_PER_PAGE}
+                        onPageChange={handlePageChange}
+                        className="glass-panel border border-white/20 bg-rain-950/60 backdrop-blur-2xl rounded-2xl"
+                    />
                 </div>
             )}
         </div>
