@@ -98,6 +98,7 @@ export default function AdminPanel() {
 
     const handleCleanupStress = async () => {
         if (!window.confirm(t.adminPanel.stressTest.confirmCleanup)) return;
+
         try {
             setIsCleaning(true);
             const res = await stressTestService.cleanup();
@@ -284,28 +285,30 @@ export default function AdminPanel() {
                         {/* Top highlight laser rim */}
                         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-fiery/40 to-transparent pointer-events-none" />
 
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                             {/* Left Column: Information & Status */}
-                            <div className="space-y-3 max-w-2xl">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-fiery/15 border border-fiery/30 shadow-[0_0_12px_rgba(var(--accent-rgb),0.3)]">
+                            <div className="space-y-3 flex-1 min-w-0">
+                                <div className="flex items-start sm:items-center gap-3">
+                                    <div className="p-2.5 rounded-xl bg-fiery/15 border border-fiery/30 shadow-[0_0_12px_rgba(var(--accent-rgb),0.3)] shrink-0">
                                         <Database className="text-fiery" size={20} />
                                     </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2.5">
-                                            <span>{t.adminPanel.stressTest.title}</span>
+                                    <div className="min-w-0">
+                                        <div className="flex flex-wrap items-center gap-2.5">
+                                            <h3 className="text-lg font-bold text-white tracking-tight">
+                                                {t.adminPanel.stressTest.title}
+                                            </h3>
                                             {stressStatus?.isStressDataActive ? (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-fiery/20 text-fiery border border-fiery/40 shadow-glow-accent/30 animate-pulse">
-                                                    <Zap size={11} />
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-fiery/20 text-fiery border border-fiery/40 shadow-glow-accent/30 animate-pulse shrink-0 whitespace-nowrap">
+                                                    <Zap size={12} />
                                                     <span>{t.adminPanel.stressTest.statusActive}</span>
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                                                    <CheckCircle2 size={11} />
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0 whitespace-nowrap">
+                                                    <CheckCircle2 size={12} />
                                                     <span>{t.adminPanel.stressTest.statusClean}</span>
                                                 </span>
                                             )}
-                                        </h3>
+                                        </div>
                                         <p className="text-rain-200 text-xs mt-1 leading-relaxed">
                                             {t.adminPanel.stressTest.subtitle}
                                         </p>
@@ -337,23 +340,23 @@ export default function AdminPanel() {
                                 )}
                             </div>
 
-                            {/* Right Column: Actions (mutually exclusive disabled states based on active dataset) */}
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+                            {/* Right Column: Actions (stacked vertically so buttons wrap beneath each other and leave plenty of room for content) */}
+                            <div className="flex flex-col items-stretch gap-2.5 shrink-0 w-full sm:w-auto xl:w-72">
                                 <button
                                     onClick={handleSeedStress}
                                     disabled={isSeeding || isCleaning || Boolean(stressStatus?.isStressDataActive)}
-                                    className="btn-fiery flex items-center justify-center gap-2 px-5 py-3 text-sm shadow-glow-accent cursor-pointer disabled:cursor-not-allowed"
+                                    className="btn-fiery flex items-center justify-center gap-2 px-5 py-2.5 text-xs sm:text-sm shadow-glow-accent cursor-pointer disabled:cursor-not-allowed whitespace-nowrap"
                                 >
-                                    <Zap size={16} className={isSeeding ? 'animate-bounce' : ''} />
+                                    <Zap size={15} className={isSeeding ? 'animate-bounce' : ''} />
                                     <span>{isSeeding ? t.adminPanel.stressTest.seeding : t.adminPanel.stressTest.seedBtn}</span>
                                 </button>
 
                                 <button
                                     onClick={handleCleanupStress}
                                     disabled={isSeeding || isCleaning || !stressStatus?.isStressDataActive}
-                                    className="glass-btn-ghost flex items-center justify-center gap-2 px-5 py-3 text-sm text-rose-300 hover:text-rose-200 border-rose-500/30 hover:border-rose-400/60 hover:bg-rose-500/15 transition-all cursor-pointer disabled:cursor-not-allowed"
+                                    className="glass-btn-ghost flex items-center justify-center gap-2 px-5 py-2.5 text-xs sm:text-sm text-rose-300 hover:text-rose-200 border-rose-500/30 hover:border-rose-400/60 hover:bg-rose-500/15 transition-all cursor-pointer disabled:cursor-not-allowed whitespace-nowrap"
                                 >
-                                    <RefreshCw size={15} className={isCleaning ? 'animate-spin' : ''} />
+                                    <RefreshCw size={14} className={isCleaning ? 'animate-spin' : ''} />
                                     <span>{isCleaning ? t.adminPanel.stressTest.cleaning : t.adminPanel.stressTest.cleanupBtn}</span>
                                 </button>
                             </div>

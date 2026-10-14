@@ -92,7 +92,7 @@ export default function WorkspaceDetails() {
 
     return (
         <div className="h-full flex flex-col">
-            {/* Header Section: Vertically aligned with Dashboard and ProjectKanban */}
+            {/* Header Section: Stationary top position aligned with Dashboard and ProjectKanban */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-7 relative z-10 shrink-0">
                 <div>
                     {/* Back to Workspaces: Transparent, no glass box, bright white text */}
@@ -125,122 +125,124 @@ export default function WorkspaceDetails() {
                 )}
             </div>
 
-            {/* Projects Grid */}
-            {projects.length === 0 ? (
-                <div className="flex-1 min-h-0 pt-8 pb-8 pr-1">
-                    <div className="glass-panel p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-white/25 bg-rain-900/50 backdrop-blur-2xl">
-                    <div className="p-4 rounded-2xl bg-white/10 border border-white/20 shadow-glass-sm mb-4">
-                        <FolderKanban size={48} className="text-white/90 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">
-                        {t.workspaceDetails.noProjects}
-                    </h3>
-                    <p className="text-white/80 max-w-xl text-sm leading-relaxed font-medium">
-                        {t.workspaceDetails.noProjectsDesc}
-                    </p>
-                </div>
-                </div>
-            ) : (
-                <div className="flex-1 min-h-0 flex flex-col justify-between pt-8 pb-0">
-                    <div
-                        key={validCurrentPage}
-                        className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${
-                            animationDirection === 'right' ? 'animate-slide-right' : 'animate-slide-left'
-                        }`}
-                    >
-                        {paginatedProjects.map((project) => {
-                            const hexColor = THEME_COLOR_MAP[project.themeColor] || '#f97316';
+            {/* Scrollable Projects Area with Smooth Top and Bottom Fade Mask */}
+            <div className="relative flex-1 min-h-0 [mask-image:linear-gradient(to_bottom,transparent_0px,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0px,black_32px,black_calc(100%-32px),transparent_100%)]">
+                <div className="h-full overflow-y-auto pt-8 pr-1 pb-6">
+                    {projects.length === 0 ? (
+                        <div className="glass-panel p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-white/25 bg-rain-900/50 backdrop-blur-2xl rounded-2xl">
+                            <div className="p-4 rounded-2xl bg-white/10 border border-white/20 shadow-glass-sm mb-4">
+                                <FolderKanban size={48} className="text-white/90 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">
+                                {t.workspaceDetails.noProjects}
+                            </h3>
+                            <p className="text-white/80 max-w-xl text-sm leading-relaxed font-medium">
+                                {t.workspaceDetails.noProjectsDesc}
+                            </p>
+                        </div>
+                    ) : (
+                        <div
+                            key={validCurrentPage}
+                            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${
+                                animationDirection === 'right' ? 'animate-slide-right' : 'animate-slide-left'
+                            }`}
+                        >
+                            {paginatedProjects.map((project) => {
+                                const hexColor = THEME_COLOR_MAP[project.themeColor] || '#f97316';
 
-                            return (
-                                <div
-                                    key={project.id}
-                                    onClick={() => navigate('/projects/' + project.id, { state: { projectName: project.name, workspaceId: project.workspaceId } })}
-                                    className="relative overflow-hidden p-6 pl-8 cursor-pointer group glass-card-unified border border-white/20 backdrop-blur-2xl rounded-2xl transition-all duration-150 ease-out hover:border-white/35 shadow-glass-sm flex flex-col justify-between"
-                                >
-                                    {/* GPU-accelerated colored ambient bloom layer on hover */}
+                                return (
                                     <div
-                                        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
-                                        style={{
-                                            boxShadow: `inset 0 0 35px ${hexColor}25, 0 10px 30px -5px ${hexColor}35`
-                                        }}
-                                    />
+                                        key={project.id}
+                                        onClick={() => navigate('/projects/' + project.id, { state: { projectName: project.name, workspaceId: project.workspaceId } })}
+                                        className="relative overflow-hidden p-6 pl-8 cursor-pointer group glass-card-unified border border-white/20 backdrop-blur-2xl rounded-2xl transition-all duration-150 ease-out hover:border-white/35 shadow-glass-sm flex flex-col justify-between"
+                                    >
+                                        {/* GPU-accelerated colored ambient bloom layer on hover */}
+                                        <div
+                                            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+                                            style={{
+                                                boxShadow: `inset 0 0 35px ${hexColor}25, 0 10px 30px -5px ${hexColor}35`
+                                            }}
+                                        />
 
-                                    {/* Left vertical color ribbon matching theme */}
-                                    <div
-                                        className="absolute top-0 bottom-0 left-0 w-1.5 group-hover:w-2.5 transition-[width] duration-150 ease-out z-10"
-                                        style={{
-                                            backgroundColor: hexColor,
-                                            boxShadow: `0 0 16px ${hexColor}`
-                                        }}
-                                    />
+                                        {/* Left vertical color ribbon matching theme */}
+                                        <div
+                                            className="absolute top-0 bottom-0 left-0 w-1.5 group-hover:w-2.5 transition-[width] duration-150 ease-out z-10"
+                                            style={{
+                                                backgroundColor: hexColor,
+                                                boxShadow: `0 0 16px ${hexColor}`
+                                            }}
+                                        />
 
-                                    <div>
-                                        <div className="flex justify-between items-start mb-4 relative z-10">
-                                            <div className="p-3 rounded-xl bg-white/10 border border-white/20 shadow-glass-sm">
-                                                <FolderKanban
-                                                    size={24}
-                                                    style={{ color: hexColor }}
-                                                    className="drop-shadow-[0_0_10px_currentColor]"
-                                                />
+                                        <div>
+                                            <div className="flex justify-between items-start mb-4 relative z-10">
+                                                <div className="p-3 rounded-xl bg-white/10 border border-white/20 shadow-glass-sm">
+                                                    <FolderKanban
+                                                        size={24}
+                                                        style={{ color: hexColor }}
+                                                        className="drop-shadow-[0_0_10px_currentColor]"
+                                                    />
+                                                </div>
+
+                                                {isAdmin && (
+                                                    <div className="flex items-center gap-1.5 relative z-20">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditProject(project);
+                                                                setIsModalOpen(true);
+                                                            }}
+                                                            className="p-2 rounded-xl text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/25 transition-all cursor-pointer"
+                                                            title={t.common.edit}
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => handleDelete(project.id, e)}
+                                                            className="p-2 rounded-xl text-rose-300/80 hover:text-rose-200 bg-rose-500/10 hover:bg-rose-500/25 border border-rose-400/20 hover:border-rose-400/40 transition-all cursor-pointer"
+                                                            title={t.common.delete}
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            {isAdmin && (
-                                                <div className="flex items-center gap-1.5 relative z-20">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setEditProject(project);
-                                                            setIsModalOpen(true);
-                                                        }}
-                                                        className="p-2 rounded-xl text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/25 transition-all cursor-pointer"
-                                                        title={t.common.edit}
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => handleDelete(project.id, e)}
-                                                        className="p-2 rounded-xl text-rose-300/80 hover:text-rose-200 bg-rose-500/10 hover:bg-rose-500/25 border border-rose-400/20 hover:border-rose-400/40 transition-all cursor-pointer"
-                                                        title={t.common.delete}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            )}
+                                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-fiery transition-colors relative z-10">
+                                                {project.name}
+                                            </h3>
+
+                                            <p className="text-rain-200 text-sm mb-6 line-clamp-2 font-medium relative z-10">
+                                                {project.description || t.workspaceDetails.noDescription}
+                                            </p>
                                         </div>
 
-                                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-fiery transition-colors relative z-10">
-                                            {project.name}
-                                        </h3>
-
-                                        <p className="text-rain-200 text-sm mb-6 line-clamp-2 font-medium relative z-10">
-                                            {project.description || t.workspaceDetails.noDescription}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 text-xs text-rain-200 pt-4 border-t border-white/10 relative z-10">
-                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full glass-card-unified border border-white/20 text-white/90 shadow-glass-sm">
-                                            <Calendar size={13} className="text-fiery" />
-                                            <span>
-                                                {new Date(project.createdAt).toLocaleDateString()}
-                                            </span>
+                                        <div className="flex items-center gap-2 text-xs text-rain-200 pt-4 border-t border-white/10 relative z-10">
+                                            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full glass-card-unified border border-white/20 text-white/90 shadow-glass-sm">
+                                                <Calendar size={13} className="text-fiery" />
+                                                <span>
+                                                    {new Date(project.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                    {/* Pagination Bar */}
-                    <div className="pt-6 shrink-0">
-                        <Pagination
-                            currentPage={validCurrentPage}
+            {/* Pinned Stationary Pagination Bar at bottom */}
+            {projects.length > 0 && (
+                <div className="pt-4 shrink-0 pb-6">
+                    <Pagination
+                        currentPage={validCurrentPage}
                         totalPages={totalPages}
                         totalItems={projects.length}
                         itemsPerPage={PROJECTS_PER_PAGE}
                         onPageChange={handlePageChange}
                         className="glass-panel border border-white/20 bg-rain-950/60 backdrop-blur-2xl rounded-2xl"
-                        />
-                    </div>
+                    />
                 </div>
             )}
 

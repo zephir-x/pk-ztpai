@@ -406,82 +406,84 @@ export default function ProjectKanban() {
                 </div>
             </div>
 
-            {/* Kanban Board Area: Evenly fills available horizontal space with flowing border beam on hover */}
-            <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden pt-8 pb-4">
-                <DragDropContext onDragEnd={onDragEnd}>
-                    <div className="flex gap-6 h-full w-full min-w-[1100px] items-start">
-                        {kanbanColumns.map(column => {
-                            const columnTasks = tasks.filter(t => t.status === column.id);
-                            const isEmpty = columnTasks.length === 0;
+            {/* Kanban Board Area: Horizontal scrollable container with Smooth Left and Right Fade Masks */}
+            <div className="relative flex-1 min-h-0 [mask-image:linear-gradient(to_right,transparent_0px,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,transparent_0px,black_32px,black_calc(100%-32px),transparent_100%)]">
+                <div className="h-full overflow-x-auto overflow-y-hidden pt-8 pb-4">
+                    <DragDropContext onDragEnd={onDragEnd}>
+                        <div className="flex gap-6 h-full w-full min-w-[1100px] items-start px-2">
+                            {kanbanColumns.map(column => {
+                                const columnTasks = tasks.filter(t => t.status === column.id);
+                                const isEmpty = columnTasks.length === 0;
 
-                            return (
-                                <div
-                                    key={column.id}
-                                    style={{
-                                        '--column-color': column.color,
-                                        '--column-border': column.borderColor
-                                    } as React.CSSProperties}
-                                    className="flex-1 min-w-[260px] kanban-column-beam rounded-2xl shadow-none shrink-0 flex flex-col max-h-full"
-                                >
-                                    <div className="flex flex-col rounded-2xl max-h-full overflow-hidden">
-                                        {/* Column Header */}
-                                        <div className={`p-3.5 border-t-2 ${column.border} bg-white/5 border-b border-white/10 flex justify-between items-center rounded-t-2xl shrink-0`}>
-                                            <div className="flex items-center gap-2.5">
-                                                <h3 className="font-bold text-white text-sm tracking-wide">{column.title}</h3>
-                                                <span
-                                                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-all select-none"
-                                                    style={{
-                                                        backgroundColor: `${column.color}25`,
-                                                        borderColor: column.color,
-                                                        color: column.color,
-                                                        boxShadow: `0 0 10px ${column.color}40`
-                                                    }}
-                                                >
-                                                    {columnTasks.length}
-                                                </span>
-                                            </div>
-                                            {isAdmin && (
-                                                <button
-                                                    onClick={() => openCreateModal(column.id)}
-                                                    className="p-1.5 rounded-lg text-white/70 hover:text-fiery hover:bg-white/10 transition-colors cursor-pointer"
-                                                    title={t.common.create}
-                                                >
-                                                    <Plus size={18} />
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        {/* Droppable Task Column: scrollable when tasks overflow! */}
-                                        <Droppable droppableId={column.id.toString()}>
-                                            {(provided, snapshot) => (
-                                                <div
-                                                    ref={provided.innerRef}
-                                                    {...provided.droppableProps}
-                                                    className={`flex-1 min-h-0 overflow-y-auto transition-colors duration-150 rounded-b-2xl ${
-                                                        isEmpty
-                                                            ? `p-2 flex items-center justify-center ${
-                                                                snapshot.isDraggingOver ? 'bg-white/10 ring-1 ring-white/25' : 'bg-transparent'
-                                                              }`
-                                                            : `p-3 space-y-3 ${
-                                                                snapshot.isDraggingOver ? 'bg-white/5' : ''
-                                                             }`
-                                                    }`}
-                                                >
-                                                    {columnTasks.map((task, index) => (
-                                                        <Draggable key={task.id} draggableId={task.id} index={index}>
-                                                            {(provided, snapshot) => renderTaskCard(task, provided, snapshot)}
-                                                        </Draggable>
-                                                    ))}
-                                                    {provided.placeholder}
+                                return (
+                                    <div
+                                        key={column.id}
+                                        style={{
+                                            '--column-color': column.color,
+                                            '--column-border': column.borderColor
+                                        } as React.CSSProperties}
+                                        className="flex-1 min-w-[260px] kanban-column-beam rounded-2xl shadow-none shrink-0 flex flex-col max-h-full"
+                                    >
+                                        <div className="flex flex-col rounded-2xl max-h-full overflow-hidden">
+                                            {/* Column Header */}
+                                            <div className={`p-3.5 border-t-2 ${column.border} bg-white/5 border-b border-white/10 flex justify-between items-center rounded-t-2xl shrink-0`}>
+                                                <div className="flex items-center gap-2.5">
+                                                    <h3 className="font-bold text-white text-sm tracking-wide">{column.title}</h3>
+                                                    <span
+                                                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-all select-none"
+                                                        style={{
+                                                            backgroundColor: `${column.color}25`,
+                                                            borderColor: column.color,
+                                                            color: column.color,
+                                                            boxShadow: `0 0 10px ${column.color}40`
+                                                        }}
+                                                    >
+                                                        {columnTasks.length}
+                                                    </span>
                                                 </div>
-                                            )}
-                                        </Droppable>
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={() => openCreateModal(column.id)}
+                                                        className="p-1.5 rounded-lg text-white/70 hover:text-fiery hover:bg-white/10 transition-colors cursor-pointer"
+                                                        title={t.common.create}
+                                                    >
+                                                        <Plus size={18} />
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {/* Droppable Task Column: scrollable when tasks overflow! */}
+                                            <Droppable droppableId={column.id.toString()}>
+                                                {(provided, snapshot) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.droppableProps}
+                                                        className={`flex-1 min-h-0 overflow-y-auto transition-colors duration-150 rounded-b-2xl ${
+                                                            isEmpty
+                                                                ? `p-2 flex items-center justify-center ${
+                                                                    snapshot.isDraggingOver ? 'bg-white/10 ring-1 ring-white/25' : 'bg-transparent'
+                                                                  }`
+                                                                : `p-3 space-y-3 ${
+                                                                    snapshot.isDraggingOver ? 'bg-white/5' : ''
+                                                                 }`
+                                                        }`}
+                                                    >
+                                                        {columnTasks.map((task, index) => (
+                                                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                                                                {(provided, snapshot) => renderTaskCard(task, provided, snapshot)}
+                                                            </Draggable>
+                                                        ))}
+                                                        {provided.placeholder}
+                                                    </div>
+                                                )}
+                                            </Droppable>
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </DragDropContext>
+                                );
+                            })}
+                        </div>
+                    </DragDropContext>
+                </div>
             </div>
 
             {/* Modals with createPortal and Glassmorphism */}
