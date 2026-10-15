@@ -29,7 +29,7 @@ const PRIORITY_COLOR_MAP: Record<TaskPriority, string> = {
 };
 
 export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate, onDelete }: TaskDetailsModalProps) => {
-    const { isAdmin } = useAuth();
+    const { user, isAdmin } = useAuth();
     const { t } = useTranslation();
 
     const [activeTab, setActiveTab] = useState<ModalViewMode>(initialView);
@@ -40,6 +40,11 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
     const [users, setUsers] = useState<UserResponse[]>([]);
     const [comments, setComments] = useState<CommentResponse[]>([]);
     const [newComment, setNewComment] = useState('');
+
+    // State for inline comment editing
+    const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+    const [editingCommentContent, setEditingCommentContent] = useState('');
+    const [isSubmittingCommentEdit, setIsSubmittingCommentEdit] = useState(false);
 
     const [isLoading, setIsLoading] = useState(false);
     const [isCommenting, setIsCommenting] = useState(false);
@@ -57,6 +62,8 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
             setEditTitle(task.title);
             setEditDescription(task.description || '');
             setIsEditing(false);
+            setEditingCommentId(null);
+            setEditingCommentContent('');
             if (isAdmin) fetchUsers();
             fetchComments(task.id);
         }
@@ -159,6 +166,45 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
             handleApiError(err);
         } finally {
             setIsCommenting(false);
+        }
+    };
+
+    // Inline comment edit handlers
+    const handleStartEditComment = (comment: CommentResponse) => {
+        setEditingCommentId(comment.id);
+        setEditingCommentContent(comment.content);
+    };
+
+    const handleCancelEditComment = () => {
+        setEditingCommentId(null);
+        setEditingCommentContent('');
+    };
+
+    const handleSaveCommentEdit = async (commentId: string) => {
+        if (!editingCommentContent.trim()) return;
+        setIsSubmittingCommentEdit(true);
+        try {
+            await commentService.update(commentId, { content: editingCommentContent });
+            setComments(prev => prev.map(c => c.id === commentId ? { ...c, content: editingCommentContent } : c));
+            setEditingCommentId(null);
+            setEditingCommentContent('');
+            toast.success(t.modals.taskDetails.commentsSection.editCommentSuccess);
+        } catch (err) {
+            handleApiError(err);
+        } finally {
+            setIsSubmittingCommentEdit(false);
+        }
+    };
+
+    // Delete comment handler
+    const handleDeleteComment = async (commentId: string) => {
+        if (!window.confirm(t.modals.taskDetails.commentsSection.deleteCommentConfirm)) return;
+        try {
+            await commentService.delete(commentId);
+            setComments(prev => prev.filter(c => c.id !== commentId));
+            toast.success(t.modals.taskDetails.commentsSection.deleteCommentSuccess);
+        } catch (err) {
+            handleApiError(err);
         }
     };
 
@@ -323,20 +369,18 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                                     </div>
                                 ) : (
                                     <div className="space-y-6">
-                                        {/* Task Title & Edit Button Header */}
+                                        {/* Task Title & Edit Button Header - Accessible to all team members */}
                                         <div className="flex items-start justify-between gap-4">
                                             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug drop-shadow-sm flex-1">
                                                 {task.title}
                                             </h2>
-                                            {isAdmin && (
-                                                <button
-                                                    onClick={() => setIsEditing(true)}
-                                                    className="p-2.5 rounded-xl text-rain-200 hover:text-fiery hover:bg-white/10 border border-white/15 hover:border-white/30 transition-all cursor-pointer shrink-0"
-                                                    title={t.common.edit}
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={() => setIsEditing(true)}
+                                                className="p-2.5 rounded-xl text-rain-200 hover:text-fiery hover:bg-white/10 border border-white/15 hover:border-white/30 transition-all cursor-pointer shrink-0"
+                                                title={t.common.edit}
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
                                         </div>
 
                                         {/* Unified Meta Badges Row */}
@@ -391,7 +435,7 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
 
                                         {/* Task Description Section */}
                                         <div>
-                                            <div className="text-xs font-bold uppercase tracking-wider text-rain-300 mb-2">
+                                            <div className="text-xs font-bold uppercase tracking-wider text-rain-200 mb-2">
                                                 {t.modals.createTask.descriptionLabel}
                                             </div>
                                             <div className="w-full text-white/90 whitespace-pre-wrap leading-relaxed text-sm bg-rain-950/50 p-5 rounded-2xl border border-white/15 backdrop-blur-md min-h-[140px]">
@@ -409,7 +453,7 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                             </div>
                         )}
 
-                        {/* Comments Tab */}
+                        {/* Comments Tab - Full CRUD for Author & Admin */}
                         {activeTab === 'comments' && (
                             <div className="w-full flex flex-col space-y-5">
                                 <div className="relative w-full [mask-image:linear-gradient(to_bottom,transparent_0%,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_32px,black_calc(100%-32px),transparent_100%)]">
@@ -427,6 +471,9 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                                         comments.map(comment => {
                                             const authorFullName = `${comment.authorFirstName || ''} ${comment.authorLastName || ''}`.trim();
                                             const authorDisplayName = authorFullName || `User ${comment.authorId.substring(0, 8)}`;
+                                            const canManageComment = user?.id === comment.authorId || isAdmin;
+                                            const isThisCommentEditing = editingCommentId === comment.id;
+
                                             return (
                                                 <div
                                                     key={comment.id}
@@ -441,13 +488,67 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                                                             />
                                                             <span className="font-bold text-sm text-white">{authorDisplayName}</span>
                                                         </div>
-                                                        <span className="text-xs text-rain-300 font-medium">
-                                                            {new Date(comment.createdAt).toLocaleString()}
-                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs text-rain-300 font-medium">
+                                                                {new Date(comment.createdAt).toLocaleString()}
+                                                            </span>
+                                                            {canManageComment && !isThisCommentEditing && (
+                                                                <div className="flex items-center gap-1 ml-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleStartEditComment(comment)}
+                                                                        className="p-1.5 rounded-lg text-rain-300 hover:text-fiery hover:bg-white/10 transition-colors cursor-pointer"
+                                                                        title={t.modals.taskDetails.commentsSection.editComment}
+                                                                    >
+                                                                        <Edit2 size={13} />
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDeleteComment(comment.id)}
+                                                                        className="p-1.5 rounded-lg text-rain-300 hover:text-red-400 hover:bg-white/10 transition-colors cursor-pointer"
+                                                                        title={t.modals.taskDetails.commentsSection.deleteComment}
+                                                                    >
+                                                                        <Trash2 size={13} />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <p className="text-white/85 text-sm pl-8 leading-relaxed whitespace-pre-wrap">
-                                                        {renderCommentContent(comment.content)}
-                                                    </p>
+
+                                                    {isThisCommentEditing ? (
+                                                        <div className="pl-8 pt-1 space-y-2">
+                                                            <textarea
+                                                                className="input-glass w-full min-h-[70px] text-sm resize-none"
+                                                                value={editingCommentContent}
+                                                                onChange={e => setEditingCommentContent(e.target.value)}
+                                                                maxLength={1000}
+                                                                autoFocus
+                                                            />
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={handleCancelEditComment}
+                                                                    className="glass-btn-ghost text-xs px-3 py-1.5"
+                                                                    disabled={isSubmittingCommentEdit}
+                                                                >
+                                                                    {t.common.cancel}
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleSaveCommentEdit(comment.id)}
+                                                                    disabled={isSubmittingCommentEdit || !editingCommentContent.trim()}
+                                                                    className="btn-fiery text-xs px-3.5 py-1.5 flex items-center gap-1.5"
+                                                                >
+                                                                    <Save size={13} />
+                                                                    <span>{t.common.save}</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-white/85 text-sm pl-8 leading-relaxed whitespace-pre-wrap">
+                                                            {renderCommentContent(comment.content)}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             );
                                         })
@@ -519,7 +620,7 @@ export const TaskDetailsModal = ({ isOpen, task, initialView, onClose, onUpdate,
                                     </div>
                                 </div>
 
-                                {/* Red-Themed Delete Action Tile (No Danger Zone module) */}
+                                {/* Red-Themed Delete Action Tile */}
                                 <div className="bg-red-950/20 p-5 rounded-2xl border border-red-500/25 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div>
                                         <h4 className="text-sm font-bold text-red-200">

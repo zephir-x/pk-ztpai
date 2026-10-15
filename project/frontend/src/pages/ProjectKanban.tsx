@@ -441,15 +441,13 @@ export default function ProjectKanban() {
                                                         {columnTasks.length}
                                                     </span>
                                                 </div>
-                                                {isAdmin && (
-                                                    <button
-                                                        onClick={() => openCreateModal(column.id)}
-                                                        className="p-1.5 rounded-lg text-white/70 hover:text-fiery hover:bg-white/10 transition-colors cursor-pointer"
-                                                        title={t.common.create}
-                                                    >
-                                                        <Plus size={18} />
-                                                    </button>
-                                                )}
+                                                <button
+                                                    onClick={() => openCreateModal(column.id)}
+                                                    className="p-1.5 rounded-lg text-white/70 hover:text-fiery hover:bg-white/10 transition-colors cursor-pointer"
+                                                    title={t.common.create}
+                                                >
+                                                    <Plus size={18} />
+                                                </button>
                                             </div>
 
                                             {/* Droppable Task Column: scrollable when tasks overflow! */}

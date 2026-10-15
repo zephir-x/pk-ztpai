@@ -132,7 +132,7 @@ public class TaskItemService : ITaskItemService
     // Creates a new task item and validates assignment constraints
     public async Task<TaskItemResponse> CreateAsync(CreateTaskItemRequest request, Guid userId, UserRole role, CancellationToken ct = default)
     {
-        await ValidateProjectAccessAsync(request.ProjectId, userId, role, ct);
+        await ValidateProjectAccessAsync(request.ProjectId, ct);
 
         if (request.Status == ProjectTaskStatus.Done && request.AssigneeId == null)
         {
@@ -203,17 +203,26 @@ public class TaskItemService : ITaskItemService
             .FirstOrDefaultAsync(t => t.Id == id, ct) 
             ?? throw new NotFoundException(LocalizationMessages.NotFound("Task", id));
 
-        await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);
+        await ValidateProjectAccessAsync(task.ProjectId, ct);
 
         if (request.Status == ProjectTaskStatus.Done && task.AssigneeId == null)
         {
             throw new ConflictException(LocalizationMessages.TaskDoneRequiresAssignee);
         }
 
+        // Only administrators can change task priority after creation
+        if (request.Priority != task.Priority && role != UserRole.Admin)
+        {
+            throw new ForbiddenException(LocalizationMessages.TaskPriorityAdminOnly);
+        }
+
         task.Title = request.Title;
         task.Description = request.Description;
         task.Status = request.Status;
-        task.Priority = request.Priority;
+        if (role == UserRole.Admin)
+        {
+            task.Priority = request.Priority;
+        }
         task.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(ct);
@@ -243,7 +252,7 @@ public class TaskItemService : ITaskItemService
             .FirstOrDefaultAsync(t => t.Id == id, ct) 
             ?? throw new NotFoundException(LocalizationMessages.NotFound("Task", id));
 
-        await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);
+        await ValidateProjectAccessAsync(task.ProjectId, ct);
 
         if (role != UserRole.Admin)
         {
@@ -286,7 +295,7 @@ public class TaskItemService : ITaskItemService
             }, ct);
     }
     
-    // Deletes a task item
+    // Deletes a task item - requires administrative privileges
     public async Task DeleteAsync(Guid id, Guid userId, UserRole role, CancellationToken ct = default)
     {
         var task = await _context.Tasks
@@ -294,26 +303,27 @@ public class TaskItemService : ITaskItemService
             .FirstOrDefaultAsync(t => t.Id == id, ct) 
             ?? throw new NotFoundException(LocalizationMessages.NotFound("Task", id));
 
-        await ValidateProjectAccessAsync(task.ProjectId, userId, role, ct);
+        await ValidateProjectAccessAsync(task.ProjectId, ct);
+
+        if (role != UserRole.Admin)
+        {
+            throw new ForbiddenException(LocalizationMessages.AdminOnlyOperation);
+        }
 
         _context.Tasks.Remove(task);
         await _context.SaveChangesAsync(ct);
     }
     
-    // Confirms that the current user has the authority to modify the project's tasks
-    private async Task ValidateProjectAccessAsync(Guid projectId, Guid userId, UserRole role, CancellationToken ct)
+    // Confirms that the project exists
+    private async Task ValidateProjectAccessAsync(Guid projectId, CancellationToken ct)
     {
-        if (role == UserRole.Admin) return;
-
-        var project = await _context.Projects
-            .Include(p => p.Workspace)
+        var projectExists = await _context.Projects
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == projectId, ct)
-            ?? throw new NotFoundException(LocalizationMessages.NotFound("Project", projectId));
+            .AnyAsync(p => p.Id == projectId, ct);
 
-        if (project.Workspace.OwnerId != userId)
+        if (!projectExists)
         {
-            throw new ForbiddenException(LocalizationMessages.NoTaskPermission);
+            throw new NotFoundException(LocalizationMessages.NotFound("Project", projectId));
         }
     }
 }

@@ -312,7 +312,12 @@ export const pl: Translations = {
             deleteSuccess: 'Zadanie zostało trwale usunięte.',
             commentsSection: {
                 noComments: 'Brak komentarzy.',
-                placeholder: 'Napisz komentarz...'
+                placeholder: 'Napisz komentarz...',
+                editComment: 'Edytuj',
+                deleteComment: 'Usuń',
+                deleteCommentConfirm: 'Czy na pewno chcesz usunąć ten komentarz?',
+                editCommentSuccess: 'Komentarz został zaktualizowany.',
+                deleteCommentSuccess: 'Komentarz został usunięty.'
             },
             adminSection: {
                 priorityOverride: 'Zmiana priorytetu',

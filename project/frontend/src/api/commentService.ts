@@ -1,5 +1,5 @@
 ﻿import { axiosClient } from './axiosClient';
-import type { CommentResponse, CreateCommentRequest } from '../types/api';
+import type { CommentResponse, CreateCommentRequest, UpdateCommentRequest } from '../types/api';
 
 export const commentService = {
     getByTask: async (taskId: string): Promise<CommentResponse[]> => {
@@ -9,5 +9,11 @@ export const commentService = {
     create: async (request: CreateCommentRequest): Promise<CommentResponse> => {
         const response = await axiosClient.post('/comments', request);
         return response.data;
+    },
+    update: async (id: string, request: UpdateCommentRequest): Promise<void> => {
+        await axiosClient.put(`/comments/${id}`, request);
+    },
+    delete: async (id: string): Promise<void> => {
+        await axiosClient.delete(`/comments/${id}`);
     }
 };
