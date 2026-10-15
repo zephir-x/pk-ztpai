@@ -48,6 +48,7 @@ public static class LocalizationMessages
     public static string TaskDoneRequiresAssignee => IsPolish ? "Zadanie nie może zostać oznaczone jako 'Zrobione' bez przypisanej osoby." : "A task cannot be marked as 'Done' if it does not have an active assignee attached.";
     public static string TaskDoneCreateRequiresAssignee => IsPolish ? "Zadanie nie może zostać utworzone ze statusem 'Zrobione' bez przypisanej osoby." : "A task cannot be created with 'Done' status if it does not have an assignee.";
     public static string TaskAssignAdminOnly => IsPolish ? "Tylko użytkownicy z uprawnieniami administratora mogą przypisywać zadania." : "Only users with ADMIN privileges can assign tasks to a user.";
+    public static string TaskPriorityAdminOnly => IsPolish ? "Tylko administrator może zmieniać priorytet istniejącego zadania." : "Only administrators can change the priority of an existing task.";
     public static string CommentAuthorOrAdminOnly => IsPolish ? "Tylko autor lub administrator może zmodyfikować ten komentarz." : "Only the author or an administrator can modify this comment.";
     public static string NoWorkspacePermission => IsPolish ? "Nie masz uprawnień do zarządzania tym obszarem roboczym." : "You do not have permission to access or modify this workspace.";
     public static string NoProjectPermission => IsPolish ? "Nie masz uprawnień dostępu do projektów w tym obszarze roboczym." : "You do not have permission to access projects in this workspace.";

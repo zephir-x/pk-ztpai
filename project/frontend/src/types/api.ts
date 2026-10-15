@@ -180,6 +180,10 @@ export interface CreateCommentRequest {
     taskItemId: string;
 }
 
+export interface UpdateCommentRequest {
+    content: string;
+}
+
 // === Notification and Messaging DTOs ===
 export const NotificationType = {
     Mention: 0,

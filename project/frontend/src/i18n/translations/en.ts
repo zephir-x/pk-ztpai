@@ -312,7 +312,12 @@ export const en: Translations = {
             deleteSuccess: 'The task has been permanently deleted.',
             commentsSection: {
                 noComments: 'No comments yet.',
-                placeholder: 'Write a comment...'
+                placeholder: 'Write a comment...',
+                editComment: 'Edit',
+                deleteComment: 'Delete',
+                deleteCommentConfirm: 'Are you sure you want to delete this comment?',
+                editCommentSuccess: 'Comment updated successfully.',
+                deleteCommentSuccess: 'Comment deleted successfully.'
             },
             adminSection: {
                 priorityOverride: 'Priority Override',

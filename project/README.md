@@ -229,9 +229,9 @@ The project implements **5 rigorous business rules** that extend well beyond sta
 * **Test Verification**: `TaskItemService_BusinessRulesTests.CreateAsync_WhenStatusIsDoneAndAssigneeIsNull_ShouldThrowConflictException`, `TasksControllerIntegrationTests.CreateTask_WhenStatusIsDoneWithoutAssignee_Returns409Conflict`.
 
 ### Rule 2: Administrator Exclusive Privilege for Assigning and Changing Task Assignees
-* **Description**: A regular user (`UserRole.User`) can create tasks and update their content (title, description, priority), but does not have permission to assign or change the responsible person (`AssigneeId`). Task assignment can only be performed by a user with the `UserRole.Admin` role.
+* **Description**: A regular user (`UserRole.User`) can create tasks, update their core details (title and description), and move cards on the Kanban board (transitioning status, e.g. from *To Do* to *In Progress*), but does not have permission to assign or modify the responsible person (`AssigneeId`). Furthermore, modifying task priority after creation and permanently deleting tasks are reserved exclusively for administrators (`UserRole.Admin`). Task assignment and resource allocation can only be performed by an Administrator.
 * **Business Justification**: Protects the team against uncontrolled shifting of task responsibilities among team members (so-called "task passing") and centralizes resource planning under the Project Manager / Administrator.
-* **Code Handling**: An attempt to modify the `AssigneeId` field by a user with role `User` throws `ForbiddenException("TaskAssignAdminOnly")` resulting in **HTTP 403 Forbidden**. A successful assignment by an administrator triggers a dedicated notification and a SignalR WebSocket event (`TaskAssigneeChanged`).
+* **Code Handling**: An attempt to modify the `AssigneeId` field by a user with role `User` throws `ForbiddenException("TaskAssignAdminOnly")`, attempting to change the priority of an existing task throws `ForbiddenException("TaskPriorityAdminOnly")`, and attempting to delete a task throws `ForbiddenException("AdminOnlyOperation")`, all resulting in **HTTP 403 Forbidden**. A successful assignment by an administrator triggers a dedicated notification and a SignalR WebSocket event (`TaskAssigneeChanged`).
 * **Test Verification**: `TaskItemService_BusinessRulesTests.ChangeAssigneeAsync_WhenRegularUserAttemptsReassignment_ShouldThrowForbiddenException`, `TasksControllerIntegrationTests.ChangeAssignee_WhenRegularUserAttemptsReassignment_Returns403Forbidden`.
 
 ### Rule 3: Project Deletion Safeguard (Critical Tasks Shield)
@@ -241,9 +241,9 @@ The project implements **5 rigorous business rules** that extend well beyond sta
 * **Test Verification**: `ProjectService_BusinessRulesTests.DeleteAsync_WhenProjectHasCriticalUnresolvedTask_ShouldThrowConflictException`, `ProjectsControllerIntegrationTests.DeleteProject_WhenCriticalTaskIsUnresolved_Returns409Conflict`.
 
 ### Rule 4: Author and Moderator Protection for Comments with Asynchronous Mentions
-* **Description**: A comment's text can only be edited by its original author (`AuthorId == currentUserId`). Deleting a comment is restricted to the author or a system Administrator (as part of content moderation). In addition, creating a comment does not block the HTTP thread; instead, it dispatches an asynchronous MediatR event that parses `@username` and `@admin` mentions.
+* **Description**: A comment can only be edited or deleted by its original author (`AuthorId == currentUserId`) or by a system Administrator (`UserRole.Admin`, as part of team content moderation). Regular users cannot edit or delete comments authored by other team members. Both edit (`PUT /api/comments/{id}`) and delete (`DELETE /api/comments/{id}`) operations are fully supported in the UI and backend. In addition, creating a comment does not block the HTTP thread; instead, it dispatches an asynchronous MediatR event that parses `@username` and `@admin` mentions and sends real-time notifications.
 * **Business Justification**: Ensures project discussion integrity and prevents impersonation while preserving the administrator's ability to moderate content and remove spam.
-* **Code Handling**: Attempting to edit another user's comment results in `ForbiddenException` (**HTTP 403 Forbidden**).
+* **Code Handling**: Attempting to edit or delete another user's comment by a non-author (who is not an administrator) results in `ForbiddenException("CommentAuthorOrAdminOnly")` (**HTTP 403 Forbidden**).
 * **Test Verification**: `CommentService_AuthorizationTests.UpdateAsync_WhenUserIsNotAuthorAndNotAdmin_ShouldThrowForbiddenException`, `CommentsControllerIntegrationTests.UpdateComment_WhenUserIsNotAuthorAndNotAdmin_Returns403Forbidden`.
 
 ### Rule 5: Last Administrator Safeguard (Self-Deletion Safeguard) and Soft Delete
@@ -383,13 +383,16 @@ A detailed inventory of all 37 test scenarios, along with descriptions of mock c
 | `POST` | `/api/projects` | **Admin Only** | Create a new project (`201 Created`) |
 | `DELETE`| `/api/projects/{id}` | **Admin Only** | Delete project with **Rule 3** check (`204` / `409 Conflict`) |
 | `GET` | `/api/taskitems/by-project/{id}` | Any (Auth) | Fetch tasks for Kanban board (`200 OK`) |
-| `POST` | `/api/taskitems` | Any (Auth) | Create task (validates **Rule 1** and **Rule 2**) |
-| `PUT` | `/api/taskitems/{id}` | Any (Auth) | Update task details / Kanban status (`200 OK` / `409`) |
-| `PATCH`| `/api/taskitems/{id}/assignee` | **Admin Only** | Change assignee with SignalR broadcast (**Rule 2**, `204`) |
-| `POST` | `/api/comments` | Any (Auth) | Add comment with async MediatR event (`201`) |
-| `DELETE`| `/api/comments/{id}` | Author / Admin | Delete comment (**Rule 4**, `204 NoContent` / `403`) |
+| `POST` | `/api/taskitems` | Any (Auth) | Create task with initial details & priority (`201 Created`) |
+| `PUT` | `/api/taskitems/{id}` | Any (Auth) | Update task title, description, and status (`200 OK` / `409 Conflict`) |
+| `PATCH`| `/api/taskitems/{id}/assignee` | **Admin Only** | Change assignee with SignalR broadcast (`204 NoContent` / `403 Forbidden`) |
+| `DELETE`| `/api/taskitems/{id}` | **Admin Only** | Permanently delete task (`204 NoContent` / `403 Forbidden`) |
+| `GET` | `/api/comments/task/{taskId}` | Any (Auth) | Fetch paginated comments for a task (`200 OK`) |
+| `POST` | `/api/comments` | Any (Auth) | Add comment with async MediatR mention events (`201 Created`) |
+| `PUT` | `/api/comments/{id}` | Author / Admin | Edit comment content (`200 OK` / `403 Forbidden`) |
+| `DELETE`| `/api/comments/{id}` | Author / Admin | Delete comment (`204 NoContent` / `403 Forbidden`) |
 | `GET` | `/api/users` | **Admin Only** | Manage users in admin panel (`200 OK`) |
-| `DELETE`| `/api/users/{id}` | **Admin Only** | Soft-delete a user (**Rule 5**, `204` / `409`) |
+| `DELETE`| `/api/users/{id}` | **Admin Only** | Soft-delete a user (`204` / `409`) |
 
 ---
 
@@ -508,8 +511,8 @@ The database is pre-seeded with test accounts for both system roles:
 
 | System Role | Email Address | Password | Permissions & Capabilities |
 | :--- | :--- | :--- | :--- |
-| **ADMINISTRATOR** | `admin@projecthub.com` | `Password123!` | Full permissions: user management, creating and deleting Workspaces/Projects, task assignment, High-Volume Stress Test data injection. |
-| **REGULAR USER** | `frontend.dev@projecthub.com` | `Password123!` | Standard member: browse projects, tasks, Kanban cards, post comments. Cannot assign team members or delete projects. |
+| **ADMINISTRATOR** | `admin@projecthub.com` | `Password123!` | Full permissions: user management, creating and deleting Workspaces/Projects/Tasks, task assignment, priority overrides, comment moderation, High-Volume Stress Test data injection. |
+| **REGULAR USER** | `frontend.dev@projecthub.com` | `Password123!` | Standard member: create tasks, edit title/description, update Kanban status (drag & drop), post, edit and delete own comments. Cannot assign team members, change task priority post-creation, or delete tasks/projects. |
 | **REGULAR USER** | `backend.eng@projecthub.com` | `Password123!` | Same as above. |
 | **REGULAR USER** | `qa.tester@projecthub.com` | `Password123!` | Same as above. |
 
@@ -525,7 +528,7 @@ All graphical assets and user interface screenshots are located in the `Assets/`
 | **Workspaces Dashboard** | Grid of workspaces featuring colorful category banners and pagination | ![Workspaces Dashboard](Assets/02_workspaces_dashboard.png) |
 | **Project Explorer** | List of projects assigned to a workspace with metadata | ![Project Explorer](Assets/03_workspace_projects.png) |
 | **Reactive Kanban Board** | Real-time drag & drop tasks (SignalR) with fade masks | ![Kanban Board](Assets/04_kanban_board.png) |
-| **Task Details & Comments** | Task details modal with asynchronous comments and user mentions | ![Task Details & Comments](Assets/05_task_details_modal.png) |
+| **Task Details & Comments** | Task details modal with editable details, full comment CRUD, and real-time user mentions | ![Task Details & Comments](Assets/05_task_details_modal.png) |
 | **Notification Center** | Notifications feed with task shortcuts and direct messages module | ![Notification Center](Assets/06_notifications_view.png) |
 | **Administrator Panel** | User management (Soft Delete, password change) and Stress Testing | ![Administrator Panel](Assets/07_admin_panel.png) |
 

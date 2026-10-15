@@ -304,6 +304,11 @@ export interface Translations {
             commentsSection: {
                 noComments: string;
                 placeholder: string;
+                editComment: string;
+                deleteComment: string;
+                deleteCommentConfirm: string;
+                editCommentSuccess: string;
+                deleteCommentSuccess: string;
             };
             adminSection: {
                 priorityOverride: string;
