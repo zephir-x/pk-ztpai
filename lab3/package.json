@@ -1,7 +1,7 @@
 {
   "name": "lab3",
   "version": "1.0.0",
-  "description": "Room Booking API - Layered Architecture, Validation and Error Handling",
+  "description": "Room Booking API",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
