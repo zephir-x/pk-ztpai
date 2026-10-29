@@ -1,0 +1,337 @@
+﻿### === TASK 1: Layered Architecture & Basic Endpoints ===
+
+### Get all rooms (200 OK)
+GET http://localhost:3000/api/rooms
+Accept: application/json
+
+### Get existing room by ID (200 OK)
+GET http://localhost:3000/api/rooms/1
+Accept: application/json
+
+### Get non-existing room by ID (Should return 404 NOT_FOUND)
+GET http://localhost:3000/api/rooms/999
+Accept: application/json
+
+### Get all reservations (includes seeded historical reservation id=1, without internalNote)
+GET http://localhost:3000/api/reservations
+Accept: application/json
+
+### Get reservations filtered by roomId=1 (200 OK)
+GET http://localhost:3000/api/reservations?roomId=1
+Accept: application/json
+
+### Get reservations filtered by non-existent roomId=999 (Should return empty array [])
+GET http://localhost:3000/api/reservations?roomId=999
+Accept: application/json
+
+
+### === TASK 2: Validation with Zod ===
+
+### Validation Error: Multiple errors at once (invalid roomId type, short reservedBy, invalid participants, invalid endTime, and unrecognized field isAdmin)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": "1",
+  "reservedBy": "  ab  ",
+  "participants": -5,
+  "startTime": "2026-11-10T10:00:00.000Z",
+  "endTime": "not-a-date",
+  "isAdmin": true
+}
+
+### Validation Error: Invalid room ID parameter in URL (Should return 400 VALIDATION_ERROR instead of 404)
+GET http://localhost:3000/api/rooms/abc
+Accept: application/json
+
+### Validation Error: Invalid roomId query parameter (Should return 400 VALIDATION_ERROR)
+GET http://localhost:3000/api/reservations?roomId=abc
+Accept: application/json
+
+### Validation Error: Missing timezone offset in ISO date (Should return 400 VALIDATION_ERROR)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Jan Kowalski",
+  "participants": 10,
+  "startTime": "2026-11-10T10:00:00",
+  "endTime": "2026-11-10T12:00:00"
+}
+
+
+### === TASK 3: Global Error Handling & Request Logging ===
+
+### Unknown route (Should return 404 NOT_FOUND in JSON format, not HTML)
+GET http://localhost:3000/api/nope
+Accept: application/json
+
+### Malformed JSON payload (Should return 400 INVALID_JSON)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+"malformed-json-body"
+
+### Request with custom X-Request-Id header (Echoed back in response header and error body)
+GET http://localhost:3000/api/rooms/999
+Accept: application/json
+X-Request-Id: custom-req-id-001
+
+### Unexpected server crash (Should return 500 INTERNAL_ERROR without leaking stack trace)
+GET http://localhost:3000/api/debug/crash
+Accept: application/json
+X-Request-Id: crash-demo-500
+
+
+### === TASK 4: Business Rules - Time Constraints, Capacity & Overlapping Reservations ===
+
+### Business Rule Error: startTime in the past (Should return 400 VALIDATION_ERROR)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Jan Kowalski",
+  "participants": 10,
+  "startTime": "2025-01-10T10:00:00.000Z",
+  "endTime": "2025-01-10T12:00:00.000Z"
+}
+
+### Business Rule Error: endTime not after startTime (Should return 400 VALIDATION_ERROR)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Jan Kowalski",
+  "participants": 10,
+  "startTime": "2026-11-10T12:00:00.000Z",
+  "endTime": "2026-11-10T10:00:00.000Z"
+}
+
+### Business Rule Error: Duration shorter than 15 minutes (Should return 400 VALIDATION_ERROR)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Jan Kowalski",
+  "participants": 10,
+  "startTime": "2026-11-10T10:00:00.000Z",
+  "endTime": "2026-11-10T10:10:00.000Z"
+}
+
+### Business Rule Error: Duration longer than 8 hours (Should return 400 VALIDATION_ERROR)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Jan Kowalski",
+  "participants": 10,
+  "startTime": "2026-11-10T08:00:00.000Z",
+  "endTime": "2026-11-10T17:00:00.000Z"
+}
+
+### Business Rule Error: Room capacity exceeded (Should return 409 ROOM_CAPACITY_EXCEEDED)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Piotr Wiśniewski",
+  "participants": 40,
+  "startTime": "2026-11-10T10:00:00.000Z",
+  "endTime": "2026-11-10T12:00:00.000Z"
+}
+
+### Base Reservation (id=2): Create valid reservation 10:00-12:00 in Room 1 (201 Created + Location header)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Jan Kowalski",
+  "participants": 20,
+  "startTime": "2026-11-10T10:00:00.000Z",
+  "endTime": "2026-11-10T12:00:00.000Z"
+}
+
+### Overlap Case 1: 12:00-13:00 in Room 1 -> OK (201 Created, adjacent interval at end)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Anna Nowak",
+  "participants": 15,
+  "startTime": "2026-11-10T12:00:00.000Z",
+  "endTime": "2026-11-10T13:00:00.000Z"
+}
+
+### Overlap Case 2: 08:00-10:00 in Room 1 -> OK (201 Created, adjacent interval at start)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Anna Nowak",
+  "participants": 15,
+  "startTime": "2026-11-10T08:00:00.000Z",
+  "endTime": "2026-11-10T10:00:00.000Z"
+}
+
+### Overlap Case 3: 11:00-13:00 in Room 1 -> 409 Conflict (ROOM_ALREADY_BOOKED, overlaps 11:00-12:00)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Tomasz Zieliński",
+  "participants": 10,
+  "startTime": "2026-11-10T11:00:00.000Z",
+  "endTime": "2026-11-10T13:00:00.000Z"
+}
+
+### Overlap Case 4: 09:00-13:00 in Room 1 -> 409 Conflict (ROOM_ALREADY_BOOKED, encloses 10:00-12:00)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Tomasz Zieliński",
+  "participants": 10,
+  "startTime": "2026-11-10T09:00:00.000Z",
+  "endTime": "2026-11-10T13:00:00.000Z"
+}
+
+### Overlap Case 5: 10:30-11:00 in Room 1 -> 409 Conflict (ROOM_ALREADY_BOOKED, inside 10:00-12:00)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Tomasz Zieliński",
+  "participants": 10,
+  "startTime": "2026-11-10T10:30:00.000Z",
+  "endTime": "2026-11-10T11:00:00.000Z"
+}
+
+### Overlap Case 6: 10:00-12:00 in Room 2 -> OK (201 Created, different room)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 2,
+  "reservedBy": "Katarzyna Wiśniewska",
+  "participants": 10,
+  "startTime": "2026-11-10T10:00:00.000Z",
+  "endTime": "2026-11-10T12:00:00.000Z"
+}
+
+
+### === TASK 5: Cancellation State Machine & Response DTO ===
+
+### Attempt to cancel reservation that has already started (Seeded id=1 -> 409 RESERVATION_ALREADY_STARTED)
+PATCH http://localhost:3000/api/reservations/1/cancel
+Accept: application/json
+
+### Cancel future reservation (id=2, 10:00-12:00 in Room 1 -> 200 OK, sets status=CANCELLED and cancelledAt)
+PATCH http://localhost:3000/api/reservations/2/cancel
+Accept: application/json
+
+### Idempotent second cancellation of reservation id=2 (200 OK, cancelledAt remains unchanged)
+PATCH http://localhost:3000/api/reservations/2/cancel
+Accept: application/json
+
+### Overlap Case 7: 10:00-12:00 in Room 1 when existing reservation (id=2) is CANCELLED -> OK (201 Created)
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "roomId": 1,
+  "reservedBy": "Michał Lewandowski",
+  "participants": 25,
+  "startTime": "2026-11-10T10:00:00.000Z",
+  "endTime": "2026-11-10T12:00:00.000Z"
+}
+
+### Cancel non-existing reservation (Should return 404 NOT_FOUND)
+PATCH http://localhost:3000/api/reservations/999/cancel
+Accept: application/json
+
+
+### === LAB 3 - TASK 2: Buildings, Knex & PostgreSQL Persistence ===
+
+### Get all buildings (Should return 2 buildings from the seed)
+GET http://localhost:3000/api/buildings
+Accept: application/json
+
+### Get existing building by ID
+GET http://localhost:3000/api/buildings/1
+Accept: application/json
+
+### Get non-existing building (Should return 404 NOT_FOUND)
+GET http://localhost:3000/api/buildings/999
+Accept: application/json
+
+### Create a new building (201 Created)
+POST http://localhost:3000/api/buildings
+Content-Type: application/json
+
+{
+  "name": "Budynek C",
+  "address": "ul. Warszawska 25, Kraków"
+}
+
+### Create a new room associated with Building A (201 Created)
+POST http://localhost:3000/api/rooms
+Content-Type: application/json
+
+{
+  "buildingId": 1,
+  "name": "103",
+  "capacity": 45
+}
+
+### Validation Error: Create room with missing buildingId (Should return 400 VALIDATION_ERROR)
+POST http://localhost:3000/api/rooms
+Content-Type: application/json
+
+{
+  "name": "104",
+  "capacity": 20
+}
+
+### Conflict Error: Create room with duplicate name in the same building (Should return 409 UNIQUE_VIOLATION)
+POST http://localhost:3000/api/rooms
+Content-Type: application/json
+
+{
+  "buildingId": 1,
+  "name": "101",
+  "capacity": 50
+}
+
+### === LAB 3 - TASK 4: Pagination, Filtering & Sorting ===
+
+### Combo 1: Just pagination and descending participants limit
+GET http://localhost:3000/api/reservations?page=1&limit=2&sort=-participants
+Accept: application/json
+
+### Combo 2: Filtering by Building and Status + sorting by startTime
+GET http://localhost:3000/api/reservations?buildingId=2&status=CONFIRMED&sort=startTime
+Accept: application/json
+
+### Combo 3: Overlapping dates filter (should fetch reservations touching Nov 2026)
+GET http://localhost:3000/api/reservations?from=2026-11-01T00:00:00.000Z&to=2026-11-30T23:59:59.000Z
+Accept: application/json
+
+### Combo 4: Out of bounds page (Should return 200 OK with empty data array)
+GET http://localhost:3000/api/reservations?page=99&limit=10
+Accept: application/json
+
+### Validation Error: from >= to (Should return 400 VALIDATION_ERROR)
+GET http://localhost:3000/api/reservations?from=2026-11-10T12:00:00.000Z&to=2026-11-10T10:00:00.000Z
+Accept: application/json
