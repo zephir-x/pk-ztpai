@@ -23,7 +23,7 @@ ENV VITE_HUB_URL=$VITE_HUB_URL
 RUN npm run build
 
 # === Stage 2: Serve production assets via Nginx Reverse Proxy ===
-FROM nginx:alpine AS final
+FROM nginx:1.31.9-alpine AS final
 
 # Remove default boilerplate configuration and static files
 RUN rm -rf /etc/nginx/conf.d/default.conf /usr/share/nginx/html/*
